@@ -412,7 +412,6 @@ class DiscreteTimeQuantumWalk:
                 if Utils.get_conf(self._spark_context, 'quantum.dtqw.profiler.logExecutors', default='False') == 'True':
                     self._profiler.log_executors(app_id=app_id)
 
-
         if self._shift_operator is None:
             if self._logger:
                 self._logger.info("no shift operator has been set. A new one will be built")

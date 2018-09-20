@@ -158,7 +158,7 @@ class Segment(Mesh1D):
 
             expected_elems = coin_size * size
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_elems)
+            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(

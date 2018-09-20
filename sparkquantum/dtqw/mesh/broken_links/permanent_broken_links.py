@@ -1,6 +1,7 @@
 import random
 
 from sparkquantum.dtqw.mesh.broken_links.broken_links import BrokenLinks
+from sparkquantum.utils.utils import Utils
 
 __all__ = ['PermanentBrokenLinks']
 
@@ -21,7 +22,7 @@ class PermanentBrokenLinks(BrokenLinks):
         """
         super().__init__(spark_context)
 
-        if not (isinstance(self._edges, range) or isinstance(self._edges, (list, tuple))):
+        if not (isinstance(edges, range) or isinstance(edges, (list, tuple))):
             raise ValueError("invalid edges format")
 
         if not len(edges):
@@ -68,7 +69,7 @@ class PermanentBrokenLinks(BrokenLinks):
                 )
 
             rdd = self._spark_context.parallelize(
-                edges
+                self._edges
             )
 
         rdd = rdd.map(

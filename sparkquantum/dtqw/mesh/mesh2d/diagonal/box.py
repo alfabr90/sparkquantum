@@ -185,7 +185,7 @@ class BoxDiagonal(Diagonal):
 
             expected_elems = coin_size ** 2 * size_xy
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_elems)
+            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(
