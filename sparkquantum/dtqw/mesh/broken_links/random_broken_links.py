@@ -23,7 +23,7 @@ class RandomBrokenLinks(BrokenLinks):
         super().__init__(spark_context)
 
         if probability <= 0:
-            # self.logger.error('probability of broken links must be positive')
+            # self._logger.error('probability of broken links must be positive')
             raise ValueError('probability of broken links must be positive')
 
         self._probability = probability

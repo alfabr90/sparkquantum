@@ -34,8 +34,8 @@ class Mesh1D(Mesh):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self.logger:
-                self.logger.error("invalid size")
+            if self._logger:
+                self._logger.error("invalid size")
             raise ValueError("invalid size")
 
         return size

@@ -34,7 +34,7 @@ class State(Vector):
 
         """
         if not is_mesh(mesh):
-            # self.logger.error('Mesh instance expected, not "{}"'.format(type(mesh)))
+            # self._logger.error('Mesh instance expected, not "{}"'.format(type(mesh)))
             raise TypeError('mesh instance expected, not "{}"'.format(type(mesh)))
 
         super().__init__(rdd, shape, data_type=complex)

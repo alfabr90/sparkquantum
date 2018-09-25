@@ -26,7 +26,7 @@ class PermanentBrokenLinks(BrokenLinks):
             raise ValueError("invalid edges format")
 
         if not len(edges):
-            # self.logger.error('probability of broken links must be positive')
+            # self._logger.error('probability of broken links must be positive')
             raise ValueError('there must be at least one broken edge')
 
         self._edges = edges

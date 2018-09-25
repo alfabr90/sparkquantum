@@ -67,8 +67,8 @@ class QWProfiler(Profiler):
         TypeError
 
         """
-        if self.logger:
-            self.logger.info('profiling operator data for "{}"...'.format(name))
+        if self._logger:
+            self._logger.info('profiling operator data for "{}"...'.format(name))
 
         if not is_operator(operator):
             if self._logger:
@@ -217,13 +217,13 @@ class QWProfiler(Profiler):
                 return self._operators.copy()
             else:
                 if name not in self._operators:
-                    if self.logger:
-                        self.logger.warning('no resources information for operator "{}"'.format(name))
+                    if self._logger:
+                        self._logger.warning('no resources information for operator "{}"'.format(name))
                     return {}
                 return self._operators[name]
         else:
-            if self.logger:
-                self.logger.warning('no resources information for operators have been gotten')
+            if self._logger:
+                self._logger.warning('no resources information for operators have been gotten')
             return {}
 
     def get_states(self, name=None):
@@ -246,13 +246,13 @@ class QWProfiler(Profiler):
                 return self._states.copy()
             else:
                 if name not in self._states:
-                    if self.logger:
-                        self.logger.warning('no resources information for state "{}"'.format(name))
+                    if self._logger:
+                        self._logger.warning('no resources information for state "{}"'.format(name))
                     return {}
                 return self._states[name]
         else:
-            if self.logger:
-                self.logger.warning('no resources information for states have been gotten')
+            if self._logger:
+                self._logger.warning('no resources information for states have been gotten')
             return {}
 
     def get_pdfs(self, name=None):
@@ -275,13 +275,13 @@ class QWProfiler(Profiler):
                 return self._pdfs.copy()
             else:
                 if name not in self._pdfs:
-                    if self.logger:
-                        self.logger.warning('no resources information for pdf "{}"'.format(name))
+                    if self._logger:
+                        self._logger.warning('no resources information for pdf "{}"'.format(name))
                     return {}
                 return self._pdfs[name]
         else:
-            if self.logger:
-                self.logger.warning('no resources information for pdfs have been gotten')
+            if self._logger:
+                self._logger.warning('no resources information for pdfs have been gotten')
             return {}
 
     def export_operators(self, path, extension='csv'):
@@ -300,8 +300,8 @@ class QWProfiler(Profiler):
         None
 
         """
-        if self.logger:
-            self.logger.info("exporting operators' resources in {} format...".format(extension))
+        if self._logger:
+            self._logger.info("exporting operators' resources in {} format...".format(extension))
 
         if len(self._operators):
             operator = []
@@ -313,11 +313,11 @@ class QWProfiler(Profiler):
 
             self._export_values(operator, operator[-1].keys(), path + 'operators', extension)
 
-            if self.logger:
-                self.logger.info("operator's resources successfully exported")
+            if self._logger:
+                self._logger.info("operator's resources successfully exported")
         else:
-            if self.logger:
-                self.logger.warning("no measurement of operators' resources has been done")
+            if self._logger:
+                self._logger.warning("no measurement of operators' resources has been done")
 
     def export_states(self, path, extension='csv'):
         """
@@ -335,8 +335,8 @@ class QWProfiler(Profiler):
         None
 
         """
-        if self.logger:
-            self.logger.info("exporting states' resources in {} format...".format(extension))
+        if self._logger:
+            self._logger.info("exporting states' resources in {} format...".format(extension))
 
         if len(self._states):
             states = []
@@ -348,11 +348,11 @@ class QWProfiler(Profiler):
 
             self._export_values(states, states[-1].keys(), path + 'states', extension)
 
-            if self.logger:
-                self.logger.info("states' resources successfully exported")
+            if self._logger:
+                self._logger.info("states' resources successfully exported")
         else:
-            if self.logger:
-                self.logger.warning("no measurement of states' resources has been done")
+            if self._logger:
+                self._logger.warning("no measurement of states' resources has been done")
 
     def export_pdfs(self, path, extension='csv'):
         """
@@ -370,8 +370,8 @@ class QWProfiler(Profiler):
         None
 
         """
-        if self.logger:
-            self.logger.info("exporting pdfs' resources in {} format...".format(extension))
+        if self._logger:
+            self._logger.info("exporting pdfs' resources in {} format...".format(extension))
 
         if len(self._operators):
             pdfs = []
@@ -383,11 +383,11 @@ class QWProfiler(Profiler):
 
             self._export_values(pdfs, pdfs[-1].keys(), path + 'pdfs', extension)
 
-            if self.logger:
-                self.logger.info("pdfs' resources successfully exported")
+            if self._logger:
+                self._logger.info("pdfs' resources successfully exported")
         else:
-            if self.logger:
-                self.logger.warning("no measurement of pdfs' resources has been done")
+            if self._logger:
+                self._logger.warning("no measurement of pdfs' resources has been done")
 
     def export(self, path, extension='csv'):
         """

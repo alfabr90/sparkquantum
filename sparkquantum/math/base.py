@@ -26,12 +26,12 @@ class Base:
 
         """
         if not isinstance(rdd, RDD):
-            # self.logger.error("Invalid argument to instantiate an Operator object")
+            # self._logger.error("Invalid argument to instantiate an Operator object")
             raise TypeError("invalid argument to instantiate an Operator object")
 
         if shape is not None:
             if not Utils.is_shape(shape):
-                # self.logger.error("Invalid shape")
+                # self._logger.error("Invalid shape")
                 raise ValueError("invalid shape")
 
         self._spark_context = rdd.context

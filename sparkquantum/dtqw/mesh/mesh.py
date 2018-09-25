@@ -32,7 +32,7 @@ class Mesh:
 
         if broken_links:
             if not is_broken_links(broken_links):
-                # self.logger.error('broken links instance expected, not "{}"'.format(type(broken_links)))
+                # self._logger.error('broken links instance expected, not "{}"'.format(type(broken_links)))
                 raise TypeError('broken links instance expected, not "{}"'.format(type(broken_links)))
 
         self._broken_links = broken_links
