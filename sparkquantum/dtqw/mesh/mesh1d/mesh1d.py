@@ -24,6 +24,9 @@ class Mesh1D(Mesh):
         """
         super().__init__(spark_context, size, broken_links=broken_links)
 
+        self._coin_size = 2
+        self._dimension = 1
+
     def _validate(self, size):
         if type(size) != int:
             return False

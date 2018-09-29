@@ -26,6 +26,9 @@ class Mesh2D(Mesh):
         """
         super().__init__(spark_context, size, broken_links=broken_links)
 
+        self._coin_size = 4
+        self._dimension = 2
+
     def _validate(self, size):
         if isinstance(size, (list, tuple)):
             if len(size) != 2:

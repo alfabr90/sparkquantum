@@ -24,6 +24,16 @@ class Utils():
         Indicate that the Operator object must have its entries stored as (i,(j,value)) coordinates. This is mandatory
         when the object is the multiplicand operand.
     """
+    RepresentationFormatCoinPosition = 0
+    """
+    RepresentationFormatCoinPosition : int
+        Indicate that the quantum system is represented as the kronecker product between the Coin and the Position subspaces.
+    """
+    RepresentationFormatPositionCoin = 1
+    """
+    RepresentationFormatPositionCoin : int
+        Indicate that the quantum system is represented as the kronecker product between the Position and the Coin subspaces.
+    """
 
     def __init__(self):
         pass

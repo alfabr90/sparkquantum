@@ -42,6 +42,91 @@ class Cycle(Mesh1D):
         """
         return True
 
+    def _create_rdd(self, coord_format, storage_level):
+        coin_size = self._coin_size
+        size_per_coin = coin_size / self._dimension
+        size = self._size
+        num_edges = self._num_edges
+        shape = (coin_size * size, coin_size * size)
+
+        if self._broken_links:
+            broken_links = self._broken_links.generate(num_edges)
+
+            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
+
+            if generation_mode == 'rdd':
+                def __map(e):
+                    """e = (edge, (edge, broken or not))"""
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+
+                        # Finding the correspondent x coordinate of the vertex from the edge number
+                        x = (e[1][0] - i - l) % size
+
+                        if e[1][1]:
+                            l = 0
+
+                        yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
+
+                rdd = self._spark_context.range(
+                    num_edges
+                ).map(
+                    lambda m: (m, m)
+                ).leftOuterJoin(
+                    broken_links
+                ).flatMap(
+                    __map
+                )
+            elif generation_mode == 'broadcast':
+                def __map(e):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+
+                        # Finding the correspondent x coordinate of the vertex from the edge number
+                        x = (e - i - l) % size
+
+                        if e in broken_links.value:
+                            l = 0
+
+                        yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
+
+                rdd = self._spark_context.range(
+                    num_edges
+                ).flatMap(
+                    __map
+                )
+            else:
+                if self._logger:
+                    self._logger.error("invalid broken links generation mode")
+                raise ValueError("invalid broken links generation mode")
+        else:
+            def __map(x):
+                for i in range(size_per_coin):
+                    l = (-1) ** i
+                    yield i * size + (x + l) % size, i * size + x, 1
+
+            rdd = self._spark_context.range(
+                size
+            ).flatMap(
+                __map
+            )
+
+        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+            rdd = Utils.change_coordinate(
+                rdd, Utils.CoordinateDefault, new_coord=coord_format
+            )
+
+            expected_elems = coin_size * size
+            expected_size = Utils.get_size_of_type(int) * expected_elems
+            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+
+            if num_partitions:
+                rdd = rdd.partitionBy(
+                    numPartitions=num_partitions
+                )
+
+        return (rdd, shape, broken_links)
+
     def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """
         Build the shift operator for the walk.
@@ -68,90 +153,11 @@ class Cycle(Mesh1D):
 
         initial_time = datetime.now()
 
-        coin_size = 2
-        size = self._size
-        num_edges = self._num_edges
-        shape = (coin_size * size, coin_size * size)
-
-        if self._broken_links:
-            broken_links = self._broken_links.generate(num_edges)
-
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
-
-            if generation_mode == 'rdd':
-                def __map(e):
-                    """e = (edge, (edge, broken or not))"""
-                    for i in range(coin_size):
-                        l = (-1) ** i
-
-                        # Finding the correspondent x coordinate of the vertex from the edge number
-                        x = (e[1][0] - i - l) % size
-
-                        if e[1][1]:
-                            l = 0
-
-                        yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
-
-                rdd = self._spark_context.range(
-                    num_edges
-                ).map(
-                    lambda m: (m, m)
-                ).leftOuterJoin(
-                    broken_links
-                ).flatMap(
-                    __map
-                )
-            elif generation_mode == 'broadcast':
-                def __map(e):
-                    for i in range(coin_size):
-                        l = (-1) ** i
-
-                        # Finding the correspondent x coordinate of the vertex from the edge number
-                        x = (e - i - l) % size
-
-                        if e in broken_links.value:
-                            l = 0
-
-                        yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
-
-                rdd = self._spark_context.range(
-                    num_edges
-                ).flatMap(
-                    __map
-                )
-            else:
-                if self._logger:
-                    self._logger.error("invalid broken links generation mode")
-                raise ValueError("invalid broken links generation mode")
-        else:
-            def __map(x):
-                for i in range(coin_size):
-                    l = (-1) ** i
-                    yield i * size + (x + l) % size, i * size + x, 1
-
-            rdd = self._spark_context.range(
-                size
-            ).flatMap(
-                __map
-            )
-
-        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.CoordinateDefault, new_coord=coord_format
-            )
-
-            expected_elems = coin_size * size
-            expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
+        rdd, shape, broken_links = self._create_rdd(coord_format, storage_level)
 
         operator = Operator(rdd, shape, data_type=int, coord_format=coord_format).materialize(storage_level)
 
-        if self._broken_links:
+        if broken_links:
             broken_links.unpersist()
 
         self._profile(operator, initial_time)

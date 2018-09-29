@@ -42,33 +42,9 @@ class Segment(Mesh1D):
         """
         return True
 
-    def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the shift operator for the walk.
-
-        Parameters
-        ----------
-        coord_format : bool, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
-
-        Returns
-        -------
-        Operator
-
-        Raises
-        ------
-        ValueError
-
-        """
-        if self._logger:
-            self._logger.info("building shift operator...")
-
-        initial_time = datetime.now()
-
-        coin_size = 2
+    def _create_rdd(self, coord_format, storage_level):
+        coin_size = self._coin_size
+        size_per_coin = coin_size / self._dimension
         size = self._size
         num_edges = self._num_edges
         shape = (coin_size * size, coin_size * size)
@@ -81,7 +57,7 @@ class Segment(Mesh1D):
             if generation_mode == 'rdd':
                 def __map(e):
                     """e = (edge, (edge, broken or not))"""
-                    for i in range(coin_size):
+                    for i in range(size_per_coin):
                         l = (-1) ** i
 
                         # Finding the correspondent x coordinate of the vertex from the edge number
@@ -108,7 +84,7 @@ class Segment(Mesh1D):
                 )
             elif generation_mode == 'broadcast':
                 def __map(e):
-                    for i in range(coin_size):
+                    for i in range(size_per_coin):
                         l = (-1) ** i
 
                         # Finding the correspondent x coordinate of the vertex from the edge number
@@ -135,7 +111,7 @@ class Segment(Mesh1D):
                 raise ValueError("invalid broken links generation mode")
         else:
             def __map(x):
-                for i in range(coin_size):
+                for i in range(size_per_coin):
                     l = (-1) ** i
 
                     if x + l >= size or x + l < 0:
@@ -165,9 +141,39 @@ class Segment(Mesh1D):
                     numPartitions=num_partitions
                 )
 
+        return (rdd, shape, broken_links)
+
+    def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+        """
+        Build the shift operator for the walk.
+
+        Parameters
+        ----------
+        coord_format : bool, optional
+            Indicate if the operator must be returned in an apropriate format for multiplications.
+            Default value is Utils.CoordinateDefault.
+        storage_level : StorageLevel, optional
+            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+
+        Returns
+        -------
+        Operator
+
+        Raises
+        ------
+        ValueError
+
+        """
+        if self._logger:
+            self._logger.info("building shift operator...")
+
+        initial_time = datetime.now()
+
+        rdd, shape, broken_links = self._create_rdd(coord_format, storage_level)
+
         operator = Operator(rdd, shape, data_type=int, coord_format=coord_format).materialize(storage_level)
 
-        if self._broken_links:
+        if broken_links:
             broken_links.unpersist()
 
         self._profile(operator, initial_time)

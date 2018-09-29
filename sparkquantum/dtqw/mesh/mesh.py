@@ -29,6 +29,8 @@ class Mesh:
         self._spark_context = spark_context
         self._size = self._define_size(size)
         self._num_edges = self._define_num_edges(size)
+        self._coin_size = None
+        self._dimension = None
 
         if broken_links:
             if not is_broken_links(broken_links):
@@ -55,6 +57,14 @@ class Mesh:
     @property
     def broken_links(self):
         return self._broken_links
+
+    @property
+    def coin_size(self):
+        return self._coin_size
+
+    @property
+    def dimension(self):
+        return self._dimension
 
     @property
     def logger(self):
