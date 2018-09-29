@@ -146,29 +146,60 @@ class BoxNatural(Natural):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            def __map(xy):
-                x = xy % size[0]
-                y = int(xy / size[0])
+            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
 
-                for i in range(size_per_coin):
-                    l = (-1) ** i
-                    for j in range(size_per_coin):
-                        delta = int(not (i ^ j))
+            if repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
 
-                        pos1 = x + l * (1 - delta)
-                        pos2 = y + l * delta
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        for j in range(size_per_coin):
+                            delta = int(not (i ^ j))
 
-                        # The border edges are considered broken so that they become reflexive
-                        if pos1 >= size[0] or pos1 < 0 or pos2 >= size[1] or pos2 < 0:
-                            bl = 0
-                        else:
-                            bl = l
+                            pos1 = x + l * (1 - delta)
+                            pos2 = y + l * delta
 
-                        m = ((i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)) * size_xy + \
-                            (x + bl * (1 - delta)) * size[1] + (y + bl * delta)
-                        n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                            # The border edges are considered broken so that they become reflexive
+                            if pos1 >= size[0] or pos1 < 0 or pos2 >= size[1] or pos2 < 0:
+                                bl = 0
+                            else:
+                                bl = l
 
-                        yield m, n, 1
+                            m = ((x + bl * (1 - delta)) * size[1] + (y + bl * delta)) * coin_size + \
+                                (i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)
+                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+
+                            yield m, n, 1
+            elif repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
+
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        for j in range(size_per_coin):
+                            delta = int(not (i ^ j))
+
+                            pos1 = x + l * (1 - delta)
+                            pos2 = y + l * delta
+
+                            # The border edges are considered broken so that they become reflexive
+                            if pos1 >= size[0] or pos1 < 0 or pos2 >= size[1] or pos2 < 0:
+                                bl = 0
+                            else:
+                                bl = l
+
+                            m = ((i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)) * size_xy + \
+                                (x + bl * (1 - delta)) * size[1] + (y + bl * delta)
+                            n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+
+                            yield m, n, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
                 size_xy

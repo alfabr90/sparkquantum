@@ -110,16 +110,34 @@ class Segment(Mesh1D):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            def __map(x):
-                for i in range(size_per_coin):
-                    l = (-1) ** i
+            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
 
-                    if x + l >= size or x + l < 0:
-                        bl = 0
-                    else:
-                        bl = l
+            if repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(x):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
 
-                    yield (i + bl) * size + x + bl, (1 - i) * size + x, 1
+                        if x + l >= size or x + l < 0:
+                            bl = 0
+                        else:
+                            bl = l
+
+                        yield (x + bl) * coin_size + i + bl, x * coin_size + (1 - i), 1
+            elif repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(x):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+
+                        if x + l >= size or x + l < 0:
+                            bl = 0
+                        else:
+                            bl = l
+
+                        yield (i + bl) * size + x + bl, (1 - i) * size + x, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
                 size

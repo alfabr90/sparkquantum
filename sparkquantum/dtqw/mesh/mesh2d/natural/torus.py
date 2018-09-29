@@ -133,20 +133,42 @@ class TorusNatural(Natural):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            def __map(xy):
-                x = xy % size[0]
-                y = int(xy / size[0])
+            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
 
-                for i in range(size_per_coin):
-                    l = (-1) ** i
-                    for j in range(size_per_coin):
-                        delta = int(not (i ^ j))
+            if repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
 
-                        m = (i * size_per_coin + j) * size_xy + \
-                            ((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]
-                        n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        for j in range(size_per_coin):
+                            delta = int(not (i ^ j))
 
-                        yield m, n, 1
+                            m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * \
+                                coin_size + i * size_per_coin + j
+                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
+
+                            yield m, n, 1
+            elif repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
+
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        for j in range(size_per_coin):
+                            delta = int(not (i ^ j))
+
+                            m = (i * size_per_coin + j) * size_xy + \
+                                ((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]
+                            n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+
+                            yield m, n, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
                 size_xy

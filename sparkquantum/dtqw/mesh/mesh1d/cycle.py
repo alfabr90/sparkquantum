@@ -100,10 +100,22 @@ class Cycle(Mesh1D):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            def __map(x):
-                for i in range(size_per_coin):
-                    l = (-1) ** i
-                    yield i * size + (x + l) % size, i * size + x, 1
+            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
+
+            if repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(x):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        yield ((x + l) % size) * coin_size + i, x * coin_size + i, 1
+            elif repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(x):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        yield i * size + (x + l) % size, i * size + x, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
                 size
