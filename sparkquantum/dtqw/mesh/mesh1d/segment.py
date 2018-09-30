@@ -49,29 +49,54 @@ class Segment(Mesh1D):
         num_edges = self._num_edges
         shape = (coin_size * size, coin_size * size)
 
+        repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
+
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
 
             if generation_mode == 'rdd':
-                def __map(e):
-                    """e = (edge, (edge, broken or not))"""
-                    for i in range(size_per_coin):
-                        l = (-1) ** i
+                if repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l = (-1) ** i
 
-                        # Finding the correspondent x coordinate of the vertex from the edge number
-                        x = (e[1][0] - i - l) % size
+                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            x = (e[1][0] - i - l) % size
 
-                        if e[1][1]:
-                            bl = 0
-                        else:
-                            if x + l >= size or x + l < 0:
+                            if e[1][1]:
                                 bl = 0
                             else:
-                                bl = l
+                                if x + l >= size or x + l < 0:
+                                    bl = 0
+                                else:
+                                    bl = l
 
-                        yield (i + bl) * size + x + bl, (1 - i) * size + x, 1
+                            yield (x + bl) * coin_size + i + bl, x * coin_size + 1 - i, 1
+                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l = (-1) ** i
+
+                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            x = (e[1][0] - i - l) % size
+
+                            if e[1][1]:
+                                bl = 0
+                            else:
+                                if x + l >= size or x + l < 0:
+                                    bl = 0
+                                else:
+                                    bl = l
+
+                            yield (i + bl) * size + x + bl, (1 - i) * size + x, 1
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
                     num_edges
@@ -83,7 +108,25 @@ class Segment(Mesh1D):
                     __map
                 )
             elif generation_mode == 'broadcast':
-                def __map(e):
+                if repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+
+                        # Finding the correspondent x coordinate of the vertex from the edge number
+                        x = (e - i - l) % size
+
+                        if e in broken_links.value:
+                            bl = 0
+                        else:
+                            if x + l >= size or x + l < 0:
+                                bl = 0
+                            else:
+                                bl = l
+
+                        yield (x + bl) * coin_size + i + bl, x * coin_size + 1 - i, 1
+                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                    def __map(e):
                     for i in range(size_per_coin):
                         l = (-1) ** i
 
@@ -99,6 +142,10 @@ class Segment(Mesh1D):
                                 bl = l
 
                         yield (i + bl) * size + x + bl, (1 - i) * size + x, 1
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
                     num_edges
@@ -110,8 +157,6 @@ class Segment(Mesh1D):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
-
             if repr_format == Utils.RepresentationFormatPositionCoin:
                 def __map(x):
                     for i in range(size_per_coin):

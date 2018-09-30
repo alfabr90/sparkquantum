@@ -53,36 +53,68 @@ class BoxDiagonal(Diagonal):
         size_xy = size[0] * size[1]
         shape = (coin_size * size_xy, coin_size * size_xy)
 
+        repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
+
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
 
             if generation_mode == 'rdd':
-                def __map(e):
-                    """e = (edge, (edge, broken or not))"""
-                    for i in range(size_per_coin):
-                        l1 = (-1) ** i
-                        for j in range(size_per_coin):
-                            l2 = (-1) ** j
+                if repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
-                            x = (e[1][0] % size[0] - i - l1) % size[0]
-                            y = (int(e[1][0] / size[0]) - j - l2) % size[1]
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e[1][0] % size[0] - i - l1) % size[0]
+                                y = (int(e[1][0] / size[0]) - j - l2) % size[1]
 
-                            if e[1][1]:
-                                bl1, bl2 = 0, 0
-                            else:
-                                # The border edges are considered broken so that they become reflexive
-                                if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                if e[1][1]:
                                     bl1, bl2 = 0, 0
                                 else:
-                                    bl1, bl2 = l1, l2
+                                    # The border edges are considered broken so that they become reflexive
+                                    if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                        bl1, bl2 = 0, 0
+                                    else:
+                                        bl1, bl2 = l1, l2
 
-                            m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + (y + bl2)
-                            n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                m = ((x + bl1) * size[1] + (y + bl2)) * coin_size + (i + bl1) * size_per_coin + (j + bl2)
+                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
 
-                            yield m, n, 1
+                                yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
+
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e[1][0] % size[0] - i - l1) % size[0]
+                                y = (int(e[1][0] / size[0]) - j - l2) % size[1]
+
+                                if e[1][1]:
+                                    bl1, bl2 = 0, 0
+                                else:
+                                    # The border edges are considered broken so that they become reflexive
+                                    if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                        bl1, bl2 = 0, 0
+                                    else:
+                                        bl1, bl2 = l1, l2
+
+                                m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + (y + bl2)
+                                n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+
+                                yield m, n, 1
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
                     num_edges
@@ -94,29 +126,58 @@ class BoxDiagonal(Diagonal):
                     __map
                 )
             elif generation_mode == 'broadcast':
-                def __map(e):
-                    for i in range(size_per_coin):
-                        l1 = (-1) ** i
-                        for j in range(size_per_coin):
-                            l2 = (-1) ** j
+                if repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
-                            x = (e % size[0] - i - l1) % size[0]
-                            y = (int(e / size[0]) - j - l2) % size[1]
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e % size[0] - i - l1) % size[0]
+                                y = (int(e / size[0]) - j - l2) % size[1]
 
-                            if e in broken_links.value:
-                                bl1, bl2 = 0, 0
-                            else:
-                                # The border edges are considered broken so that they become reflexive
-                                if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                if e in broken_links.value:
                                     bl1, bl2 = 0, 0
                                 else:
-                                    bl1, bl2 = l1, l2
+                                    # The border edges are considered broken so that they become reflexive
+                                    if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                        bl1, bl2 = 0, 0
+                                    else:
+                                        bl1, bl2 = l1, l2
 
-                            m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + (y + bl2)
-                            n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                m = ((x + bl1) * size[1] + (y + bl2)) * coin_size + (i + bl1) * size_per_coin + (j + bl2)
+                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
 
-                            yield m, n, 1
+                                yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                    def __map(e):
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
+
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e % size[0] - i - l1) % size[0]
+                                y = (int(e / size[0]) - j - l2) % size[1]
+
+                                if e in broken_links.value:
+                                    bl1, bl2 = 0, 0
+                                else:
+                                    # The border edges are considered broken so that they become reflexive
+                                    if x + l1 >= size[0] or x + l1 < 0 or y + l2 >= size[1] or y + l2 < 0:
+                                        bl1, bl2 = 0, 0
+                                    else:
+                                        bl1, bl2 = l1, l2
+
+                                m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + (y + bl2)
+                                n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+
+                                yield m, n, 1
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
                     num_edges
@@ -128,8 +189,6 @@ class BoxDiagonal(Diagonal):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
-
             if repr_format == Utils.RepresentationFormatPositionCoin:
                 def __map(xy):
                     x = xy % size[0]
@@ -146,7 +205,7 @@ class BoxDiagonal(Diagonal):
                             else:
                                 bl1, bl2 = l1, l2
 
-                            m = ((x + bl1) * size[1] + (y + bl2)) * coin_size + (i + bl1) * size_per_coin + (j + bl2))
+                            m = ((x + bl1) * size[1] + (y + bl2)) * coin_size + (i + bl1) * size_per_coin + (j + bl2)
                             n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
 
                             yield m, n, 1
@@ -166,7 +225,7 @@ class BoxDiagonal(Diagonal):
                             else:
                                 bl1, bl2 = l1, l2
 
-                            m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + (y + bl2)
+                            m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + (x + bl1) * size[1] + y + bl2
                             n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                             yield m, n, 1
