@@ -11,7 +11,7 @@ from sparkquantum.utils.utils import Utils
 from sparkquantum.utils.logger import Logger
 
 '''
-    DTQW 1D - 1 Particle
+    DTQW 1D - 1 particle
 '''
 base_path = './output/'
 num_cores = 4
