@@ -63,13 +63,14 @@ class LatticeNatural(Natural):
 
     def _create_rdd(self, coord_format, storage_level):
         coin_size = self._coin_size
-        size_per_coin = coin_size / self._dimension
+        size_per_coin = int(coin_size / self._dimension)
         size = self._size
         num_edges = self._num_edges
         size_xy = size[0] * size[1]
         shape = (coin_size * size_xy, coin_size * size_xy)
+        broken_links = None
 
-        repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
@@ -77,33 +78,7 @@ class LatticeNatural(Natural):
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
 
             if generation_mode == 'rdd':
-                if repr_format == Utils.RepresentationFormatPositionCoin:
-                    def __map(e):
-                        """e = (edge, (edge, broken or not))"""
-                        for i in range(size_per_coin):
-                            l = (-1) ** i
-
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
-                            if e[1][0] >= size[0] * size[1]:
-                                j = i
-                                x = int((e[1][0] - size[0] * size[1]) / size[0])
-                                y = ((e[1][0] - size[0] * size[1]) % size[1] - i - l) % size[1]
-                            else:
-                                j = int(not i)
-                                x = (e[1][0] % size[0] - i - l) % size[0]
-                                y = int(e[1][0] / size[0])
-
-                            delta = int(not (i ^ j))
-
-                            if e[1][1]:
-                                l = 0
-
-                            m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * coin_size + \
-                                (i + l) * size_per_coin + (abs(j + l) % size_per_coin)
-                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
-
-                            yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.RepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -129,6 +104,32 @@ class LatticeNatural(Natural):
                             n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                             yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l = (-1) ** i
+
+                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            if e[1][0] >= size[0] * size[1]:
+                                j = i
+                                x = int((e[1][0] - size[0] * size[1]) / size[0])
+                                y = ((e[1][0] - size[0] * size[1]) % size[1] - i - l) % size[1]
+                            else:
+                                j = int(not i)
+                                x = (e[1][0] % size[0] - i - l) % size[0]
+                                y = int(e[1][0] / size[0])
+
+                            delta = int(not (i ^ j))
+
+                            if e[1][1]:
+                                l = 0
+
+                            m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * coin_size + \
+                                (i + l) * size_per_coin + (abs(j + l) % size_per_coin)
+                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+
+                            yield m, n, 1
                 else:
                     if self._logger:
                         self._logger.error("invalid representation format")
@@ -144,35 +145,7 @@ class LatticeNatural(Natural):
                     __map
                 )
             elif generation_mode == 'broadcast':
-                if repr_format == Utils.RepresentationFormatPositionCoin:
-                    def __map(e):
-                        """e = (edge, (edge, broken or not))"""
-                        for i in range(size_per_coin):
-                            l = (-1) ** i
-
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
-                            if e >= size[0] * size[1]:
-                                j = i
-                                delta = int(not (i ^ j))
-                                x = int((e - size[0] * size[1]) / size[0])
-                                y = ((e - size[0] * size[1]) % size[1] - i - l) % size[1]
-                            else:
-                                j = int(not i)
-                                delta = int(not (i ^ j))
-                                x = (e % size[0] - i - l) % size[0]
-                                y = int(e / size[0])
-
-                            if e in broken_links.value:
-                                bl = 0
-                            else:
-                                bl = l
-
-                            m = (((x + bl * (1 - delta)) % size[0]) * size[1] + (y + bl * delta) % size[1]) * coin_size + \
-                                (i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)
-                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
-
-                            yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.RepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -200,6 +173,34 @@ class LatticeNatural(Natural):
                             n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                             yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l = (-1) ** i
+
+                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            if e >= size[0] * size[1]:
+                                j = i
+                                delta = int(not (i ^ j))
+                                x = int((e - size[0] * size[1]) / size[0])
+                                y = ((e - size[0] * size[1]) % size[1] - i - l) % size[1]
+                            else:
+                                j = int(not i)
+                                delta = int(not (i ^ j))
+                                x = (e % size[0] - i - l) % size[0]
+                                y = int(e / size[0])
+
+                            if e in broken_links.value:
+                                bl = 0
+                            else:
+                                bl = l
+
+                            m = (((x + bl * (1 - delta)) % size[0]) * size[1] + (y + bl * delta) % size[1]) * coin_size + \
+                                (i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)
+                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+
+                            yield m, n, 1
                 else:
                     if self._logger:
                         self._logger.error("invalid representation format")
@@ -215,22 +216,7 @@ class LatticeNatural(Natural):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.RepresentationFormatPositionCoin:
-                def __map(xy):
-                    x = xy % size[0]
-                    y = int(xy / size[0])
-
-                    for i in range(size_per_coin):
-                        l = (-1) ** i
-                        for j in range(size_per_coin):
-                            delta = int(not (i ^ j))
-
-                            m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * \
-                                coin_size + i * size_per_coin + j
-                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
-
-                            yield m, n, 1
-            elif repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.RepresentationFormatCoinPosition:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -243,6 +229,21 @@ class LatticeNatural(Natural):
                             m = (i * size_per_coin + j) * size_xy + \
                                 ((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]
                             n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+
+                            yield m, n, 1
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
+
+                    for i in range(size_per_coin):
+                        l = (-1) ** i
+                        for j in range(size_per_coin):
+                            delta = int(not (i ^ j))
+
+                            m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * \
+                                coin_size + i * size_per_coin + j
+                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
 
                             yield m, n, 1
             else:

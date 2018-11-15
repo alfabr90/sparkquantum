@@ -47,13 +47,14 @@ class TorusDiagonal(Diagonal):
 
     def _create_rdd(self, coord_format, storage_level):
         coin_size = self._coin_size
-        size_per_coin = coin_size / self._dimension
+        size_per_coin = int(coin_size / self._dimension)
         size = self._size
         num_edges = self._num_edges
         size_xy = size[0] * size[1]
         shape = (coin_size * size_xy, coin_size * size_xy)
+        broken_links = None
 
-        repr_format = Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition)
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
@@ -61,29 +62,7 @@ class TorusDiagonal(Diagonal):
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
 
             if generation_mode == 'rdd':
-                if repr_format == Utils.RepresentationFormatPositionCoin:
-                    def __map(e):
-                        """e = (edge, (edge, broken or not))"""
-                        for i in range(size_per_coin):
-                            l1 = (-1) ** i
-                            for j in range(size_per_coin):
-                                l2 = (-1) ** j
-
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
-                                x = (e[1][0] % size[0] - i - l1) % size[0]
-                                y = (int(e[1][0] / size[0]) - j - l2) % size[1]
-
-                                if e[1][1]:
-                                    bl1, bl2 = 0, 0
-                                else:
-                                    bl1, bl2 = l1, l2
-
-                                m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
-                                    (i + bl1) * size_per_coin + (j + bl2)
-                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
-
-                                yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.RepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -103,6 +82,28 @@ class TorusDiagonal(Diagonal):
                                 m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + \
                                     ((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])
                                 n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+
+                                yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
+
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e[1][0] % size[0] - i - l1) % size[0]
+                                y = (int(e[1][0] / size[0]) - j - l2) % size[1]
+
+                                if e[1][1]:
+                                    bl1, bl2 = 0, 0
+                                else:
+                                    bl1, bl2 = l1, l2
+
+                                m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
+                                    (i + bl1) * size_per_coin + (j + bl2)
+                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
 
                                 yield m, n, 1
                 else:
@@ -120,29 +121,7 @@ class TorusDiagonal(Diagonal):
                     __map
                 )
             elif generation_mode == 'broadcast':
-                if repr_format == Utils.RepresentationFormatPositionCoin:
-                    def __map(e):
-                        """e = (edge, (edge, broken or not))"""
-                        for i in range(size_per_coin):
-                            l1 = (-1) ** i
-                            for j in range(size_per_coin):
-                                l2 = (-1) ** j
-
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
-                                x = (e % size[0] - i - l1) % size[0]
-                                y = (int(e / size[0]) - j - l2) % size[1]
-
-                                if e in broken_links.value:
-                                    bl1, bl2 = 0, 0
-                                else:
-                                    bl1, bl2 = l1, l2
-
-                                m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
-                                    (i + bl1) * size_per_coin + (j + bl2)
-                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
-
-                                yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.RepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -164,6 +143,28 @@ class TorusDiagonal(Diagonal):
                                 n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                                 yield m, n, 1
+                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                    def __map(e):
+                        """e = (edge, (edge, broken or not))"""
+                        for i in range(size_per_coin):
+                            l1 = (-1) ** i
+                            for j in range(size_per_coin):
+                                l2 = (-1) ** j
+
+                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                x = (e % size[0] - i - l1) % size[0]
+                                y = (int(e / size[0]) - j - l2) % size[1]
+
+                                if e in broken_links.value:
+                                    bl1, bl2 = 0, 0
+                                else:
+                                    bl1, bl2 = l1, l2
+
+                                m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
+                                    (i + bl1) * size_per_coin + (j + bl2)
+                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+
+                                yield m, n, 1
                 else:
                     if self._logger:
                         self._logger.error("invalid representation format")
@@ -179,21 +180,7 @@ class TorusDiagonal(Diagonal):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.RepresentationFormatPositionCoin:
-                def __map(xy):
-                    x = xy % size[0]
-                    y = int(xy / size[0])
-
-                    for i in range(size_per_coin):
-                        l1 = (-1) ** i
-                        for j in range(size_per_coin):
-                            l2 = (-1) ** j
-
-                            m = (((x + l1) % size[0]) * size[1] + ((y + l2) % size[1])) * coin_size + i * size_per_coin + j
-                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
-
-                            yield m, n, 1
-            elif repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.RepresentationFormatCoinPosition:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -205,6 +192,20 @@ class TorusDiagonal(Diagonal):
 
                             m = (i * size_per_coin + j) * size_xy + ((x + l1) % size[0]) * size[1] + ((y + l2) % size[1])
                             n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+
+                            yield m, n, 1
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(xy):
+                    x = xy % size[0]
+                    y = int(xy / size[0])
+
+                    for i in range(size_per_coin):
+                        l1 = (-1) ** i
+                        for j in range(size_per_coin):
+                            l2 = (-1) ** j
+
+                            m = (((x + l1) % size[0]) * size[1] + ((y + l2) % size[1])) * coin_size + i * size_per_coin + j
+                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
 
                             yield m, n, 1
             else:

@@ -3,10 +3,10 @@ from sparkquantum.dtqw.operator import is_operator
 from sparkquantum.dtqw.state import is_state
 from sparkquantum.math.statistics.pdf import is_pdf
 
-__all__ = ['QWProfiler']
+__all__ = ['QuantumWalkProfiler']
 
 
-class QWProfiler(Profiler):
+class QuantumWalkProfiler(Profiler):
     """Profile and export the resources consumed by Spark for Quantum Walks."""
 
     def __init__(self, base_url='http://localhost:4040/api/v1/'):

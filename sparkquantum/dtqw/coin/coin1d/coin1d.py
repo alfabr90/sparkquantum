@@ -50,6 +50,55 @@ class Coin1D(Coin):
         """
         return False
 
+    def _create_rdd(self, mesh, coord_format, storage_level):
+        coin_size = self._size
+        mesh_size = mesh.size
+        shape = (self._data.shape[0] * mesh_size, self._data.shape[1] * mesh_size)
+        data = Utils.broadcast(self._spark_context, self._data)
+
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+
+        if repr_format == Utils.RepresentationFormatCoinPosition:
+            # The coin operator is built by applying a tensor product between the chosen coin and
+            # an identity matrix with the dimensions of the chosen mesh.
+            def __map(x):
+                for i in range(data.value.shape[0]):
+                    for j in range(data.value.shape[1]):
+                        yield (i * mesh_size + x, j * mesh_size + x, data.value[i][j])
+        elif repr_format == Utils.RepresentationFormatPositionCoin:
+            # The coin operator is built by applying a tensor product between
+            # an identity matrix with the dimensions of the chosen mesh and the chosen coin.
+            def __map(x):
+                for i in range(data.value.shape[0]):
+                    for j in range(data.value.shape[1]):
+                        yield (x * coin_size + i, x * coin_size + j, data.value[i][j])
+        else:
+            if self._logger:
+                self._logger.error("invalid representation format")
+            raise ValueError("invalid representation format")
+
+        rdd = self._spark_context.range(
+            mesh_size
+        ).flatMap(
+            __map
+        )
+
+        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+            rdd = Utils.change_coordinate(
+                rdd, Utils.CoordinateDefault, new_coord=coord_format
+            )
+
+            expected_elems = len(self._data) * mesh_size
+            expected_size = Utils.get_size_of_type(complex) * expected_elems
+            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+
+            if num_partitions:
+                rdd = rdd.partitionBy(
+                    numPartitions=num_partitions
+                )
+
+        return rdd, shape
+
     def create_operator(self, mesh, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """
         Build the coin operator for the walk.
@@ -84,36 +133,7 @@ class Coin1D(Coin):
                 self._logger.error("non correspondent coin and mesh dimensions")
             raise ValueError("non correspondent coin and mesh dimensions")
 
-        mesh_size = mesh.size
-        shape = (self._data.shape[0] * mesh_size, self._data.shape[1] * mesh_size)
-        data = Utils.broadcast(self._spark_context, self._data)
-
-        # The coin operator is built by applying a tensor product between the chosen coin and
-        # an identity matrix with the dimensions of the chosen mesh.
-        def __map(x):
-            for i in range(data.value.shape[0]):
-                for j in range(data.value.shape[1]):
-                    yield (i * mesh_size + x, j * mesh_size + x, data.value[i][j])
-
-        rdd = self._spark_context.range(
-            mesh_size
-        ).flatMap(
-            __map
-        )
-
-        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.CoordinateDefault, new_coord=coord_format
-            )
-
-            expected_elems = len(self._data) * mesh_size
-            expected_size = Utils.get_size_of_type(complex) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
+        rdd, shape = self._create_rdd(mesh, coord_format, storage_level)
 
         operator = Operator(rdd, shape, coord_format=coord_format).materialize(storage_level)
 

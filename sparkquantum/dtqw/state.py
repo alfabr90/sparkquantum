@@ -99,15 +99,16 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        coin_size = 2
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
 
         if self._mesh.is_1d():
-            ndim = 1
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
+            size = self._mesh.size
             num_particles = self._num_particles
             ind = ndim * num_particles
-            size = self._mesh.size
             expected_elems = size
-            cs_size = coin_size * size
+            cs_size = int(coin_size / ndim) * size
             dims = [size for p in range(ind)]
 
             if self._num_particles == 1:
@@ -115,13 +116,26 @@ class State(Vector):
 
             shape = tuple(dims)
 
-            def __map(m):
-                x = []
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    x = []
 
-                for p in range(num_particles):
-                    x.append(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
+                    for p in range(num_particles):
+                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
 
-                return tuple(x), (abs(m[1]) ** 2).real
+                    return tuple(x), (abs(m[1]) ** 2).real
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    x = []
+
+                    for p in range(num_particles):
+                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p) * coin_size)) % size)
+
+                    return tuple(x), (abs(m[1]) ** 2).real
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             def __unmap(m):
                 a = []
@@ -133,31 +147,46 @@ class State(Vector):
 
                 return tuple(a)
         elif self._mesh.is_2d():
-            ndim = 2
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
+            size_x, size_y = self._mesh.size
             num_particles = self._num_particles
             ind = ndim * num_particles
+            expected_elems = size_x * size_y
+            size_per_coin = int(coin_size / ndim)
+            cs_size_x = size_per_coin * size_x
+            cs_size_y = size_per_coin * size_y
+            cs_size_xy = cs_size_x * cs_size_y
             dims = []
 
             for p in range(0, ind, ndim):
                 dims.append(self._mesh.size[0])
                 dims.append(self._mesh.size[1])
 
-            size_x = self._mesh.size[0]
-            size_y = self._mesh.size[1]
-            expected_elems = size_x * size_y
-            cs_size_x = coin_size * size_x
-            cs_size_y = coin_size * size_y
-            cs_size_xy = cs_size_x * cs_size_y
             shape = tuple(dims)
 
-            def __map(m):
-                xy = []
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    xy = []
 
-                for p in range(num_particles):
-                    xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x)
-                    xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
+                    for p in range(num_particles):
+                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x)
+                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
 
-                return tuple(xy), (abs(m[1]) ** 2).real
+                    return tuple(xy), (abs(m[1]) ** 2).real
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    xy = []
+
+                    for p in range(num_particles):
+                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x)
+                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y)
+
+                    return tuple(xy), (abs(m[1]) ** 2).real
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             def __unmap(m):
                 xy = []
@@ -259,10 +288,10 @@ class State(Vector):
             raise TypeError('PDF instance expected, not "{}"'.format(type(full_measurement)))
 
         if self._mesh.is_1d():
-            ndim = 1
+            ndim = self._mesh.dimension
+            size = self._mesh.size
             num_particles = self._num_particles
             ind = ndim * num_particles
-            size = self._mesh.size
             expected_elems = size
             shape = (size, 1)
 
@@ -275,11 +304,10 @@ class State(Vector):
             def __map(m):
                 return m[0], m[ind]
         elif self._mesh.is_2d():
-            ndim = 2
+            ndim = self._mesh.dimension
+            size_x, size_y = self._mesh.size
             num_particles = self._num_particles
             ind = ndim * num_particles
-            size_x = self._mesh.size[0]
-            size_y = self._mesh.size[1]
             expected_elems = size_x * size_y
             shape = (size_x, size_y)
 
@@ -361,37 +389,61 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        coin_size = 2
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
 
         if self._mesh.is_1d():
-            num_particles = self._num_particles
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
             size = self._mesh.size
+            num_particles = self._num_particles
             expected_elems = size
-            cs_size = coin_size * size
+            cs_size = int(coin_size / ndim) * size
             shape = (size, 1)
 
-            def __map(m):
-                x = int(m[0] / (cs_size ** (num_particles - 1 - particle))) % size
-                return x, (abs(m[1]) ** 2).real
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle))) % size
+                    return x, (abs(m[1]) ** 2).real
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle) * coin_size)) % size
+                    return x, (abs(m[1]) ** 2).real
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             def __unmap(m):
                 return m
         elif self._mesh.is_2d():
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
+            size_x, size_y = self._mesh.size
             num_particles = self._num_particles
-            size_x = self._mesh.size[0]
-            size_y = self._mesh.size[1]
             expected_elems = size_x * size_y
-            cs_size_x = coin_size * size_x
-            cs_size_y = coin_size * size_y
+            cs_size_x = int(coin_size / ndim) * size_x
+            cs_size_y = int(coin_size / ndim) * size_y
             cs_size_xy = cs_size_x * cs_size_y
             shape = (size_x, size_y)
 
-            def __map(m):
-                xy = (
-                    int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * size_y)) % size_x,
-                    int(m[0] / (cs_size_xy ** (num_particles - 1 - particle))) % size_y
-                )
-                return xy, (abs(m[1]) ** 2).real
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    xy = (
+                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * size_y)) % size_x,
+                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle))) % size_y
+                    )
+                    return xy, (abs(m[1]) ** 2).real
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    xy = (
+                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * coin_size * size_y)) % size_x,
+                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * coin_size)) % size_y
+                    )
+                    return xy, (abs(m[1]) ** 2).real
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
 
             def __unmap(m):
                 return m[0][0], m[0][1], m[1]

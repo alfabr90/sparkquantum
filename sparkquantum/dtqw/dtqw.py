@@ -265,54 +265,98 @@ class DiscreteTimeQuantumWalk:
         phase = cmath.exp(self._phase * (0.0+1.0j))
         num_particles = self._num_particles
 
-        coin_size = 2
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
 
         if self._mesh.is_1d():
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
             size = self._mesh.size
-            cs_size = coin_size * size
+            cs_size = int(coin_size / ndim) * size
 
             rdd_range = cs_size ** num_particles
             shape = (rdd_range, rdd_range)
 
-            def __map(m):
-                x = []
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    x = []
 
-                for p in range(num_particles):
-                    x.append(int(m / (cs_size ** (num_particles - 1 - p))) % size)
+                    for p in range(num_particles):
+                        x.append(int(m / (cs_size ** (num_particles - 1 - p))) % size)
 
-                for p1 in range(num_particles):
-                    for p2 in range(num_particles):
-                        if p1 != p2 and x[p1] == x[p2]:
-                            return m, m, phase
+                    for p1 in range(num_particles):
+                        for p2 in range(num_particles):
+                            if p1 != p2 and x[p1] == x[p2]:
+                                return m, m, phase
 
-                return m, m, 1
+                    return m, m, 1
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    x = []
+
+                    for p in range(num_particles):
+                        x.append(int(m / (cs_size ** (num_particles - 1 - p) * coin_size)) % size)
+
+                    for p1 in range(num_particles):
+                        for p2 in range(num_particles):
+                            if p1 != p2 and x[p1] == x[p2]:
+                                return m, m, phase
+
+                    return m, m, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
         elif self._mesh.is_2d():
-            size_x = self._mesh.size[0]
-            size_y = self._mesh.size[1]
-            cs_size_x = coin_size * size_x
-            cs_size_y = coin_size * size_y
+            ndim = self._mesh.dimension
+            coin_size = self._mesh.coin_size
+            size_x, size_y = self._mesh.size
+            cs_size_x = int(coin_size / ndim) * size_x
+            cs_size_y = int(coin_size / ndim) * size_y
             cs_size_xy = cs_size_x * cs_size_y
 
             rdd_range = cs_size_xy ** num_particles
             shape = (rdd_range, rdd_range)
 
-            def __map(m):
-                xy = []
+            if repr_format == Utils.RepresentationFormatCoinPosition:
+                def __map(m):
+                    xy = []
 
-                for p in range(num_particles):
-                    xy.append(
-                        (
-                            int(m / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x,
-                            int(m / (cs_size_xy ** (num_particles - 1 - p))) % size_y
+                    for p in range(num_particles):
+                        xy.append(
+                            (
+                                int(m / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x,
+                                int(m / (cs_size_xy ** (num_particles - 1 - p))) % size_y
+                            )
                         )
-                    )
 
-                for p1 in range(num_particles):
-                    for p2 in range(num_particles):
-                        if p1 != p2 and xy[p1][0] == xy[p2][0] and xy[p1][1] == xy[p2][1]:
-                            return m, m, phase
+                    for p1 in range(num_particles):
+                        for p2 in range(num_particles):
+                            if p1 != p2 and xy[p1][0] == xy[p2][0] and xy[p1][1] == xy[p2][1]:
+                                return m, m, phase
 
-                return m, m, 1
+                    return m, m, 1
+            elif repr_format == Utils.RepresentationFormatPositionCoin:
+                def __map(m):
+                    xy = []
+
+                    for p in range(num_particles):
+                        xy.append(
+                            (
+                                int(m / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x,
+                                int(m / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y
+                            )
+                        )
+
+                    for p1 in range(num_particles):
+                        for p2 in range(num_particles):
+                            if p1 != p2 and xy[p1][0] == xy[p2][0] and xy[p1][1] == xy[p2][1]:
+                                return m, m, phase
+
+                    return m, m, 1
+            else:
+                if self._logger:
+                    self._logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
         else:
             if self._logger:
                 self._logger.error("mesh dimension not implemented")

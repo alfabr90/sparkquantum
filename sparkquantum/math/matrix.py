@@ -109,13 +109,13 @@ class Matrix(Base):
             lambda m: (m[1][0], m[1][1])
         )
 
-        if coord_format == Utils.CoordinateMultiplier:
+        if self._coordinate_format == Utils.CoordinateMultiplier:
             rdd = rdd.map(
                 lambda m: (m[0][1] * other_shape[1] + m[1][1], (m[0][0] * other_shape[0] + m[1][0], m[0][2] * m[1][2]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        elif coord_format == Utils.CoordinateMultiplicand:
+        elif self._coordinate_format == Utils.CoordinateMultiplicand:
             rdd = rdd.map(
                 lambda m: (m[0][0] * other_shape[0] + m[1][0], (m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2]))
             ).partitionBy(
