@@ -12,8 +12,7 @@ class Matrix(Base):
     """Class for matrices."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.CoordinateDefault):
-        """
-        Build a `Matrix` object.
+        """Build a `Matrix` object.
 
         Parameters
         ----------
