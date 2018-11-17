@@ -9,29 +9,28 @@ __all__ = ['Base']
 
 
 class Base:
-    """Top-level class for some mathematical elements."""
+    """Top-level class for some matrix-based elements."""
 
     def __init__(self, rdd, shape, data_type=complex):
-        """
-        Build a top-level object for some mathematical elements.
+        """Build a top-level object for some matrix-based elements. It is a container of RDD.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
         data_type : type, optional
-            The Python type of all values in this object. Default is complex.
+            The Python type of all values in this object. Default value is complex.
 
         """
         if not isinstance(rdd, RDD):
-            # self._logger.error("Invalid argument to instantiate an Operator object")
-            raise TypeError("invalid argument to instantiate an Operator object")
+            # self._logger.error("invalid argument to instantiate an RDD-based object")
+            raise TypeError("'RDD' instance expected, not '{}'".format(type(rdd)))
 
         if shape is not None:
             if not Utils.is_shape(shape):
-                # self._logger.error("Invalid shape")
+                # self._logger.error("invalid shape")
                 raise ValueError("invalid shape")
 
         self._spark_context = rdd.context
@@ -47,75 +46,60 @@ class Base:
 
     @property
     def spark_context(self):
+        """`SparkContext`"""
         return self._spark_context
 
     @property
     def shape(self):
+        """tuple"""
         return self._shape
 
     @property
     def num_elements(self):
+        """int"""
         return self._num_elements
 
     @property
     def num_nonzero_elements(self):
+        """int"""
         return self._num_nonzero_elements
 
     @property
     def data_type(self):
+        """`RDD`"""
         return self._data_type
 
     @property
     def logger(self):
+        """`Logger`.
+
+        To disable logging, set it to `None`.
+
+        """
         return self._logger
 
     @property
     def profiler(self):
+        """`Profiler`.
+
+        To disable profiling, set it to `None`.
+
+        """
         return self._profiler
 
     @logger.setter
     def logger(self, logger):
-        """
-        Parameters
-        ----------
-        logger : Logger
-            A Logger object or None to disable logging.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError('logger instance expected, not "{}"'.format(type(logger)))
+            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
-        """
-        Parameters
-        ----------
-        profiler : Profiler
-            A Profiler object or None to disable profiling.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError('profiler instance expected, not "{}"'.format(type(profiler)))
+            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -124,8 +108,7 @@ class Base:
         return self.__str__()
 
     def sparsity(self):
-        """
-        Calculate the sparsity of this object.
+        """Calculate the sparsity of this object.
 
         Returns
         -------
@@ -136,8 +119,7 @@ class Base:
         return 1.0 - self.num_nonzero_elements / self._num_elements
 
     def repartition(self, num_partitions):
-        """
-        Changes the number of partitions of this object's RDD.
+        """Changes the number of partitions of this object's RDD.
 
         Parameters
         ----------
@@ -146,7 +128,7 @@ class Base:
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -158,8 +140,7 @@ class Base:
         return self
 
     def define_partitioner(self, num_partitions):
-        """
-        Define the hash partitioner with the chosen number of partitions for this object's RDD.
+        """Define the hash partitioner with the chosen number of partitions for this object's RDD.
 
         Parameters
         ----------
@@ -168,7 +149,7 @@ class Base:
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -179,17 +160,16 @@ class Base:
         return self
 
     def persist(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Persist this object's RDD considering the chosen storage level.
+        """Persist this object's RDD considering the chosen storage level.
 
         Parameters
         ----------
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -208,12 +188,11 @@ class Base:
         return self
 
     def unpersist(self):
-        """
-        Unpersist this object's RDD.
+        """Unpersist this object's RDD.
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -224,7 +203,7 @@ class Base:
                     self._logger.info("RDD {} was unpersisted".format(self.data.id()))
             else:
                 if self._logger:
-                    self._logger.info("RDD has already been unpersisted".format(self.data.id()))
+                    self._logger.info("RDD {} has already been unpersisted".format(self.data.id()))
         else:
             if self._logger:
                 self._logger.warning("there is no data to be unpersisted")
@@ -232,32 +211,30 @@ class Base:
         return self
 
     def destroy(self):
-        """
-        Alias of the method unpersist.
+        """Alias of the method unpersist.
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
         return self.unpersist()
 
     def materialize(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Materialize this object's RDD considering the chosen storage level.
+        """Materialize this object's RDD considering the chosen storage level.
 
         This method calls persist and right after counts how many elements there are in the RDD to force its
         persistence.
 
         Parameters
         ----------
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -270,12 +247,16 @@ class Base:
         return self
 
     def checkpoint(self):
-        """
-        Checkpoint this object's RDD.
+        """Checkpoint this object's RDD.
+
+        Notes
+        -----
+        If it is intended to use this method in an application, it is necessary to define
+        the checkpoint dir using the `SparkContext` object.
 
         Returns
         -------
-        :obj
+        `self`
             A reference to this object.
 
         """
@@ -296,17 +277,12 @@ class Base:
         return self
 
     def dump(self, path):
-        """
-        Dump this object's RDD to disk.
+        """Dump this object's RDD to disk.
 
         Parameters
         ----------
         path : str
-            The path where the dumped RDD will be located at
-
-        Returns
-        -------
-        None
+            The path where the dumped RDD will be located at.
 
         """
         self.data.map(
@@ -314,13 +290,12 @@ class Base:
         ).saveAsTextFile(path)
 
     def numpy_array(self):
-        """
-        Create a numpy array containing this object's RDD data.
+        """Create a numpy array containing this object's RDD data.
 
         Returns
         -------
-        :obj:ndarray
-            The numpy array
+        ndarray
+            The numpy array.
 
         """
         data = self.data.collect()

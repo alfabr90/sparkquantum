@@ -13,25 +13,25 @@ class Line(Mesh1D):
     """Class for Line mesh."""
 
     def __init__(self, spark_context, size, broken_links=None):
-        """
-        Build a Line mesh object.
+        """Build a Line `Mesh` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         size : int
             Size of the mesh.
-        broken_links : BrokenLinks, optional
-            A BrokenLinks object.
+        broken_links : `BrokenLinks`, optional
+            A `BrokenLinks` object.
+
         """
         super().__init__(spark_context, size, broken_links=broken_links)
 
     def _define_size(self, size):
         if not self._validate(size):
             if self._logger:
-                self._logger.error("invalid size")
-            raise ValueError("invalid size")
+                self._logger.error("invalid mesh size")
+            raise ValueError("invalid mesh size")
 
         return 2 * size + 1
 
@@ -39,8 +39,7 @@ class Line(Mesh1D):
         return range(- int((self._size - 1) / 2), int((self._size - 1) / 2) + 1)
 
     def check_steps(self, steps):
-        """
-        Check if the number of steps is valid for the size of the mesh.
+        """Check if the number of steps is valid for the size of the mesh.
 
         Parameters
         ----------
@@ -187,24 +186,23 @@ class Line(Mesh1D):
         return (rdd, shape, broken_links)
 
     def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the shift operator for the walk.
+        """Build the shift operator for the walk.
 
         Parameters
         ----------
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        Operator
+        `Operator`
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if self._logger:

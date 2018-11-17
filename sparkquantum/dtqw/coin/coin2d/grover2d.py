@@ -9,13 +9,12 @@ class Grover2D(Coin2D):
     """Class that represents the 2-dimensional Grover coin."""
 
     def __init__(self, spark_context):
-        """
-        Build a 2-dimensional Grover coin object.
+        """Build a 2-dimensional Grover `Coin` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
 
         """
         super().__init__(spark_context)

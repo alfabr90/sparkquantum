@@ -12,16 +12,15 @@ __all__ = ['Coin1D']
 
 
 class Coin1D(Coin):
-    """Top-level class for 1-dimensional Coins."""
+    """Top-level class for 1-dimensional coins."""
 
     def __init__(self, spark_context):
-        """
-        Build a top-level 1-dimensional Coin object.
+        """Build a top-level 1-dimensional `Coin` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
 
         """
         super().__init__(spark_context)
@@ -29,8 +28,7 @@ class Coin1D(Coin):
         self._size = 2
 
     def is_1d(self):
-        """
-        Check if this is a Coin for 1-dimensional meshes.
+        """Check if this is a coin for 1-dimensional meshes.
 
         Returns
         -------
@@ -38,17 +36,6 @@ class Coin1D(Coin):
 
         """
         return True
-
-    def is_2d(self):
-        """
-        Check if this is a Coin for 2-dimensional meshes.
-
-        Returns
-        -------
-        bool
-
-        """
-        return False
 
     def _create_rdd(self, mesh, coord_format, storage_level):
         coin_size = self._size
@@ -100,22 +87,21 @@ class Coin1D(Coin):
         return rdd, shape
 
     def create_operator(self, mesh, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the coin operator for the walk.
+        """Build the coin operator for the walk.
 
         Parameters
         ----------
-        mesh : Mesh
-            A Mesh instance.
+        mesh : `Mesh`
+            A `Mesh` instance.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        Operator
+        `Operator`
 
         """
         if self._logger:
@@ -125,8 +111,8 @@ class Coin1D(Coin):
 
         if not is_mesh(mesh):
             if self._logger:
-                self._logger.error("expected mesh, not {}".format(type(mesh)))
-            raise TypeError("expected mesh, not {}".format(type(mesh)))
+                self._logger.error("expected 'Mesh' instance, not '{}'".format(type(mesh)))
+            raise TypeError("expected 'Mesh' instance, not '{}'".format(type(mesh)))
 
         if not mesh.is_1d():
             if self._logger:

@@ -10,16 +10,15 @@ __all__ = ['Coin', 'is_coin']
 
 
 class Coin:
-    """Top-level class for Coins."""
+    """Top-level class for coins."""
 
     def __init__(self, spark_context):
-        """
-        Build a top-level Coin object.
+        """Build a top-level `Coin` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
 
         """
         self._spark_context = spark_context
@@ -31,59 +30,50 @@ class Coin:
 
     @property
     def spark_context(self):
+        """`SparkContext`"""
         return self._spark_context
 
     @property
     def size(self):
+        """int"""
         return self._size
 
     @property
     def data(self):
+        """`RDD`"""
         return self._data
 
     @property
     def logger(self):
+        """`Logger`.
+
+        To disable logging, set it to `None`.
+
+        """
         return self._logger
 
     @property
     def profiler(self):
+        """`Profiler`.
+
+        To disable profiling, set it to `None`.
+
+        """
         return self._profiler
 
     @logger.setter
     def logger(self, logger):
-        """
-        Parameters
-        ----------
-        logger : Logger
-            A Logger object or None to disable logging.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError('logger instance expected, not "{}"'.format(type(logger)))
+            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
-        """
-        Parameters
-        ----------
-        profiler : Profiler
-            A Profiler object or None to disable profiling.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError('profiler instance expected, not "{}"'.format(type(profiler)))
+            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -111,42 +101,38 @@ class Coin:
         return self.__str__()
 
     def is_1d(self):
-        """
-        Check if this is a Coin for 1-dimensional meshes.
+        """Check if this is a coin for 1-dimensional meshes.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
+        Bool
 
         """
-        raise NotImplementedError
+        return False
 
     def is_2d(self):
-        """
-        Check if this is a Coin for 2-dimensional meshes.
+        """Check if this is a Coin for 2-dimensional meshes.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
+        Bool
 
         """
-        raise NotImplementedError
+        return False
 
     def create_operator(self, mesh, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the coin operator.
+        """Build the coin operator.
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
 
 def is_coin(obj):
-    """
-    Check whether argument is a Coin object.
+    """Check whether argument is a `Coin` object.
 
     Parameters
     ----------
@@ -156,7 +142,7 @@ def is_coin(obj):
     Returns
     -------
     bool
-        True if argument is a Coin object, False otherwise.
+        True if argument is a `Coin` object, False otherwise.
 
     """
     return isinstance(obj, Coin)

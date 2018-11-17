@@ -7,13 +7,13 @@ class BrokenLinks():
     """Top-level class for broken links."""
 
     def __init__(self, spark_context):
-        """
-        Build a top-level broken links object.
+        """Build a top-level `BrokenLinks` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
+
         """
         self._spark_context = spark_context
 
@@ -23,19 +23,18 @@ class BrokenLinks():
 
     def generate(self, num_edges):
         """
-        Yield broken links for the mesh.
+        Generate broken links for the mesh.
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
 
 def is_broken_links(obj):
-    """
-    Check whether argument is a BrokenLinks object.
+    """Check whether argument is a `BrokenLinks` object.
 
     Parameters
     ----------
@@ -45,7 +44,7 @@ def is_broken_links(obj):
     Returns
     -------
     bool
-        True if argument is a BrokenLinks object, False otherwise.
+        True if argument is a `BrokenLinks` object, False otherwise.
 
     """
     return isinstance(obj, BrokenLinks)

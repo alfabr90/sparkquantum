@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
 
@@ -10,20 +11,19 @@ __all__ = ['JointPDF']
 
 
 class JointPDF(PDF):
-    """Class for probability distribution function of the entire quantum system."""
+    """Class for probability distribution function (PDF) of the entire quantum system."""
 
     def __init__(self, rdd, shape, mesh, num_particles):
-        """
-        Build an object for probability distribution function of the entire quantum system.
+        """Build an object for probability distribution function (PDF) of the entire quantum system.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
-        mesh : Mesh
-            The mesh where the particles will walk on.
+        mesh : `Mesh`
+            The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
 
@@ -31,8 +31,8 @@ class JointPDF(PDF):
         super().__init__(rdd, shape, mesh, num_particles)
 
     def sum_values(self):
-        """
-        Sum the values of this PDF.
+        """Sum the values of this PDF.
+
         Returns
         -------
         float
@@ -40,7 +40,7 @@ class JointPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -63,13 +63,16 @@ class JointPDF(PDF):
         )
 
     def norm(self):
-        """
-        Calculate the norm of this PDF.
+        """Calculate the norm of this PDF.
 
         Returns
         -------
         float
             The norm of this PDF.
+
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -94,8 +97,7 @@ class JointPDF(PDF):
         return math.sqrt(n)
 
     def expected_value(self):
-        """
-        Calculate the expected value of this PDF.
+        """Calculate the expected value of this PDF.
 
         Returns
         -------
@@ -104,7 +106,7 @@ class JointPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -140,13 +142,12 @@ class JointPDF(PDF):
         )
 
     def variance(self, mean=None):
-        """
-        Calculate the variance of this PDF.
+        """Calculate the variance of this PDF.
 
         Parameters
         ----------
         mean : float, optional
-            The mean of this PDF. When None is passed as argument, the mean is calculated.
+            The mean of this PDF. When `None` is passed as argument, the mean is calculated.
 
         Returns
         -------
@@ -155,7 +156,7 @@ class JointPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -194,12 +195,15 @@ class JointPDF(PDF):
         ) - mean
 
     def max(self):
-        """
-        Find the minimum value of this probability distribution.
+        """Find the maximum value of this PDF.
 
         Returns
         ------
         float
+
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -220,12 +224,15 @@ class JointPDF(PDF):
         ).max()
 
     def min(self):
-        """
-        Find the minimum value of this probability distribution.
+        """Find the minimum value of this PDF.
 
         Returns
         ------
         float
+
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -246,8 +253,7 @@ class JointPDF(PDF):
         ).min()
 
     def plot(self, filename, title=None, labels=None, **kwargs):
-        """
-        Plot the probabilities over the mesh.
+        """Plot the probabilities over the mesh.
 
         Parameters
         ----------
@@ -257,27 +263,23 @@ class JointPDF(PDF):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        kwargs
+        **kwargs
             Keyword arguments being passed to matplotlib.
-
-        Returns
-        -------
-        None
 
         """
         if self._mesh.is_1d() and self._num_particles > 2:
             if self._logger:
-                self._logger.warning('for one-dimensional meshes, \
+                self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
-                    of systems of one and two particles'
+                    of systems of one and two particles"
                 )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
             if self._logger:
-                self._logger.warning('for two-dimensional meshes, \
+                self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
-                    of systems of just one particle'
+                    of systems of just one particle"
                 )
             return None
 
@@ -314,7 +316,7 @@ class JointPDF(PDF):
                 pdf,
                 rstride=1,
                 cstride=1,
-                cmap=plt.cm.YlGnBu_r,
+                cmap=cm.YlGnBu_r,
                 linewidth=0.1,
                 antialiased=True
             )
@@ -324,9 +326,9 @@ class JointPDF(PDF):
                 axes.set_ylabel(labels[1])
                 axes.set_zlabel(labels[2])
             else:
-                axes.set_xlabel('Particle 1')
-                axes.set_ylabel('Particle 2')
-                axes.set_zlabel('Probability')
+                axes.set_xlabel("Particle 1")
+                axes.set_ylabel("Particle 2")
+                axes.set_zlabel("Probability")
 
             if title:
                 axes.set_title(title)
@@ -342,8 +344,7 @@ class JointPDF(PDF):
                 self._logger.info("plot in {}s".format((datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
-        """
-        Plot the contour function of the probabilities over the mesh.
+        """Plot the contour function of the probabilities over the mesh.
 
         Parameters
         ----------
@@ -353,27 +354,27 @@ class JointPDF(PDF):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        kwargs
+        **kwargs
             Keyword arguments being passed to matplotlib.
 
-        Returns
-        -------
-        None
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d() and self._num_particles != 2:
             if self._logger:
-                self._logger.warning('for one-dimensional meshes, \
+                self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
-                    of systems of two particles'
+                    of systems of two particles"
                 )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
             if self._logger:
-                self._logger.warning('for two-dimensional meshes, \
+                self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
-                    of systems of just one particle'
+                    of systems of just one particle"
                 )
             return None
 
@@ -416,8 +417,8 @@ class JointPDF(PDF):
                 plt.xlabel(labels[0])
                 plt.ylabel(labels[1])
             else:
-                plt.xlabel('Particle 1')
-                plt.ylabel('Particle 2')
+                plt.xlabel("Particle 1")
+                plt.ylabel("Particle 2")
 
             if title:
                 plt.title(title)

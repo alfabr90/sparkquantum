@@ -7,8 +7,7 @@ class Logger:
     """Generate a log file and write log data into it."""
 
     def __init__(self, name, path, level=logging.DEBUG):
-        """
-        Build a logger object.
+        """Build a `Logger` object.
 
         Parameters
         ----------
@@ -17,7 +16,8 @@ class Logger:
         path : str
             The base path for the log file.
         level : enumerate, optional
-            The severity level for the log data. Default is logging.DEBUG
+            The severity level for the log data. Default value is `logging.DEBUG`.
+
         """
         self._name = name
         self._filename = path + 'log.txt'
@@ -25,14 +25,17 @@ class Logger:
 
     @property
     def name(self):
+        """str"""
         return self._name
 
     @property
     def filename(self):
+        """str"""
         return self._filename
 
     @property
     def level(self):
+        """int"""
         return self._level
 
     def set_level(self, level):
@@ -75,8 +78,7 @@ class Logger:
 
 
 def is_logger(obj):
-    """
-    Check whether argument is a Logger object.
+    """Check whether argument is a `Logger` object.
 
     Parameters
     ----------
@@ -86,7 +88,7 @@ def is_logger(obj):
     Returns
     -------
     bool
-        True if argument is a Logger object, False otherwise.
+        True if argument is a `Logger` object, False otherwise.
 
     """
     return isinstance(obj, Logger)

@@ -7,16 +7,16 @@ __all__ = ['QuantumWalkProfiler']
 
 
 class QuantumWalkProfiler(Profiler):
-    """Profile and export the resources consumed by Spark for Quantum Walks."""
+    """Profile and export the resources consumed by Spark for quantum walks."""
 
     def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """
-        Build a Quantum Walk Profiler object.
+        """Build a quantum qalk `Profiler` object.
 
         Parameters
         ----------
         base_url: str, optional
-            The base URL for getting information about the resources consumed. Default is http://localhost:4040/api/v1/.
+            The base URL for getting information about the consumed resources. Default value is http://localhost:4040/api/v1/.
+
         """
         super().__init__(base_url)
 
@@ -45,15 +45,14 @@ class QuantumWalkProfiler(Profiler):
         self._pdfs = {}
 
     def profile_operator(self, name, operator, time):
-        """
-        Store building time and resources information for a named quantum walk operator.
+        """Store building time and resources information for a named quantum walk operator.
 
         Parameters
         ----------
         name : str
             A name for the operator.
-        operator : :obj:Operator
-            The operator object.
+        operator : `Operator`
+            The `Operator` object.
         time : float
             The measured building time of the operator.
 
@@ -64,16 +63,16 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        TypeError
+        `TypeError`
 
         """
         if self._logger:
-            self._logger.info('profiling operator data for "{}"...'.format(name))
+            self._logger.info("profiling operator data for '{}'...".format(name))
 
         if not is_operator(operator):
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(operator)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(operator)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(operator)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(operator)))
 
         if name not in self._operators:
             self._operators[name] = []
@@ -96,15 +95,14 @@ class QuantumWalkProfiler(Profiler):
         return self._operators[name][-1]
 
     def profile_state(self, name, state, time):
-        """
-        Store building time and resources information for a named quantum walk system state.
+        """Store building time and resources information for a named quantum walk system state.
 
         Parameters
         ----------
         name : str
             A name for the state.
-        state : :obj:State
-            The operator state.
+        state : `State`
+            The nth step corresponding state.
         time : float
             The measured building time of the state.
 
@@ -115,16 +113,16 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        TypeError
+        `TypeError`
 
         """
         if self._logger:
-            self._logger.info('profiling quantum system state data for "{}"...'.format(name))
+            self._logger.info("profiling quantum system state data for '{}'...".format(name))
 
         if not is_state(state):
             if self._logger:
-                self._logger.error('State instance expected, not "{}"'.format(type(state)))
-            raise TypeError('State instance expected, not "{}"'.format(type(state)))
+                self._logger.error("`State` instance expected, not '{}'".format(type(state)))
+            raise TypeError("`State` instance expected, not '{}'".format(type(state)))
 
         if name not in self._states:
             self._states[name] = []
@@ -147,14 +145,13 @@ class QuantumWalkProfiler(Profiler):
         return self._states[name][-1]
 
     def profile_pdf(self, name, pdf, time):
-        """
-        Store building time and resources information for a named measurement (PDF).
+        """Store building time and resources information for a named measurement (PDF).
 
         Parameters
         ----------
         name : str
             A name for the pdf.
-        pdf : :obj:PDF
+        pdf : `PDF`
             The pdf object.
         time : float
             The measured building time of the pdf.
@@ -166,16 +163,16 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        TypeError
+        `TypeError`
 
         """
         if self._logger:
-            self._logger.info('profiling PDF data for "{}"...'.format(name))
+            self._logger.info("profiling PDF data for '{}'...".format(name))
 
         if not is_pdf(pdf):
             if self._logger:
-                self._logger.error('PDF instance expected, not "{}"'.format(type(pdf)))
-            raise TypeError('PDF instance expected, not "{}"'.format(type(pdf)))
+                self._logger.error("'PDF' instance expected, not '{}'".format(type(pdf)))
+            raise TypeError("'PDF' instance expected, not '{}'".format(type(pdf)))
 
         if name not in self._pdfs:
             self._pdfs[name] = []
@@ -198,8 +195,7 @@ class QuantumWalkProfiler(Profiler):
         return self._pdfs[name][-1]
 
     def get_operators(self, name=None):
-        """
-        Get all operators' resources information.
+        """Get the resources information of all operators or of the named one.
 
         Parameters
         ----------
@@ -209,7 +205,7 @@ class QuantumWalkProfiler(Profiler):
         Returns
         -------
         dict or list
-            A dict with all operators' resources information or a list of the provided operator's resources information.
+            A dict with the resources information of all operators or a list with the resources information of the named operator.
 
         """
         if len(self._operators):
@@ -218,27 +214,26 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._operators:
                     if self._logger:
-                        self._logger.warning('no resources information for operator "{}"'.format(name))
+                        self._logger.warning("no resources information for operator '{}'".format(name))
                     return {}
                 return self._operators[name]
         else:
             if self._logger:
-                self._logger.warning('no resources information for operators have been gotten')
+                self._logger.warning("no resources information for operators have been obtained")
             return {}
 
     def get_states(self, name=None):
-        """
-        Get all states' resources information.
+        """Get the resources information of all states or of the named one.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a operator.
+            The name used for a state.
 
         Returns
         -------
         dict or list
-            A dict with all states' resources information or a list of the provided state's resources information.
+            A dict with the resources information of all states or a list with the resources information of the named state.
 
         """
         if len(self._states):
@@ -247,27 +242,26 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._states:
                     if self._logger:
-                        self._logger.warning('no resources information for state "{}"'.format(name))
+                        self._logger.warning("no resources information for state '{}'".format(name))
                     return {}
                 return self._states[name]
         else:
             if self._logger:
-                self._logger.warning('no resources information for states have been gotten')
+                self._logger.warning("no resources information for states have been obtained")
             return {}
 
     def get_pdfs(self, name=None):
-        """
-        Get all pdfs' resources information.
+        """Get the resources information of all PDFs or of the named one.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a operator.
+            The name used for a PDF.
 
         Returns
         -------
         dict or list
-            A dict with all pdfs' resources information or a list of the provided pdf's resources information.
+            A dict with the resources information of all PDFs or a list of the resources information of the named PDF.
 
         """
         if len(self._pdfs):
@@ -276,28 +270,27 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._pdfs:
                     if self._logger:
-                        self._logger.warning('no resources information for pdf "{}"'.format(name))
+                        self._logger.warning("no resources information for pdf '{}'".format(name))
                     return {}
                 return self._pdfs[name]
         else:
             if self._logger:
-                self._logger.warning('no resources information for pdfs have been gotten')
+                self._logger.warning("no resources information for pdfs have been obtained")
             return {}
 
     def export_operators(self, path, extension='csv'):
-        """
-        Export all stored operators' resources.
+        """Export all stored operators' resources.
+
+        Notes
+        -----
+        For now, only CSV extension is supported.
 
         Parameters
         ----------
         path: str
             The location of the files.
         extension: str, optional
-            The extension of the files. Default value is 'csv', as only CSV files are supported for now.
-
-        Returns
-        -------
-        None
+            The extension of the files. Default value is 'csv'.
 
         """
         if self._logger:
@@ -320,19 +313,18 @@ class QuantumWalkProfiler(Profiler):
                 self._logger.warning("no measurement of operators' resources has been done")
 
     def export_states(self, path, extension='csv'):
-        """
-        Export all stored state' resources.
+        """Export all stored state' resources.
+
+        Notes
+        -----
+        For now, only CSV extension is supported.
 
         Parameters
         ----------
         path: str
             The location of the files.
         extension: str, optional
-            The extension of the files. Default value is 'csv', as only CSV files are supported for now.
-
-        Returns
-        -------
-        None
+            The extension of the files. Default value is 'csv'.
 
         """
         if self._logger:
@@ -355,19 +347,18 @@ class QuantumWalkProfiler(Profiler):
                 self._logger.warning("no measurement of states' resources has been done")
 
     def export_pdfs(self, path, extension='csv'):
-        """
-        Export all stored pdfs' resources.
+        """Export all stored pdfs' resources.
+
+        Notes
+        -----
+        For now, only CSV extension is supported.
 
         Parameters
         ----------
         path: str
             The location of the files.
         extension: str, optional
-            The extension of the files. Default value is 'csv', as only CSV files are supported for now.
-
-        Returns
-        -------
-        None
+            The extension of the files. Default value is 'csv'.
 
         """
         if self._logger:
@@ -390,19 +381,18 @@ class QuantumWalkProfiler(Profiler):
                 self._logger.warning("no measurement of pdfs' resources has been done")
 
     def export(self, path, extension='csv'):
-        """
-        Export all stored profiling information of quantum walks.
+        """Export all stored profiling information of quantum walks.
+
+        Notes
+        -----
+        For now, only CSV extension is supported.
 
         Parameters
         ----------
         path: str
             The location of the files.
         extension: str, optional
-            The extension of the files. Default value is 'csv', as only CSV files are supported for now.
-
-        Returns
-        -------
-        None
+            The extension of the files. Default value is 'csv'.
 
         """
         super().export(path, extension)

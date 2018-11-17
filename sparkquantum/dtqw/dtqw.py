@@ -19,17 +19,16 @@ class DiscreteTimeQuantumWalk:
     """Build the necessary operators and perform a discrete time quantum walk."""
 
     def __init__(self, spark_context, coin, mesh, num_particles, phase=None):
-        """
-        Build a discrete time quantum walk object
+        """Build a discrete time quantum walk object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
-        coin : Coin
+        spark_context : `SparkContext`
+            The `SparkContext` object.
+        coin : `Coin`
             A Coin object.
-        mesh : Mesh
-            A Mesh object.
+        mesh : `Mesh`
+            A `Mesh` object.
         num_particles : int
             The number of particles present in the walk.
         phase: float, optional
@@ -51,7 +50,7 @@ class DiscreteTimeQuantumWalk:
         self._num_partitions = None
 
         if num_particles < 1:
-            # self._logger.error("Invalid number of particles")
+            # self._logger.error("invalid number of particles")
             raise ValueError("invalid number of particles")
 
         self._logger = None
@@ -59,171 +58,125 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def spark_context(self):
+        """`SparkContext`"""
         return self._spark_context
 
     @property
     def coin(self):
+        """`Coin`"""
         return self._coin
 
     @property
     def mesh(self):
+        """`Mesh`"""
         return self._mesh
 
     @property
     def phase(self):
+        """complex"""
         return self._phase
 
     @property
     def coin_operator(self):
+        """`Operator`"""
         return self._coin_operator
 
     @property
     def shift_operator(self):
+        """`Operator`"""
         return self._shift_operator
 
     @property
     def interaction_operator(self):
+        """`Operator`"""
         return self._interaction_operator
 
     @property
     def walk_operator(self):
+        """`Operator` or list of `Operator`s"""
         return self._walk_operator
 
     @property
     def logger(self):
+        """`Logger`.
+
+        To disable logging, set it to `None`.
+
+        """
         return self._logger
 
     @property
     def profiler(self):
+        """`Profiler`.
+
+        To disable profiling, set it to `None`.
+
+        """
         return self._profiler
 
     @coin_operator.setter
     def coin_operator(self, co):
-        """
-        Parameters
-        ----------
-        co : Operator
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_operator(co):
             self._coin_operator = co
         else:
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(co)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(co)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(co)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(co)))
 
     @shift_operator.setter
     def shift_operator(self, so):
-        """
-        Parameters
-        ----------
-        so : Operator
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_operator(so):
             self._shift_operator = so
         else:
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(so)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(so)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(so)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(so)))
 
     @interaction_operator.setter
     def interaction_operator(self, io):
-        """
-        Parameters
-        ----------
-        io : Operator
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_operator(io) or io is None:
             self._interaction_operator = io
         else:
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(io)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(io)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(io)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(io)))
 
     @walk_operator.setter
     def walk_operator(self, wo):
-        """
-        Parameters
-        ----------
-        wo : Operator or list of Operator
-            An Operator or a list of Operators (for multiparticle walk simulator).
-
-        Raises
-        ------
-        ValueError
-        TypeError
-
-        """
         if is_operator(wo) or wo is None:
             self._walk_operator = wo
             self._num_partitions = self._walk_operator.data.getNumPartitions()
         elif isinstance(wo, (list, tuple)):
             if len(wo) != self._num_particles:
                 if self._logger:
-                    self._logger.error('{} walk operators expected, not {}'.format(self._num_particles, len(wo)))
-                raise ValueError('{} walk operators expected, not {}'.format(self._num_particles, len(wo)))
+                    self._logger.error("{} walk operators expected, not {}".format(self._num_particles, len(wo)))
+                raise ValueError("{} walk operators expected, not {}".format(self._num_particles, len(wo)))
 
             for o in wo:
                 if not is_operator(o):
                     if self._logger:
-                        self._logger.error('Operator instance expected, not "{}"'.format(type(wo)))
-                    raise TypeError('Operator instance expected, not "{}"'.format(type(wo)))
+                        self._logger.error("'Operator' instance expected, not '{}'".format(type(wo)))
+                    raise TypeError("'Operator' instance expected, not '{}'".format(type(wo)))
 
             self._num_partitions = self._walk_operator[0].data.getNumPartitions()
         else:
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(wo)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(wo)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(wo)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(wo)))
 
     @logger.setter
     def logger(self, logger):
-        """
-        Parameters
-        ----------
-        logger : Logger
-            A Logger object or None to disable logging.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError('logger instance expected, not "{}"'.format(type(logger)))
+            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
-        """
-        Parameters
-        ----------
-        profiler : Profiler
-            A Profiler object or None to disable profiling.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError('profiler instance expected, not "{}"'.format(type(profiler)))
+            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -235,27 +188,26 @@ class DiscreteTimeQuantumWalk:
         return "Quantum Walk with {} Particle(s) on a {}".format(self._num_particles, self._mesh.title())
 
     def create_interaction_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the particles' interaction operator for the walk.
+        """Build the particles' interaction operator for the walk.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is CoordinateDefault.
-        storage_level : StorageLevel, optional
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
-            Default is StorageLevel.MEMORY_AND_DISK.
+            Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if not self._phase:
             if self._logger:
-                self._logger.error('no collision phase or a zeroed collision phase was informed')
-            raise ValueError('no collision phase or a zeroed collision phase was informed')
+                self._logger.error("no collision phase or a zeroed collision phase was informed")
+            raise ValueError("no collision phase or a zeroed collision phase was informed")
 
         if self._logger:
             self._logger.info("building interaction operator...")
@@ -420,8 +372,7 @@ class DiscreteTimeQuantumWalk:
                 self._profiler.log_executors(app_id=app_id)
 
     def create_walk_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the walk operator for the walk.
+        """Build the walk operator for the walk.
 
         When performing a multiparticle walk, this method builds a list with n operators,
         where n is the number of particles of the system. In this case, each operator is built by
@@ -432,15 +383,16 @@ class DiscreteTimeQuantumWalk:
             Wn = I1 (X) ... (X) In-1 (X) Wn
 
         Regardless the number of particles, the walk operators have their (i,j,value) coordinates converted to
-        appropriate coordinates for multiplication, in this case, the CoordinateMultiplier.
+        appropriate coordinates for multiplication, in this case, the `Utils.CoordinateMultiplier`.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is CoordinateDefault.
-        storage_level : StorageLevel, optional
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
+            Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         """
         app_id = self._spark_context.applicationId
@@ -792,25 +744,25 @@ class DiscreteTimeQuantumWalk:
                 raise ValueError("invalid kronecker mode")
 
     def destroy_coin_operator(self):
-        """Call the Operator's method destroy."""
+        """Call the `Operator`'s method destroy."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
     def destroy_shift_operator(self):
-        """Call the Operator's method destroy."""
+        """Call the `Operator`'s method destroy."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
     def destroy_interaction_operator(self):
-        """Call the Operator's method destroy."""
+        """Call the `Operator`'s method destroy."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
     def destroy_walk_operator(self):
-        """Call the Operator's method destroy."""
+        """Call the `Operator`'s method destroy."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                     self._walk_operator.destroy()
@@ -822,33 +774,36 @@ class DiscreteTimeQuantumWalk:
     def destroy_operators(self):
         """Release all operators from memory and/or disk."""
         if self._logger:
-            self._logger.info('destroying operators...')
+            self._logger.info("destroying operators...")
 
         self.destroy_coin_operator()
         self.destroy_shift_operator()
         self.destroy_interaction_operator()
         self.destroy_walk_operator()
 
+        if self._logger:
+            self._logger.info("operators have been destroyed")
+
     def walk(self, steps, initial_state, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Perform a walk
+        """Perform a walk.
 
         Parameters
         ----------
         steps : int
-        initial_state : State
+        initial_state : `State`
             The initial state of the system.
-        storage_level : StorageLevel, optional
+        storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
+            Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        State
+        `State`
             The final state of the system after performing the walk.
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if not self._mesh.check_steps(steps):

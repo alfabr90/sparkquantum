@@ -6,20 +6,19 @@ __all__ = ['MarginalPDF']
 
 
 class MarginalPDF(PDF):
-    """Class for probability distribution function of a particle in the quantum system."""
+    """Class for probability distribution function (PDF) of a particle in the quantum system."""
 
     def __init__(self, rdd, shape, mesh, num_particles):
-        """
-        Build an object for probability distribution function of a particle in the quantum system.
+        """Build an object for probability distribution function (PDF) of a particle in the quantum system.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
-        mesh : Mesh
-            The mesh where the particles will walk on.
+        mesh : `Mesh`
+            The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
 
@@ -27,8 +26,7 @@ class MarginalPDF(PDF):
         super().__init__(rdd, shape, mesh, num_particles)
 
     def sum_values(self):
-        """
-        Sum the values of this PDF.
+        """Sum the values of this PDF.
 
         Returns
         -------
@@ -37,7 +35,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -60,13 +58,16 @@ class MarginalPDF(PDF):
         )
 
     def norm(self):
-        """
-        Calculate the norm of this PDF.
+        """Calculate the norm of this PDF.
 
         Returns
         -------
         float
             The norm of this PDF.
+
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -91,8 +92,7 @@ class MarginalPDF(PDF):
         return math.sqrt(n)
 
     def expected_value(self):
-        """
-        Calculate the expected value of this PDF.
+        """Calculate the expected value of this PDF.
 
         Returns
         -------
@@ -101,7 +101,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -134,13 +134,12 @@ class MarginalPDF(PDF):
         )
 
     def variance(self, mean=None):
-        """
-        Calculate the variance of this PDF.
+        """Calculate the variance of this PDF.
 
         Parameters
         ----------
         mean : float, optional
-            The mean of this PDF. When None is passed as argument, the mean is calculated.
+            The mean of this PDF. When `None` is passed as argument, the mean is calculated.
 
         Returns
         -------
@@ -149,7 +148,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():

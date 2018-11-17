@@ -10,21 +10,21 @@ class RandomBrokenLinks(BrokenLinks):
     """Class for generating random broken links for a mesh."""
 
     def __init__(self, spark_context, probability):
-        """
-        Build a random broken links generator object.
+        """Build a random broken links generator object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         probability : float
             Probability of the occurences of broken links in the mesh.
+
         """
         super().__init__(spark_context)
 
         if probability <= 0:
-            # self._logger.error('probability of broken links must be positive')
-            raise ValueError('probability of broken links must be positive')
+            # self._logger.error("probability of broken links must be positive")
+            raise ValueError("probability of broken links must be positive")
 
         self._probability = probability
 
@@ -33,17 +33,16 @@ class RandomBrokenLinks(BrokenLinks):
         return self._probability
 
     def generate(self, num_edges):
-        """
-        Yield broken links for the mesh based on its probability to have a broken link/edge.
+        """Generate broken links for the mesh based on its probability to have a broken link/edge.
 
         Returns
         -------
-        RDD or Broadcast
-            The RDD or Broadcast dict which keys are the numbered edges that are broken.
+        `RDD` or `Broadcast`
+            The `RDD` or `Broadcast` dict which keys are the numbered edges that are broken.
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         probability = self._probability

@@ -7,20 +7,20 @@ __all__ = ['Diagonal']
 
 
 class Diagonal(Mesh2D):
-    """Top-level class for Diagonal Meshes."""
+    """Top-level class for Diagonal meshes."""
 
     def __init__(self, spark_context, size, broken_links=None):
-        """
-        Build a top-level Diagonal Mesh object.
+        """Build a top-level Diagonal `Mesh` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         size : tuple
             Size of the mesh.
-        broken_links : BrokenLinks, optional
-            A BrokenLinks object.
+        broken_links : `BrokenLinks`, optional
+            A `BrokenLinks` object.
+
         """
         super().__init__(spark_context, size, broken_links=broken_links)
 
@@ -47,8 +47,7 @@ class Diagonal(Mesh2D):
         return size[0] * size[1]
 
     def check_steps(self, steps):
-        """
-        Check if the number of steps is valid for the size of the mesh.
+        """Check if the number of steps is valid for the size of the mesh.
 
         Parameters
         ----------
@@ -56,26 +55,25 @@ class Diagonal(Mesh2D):
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
     def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the mesh operator.
+        """Build the mesh operator.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError

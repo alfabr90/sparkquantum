@@ -13,19 +13,20 @@ class Matrix(Base):
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.CoordinateDefault):
         """
-        Build a Matrix object.
+        Build a `Matrix` object.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
         data_type : type, optional
-            The Python type of all values in this object. Default is complex.
+            The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
+            Default value is `Utils.CoordinateDefault`.
+
         """
         super().__init__(rdd, shape, data_type=data_type)
 
@@ -36,17 +37,13 @@ class Matrix(Base):
         return self._coordinate_format
 
     def dump(self, path):
-        """
-        Dump this object's RDD into disk. This method automatically converts the coordinate format to the default.
+        """Dump this object's RDD into disk.
+        This method automatically converts the coordinate format to the default.
 
         Parameters
         ----------
         path : str
             The path where the dumped RDD will be located at
-
-        Returns
-        -------
-        None
 
         """
         if self._coordinate_format == Utils.CoordinateMultiplier:
@@ -65,12 +62,11 @@ class Matrix(Base):
         rdd.saveAsTextFile(path)
 
     def numpy_array(self):
-        """
-        Create a numpy array containing this object's RDD data.
+        """Create a numpy array containing this object's RDD data.
 
         Returns
         -------
-        :obj:ndarray
+        ndarray
             The numpy array
 
         """
@@ -129,35 +125,33 @@ class Matrix(Base):
         return rdd, new_shape
 
     def kron(self, other, coord_format=Utils.CoordinateDefault):
-        """
-        Perform a tensor (Kronecker) product with another matrix.
+        """Perform a tensor (Kronecker) product with another matrix.
 
         Parameters
         ----------
-        other : :obj:Matrix
+        other : `Matrix`
             The other matrix.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
+            Default value is `Utils.CoordinateDefault`.
 
         Returns
         -------
-        :obj:Matrix
+        `Matrix`
             The resulting matrix.
 
         """
         if not is_matrix(other):
             if self._logger:
-                self._logger.error('Matrix instance expected, not "{}"'.format(type(other)))
-            raise TypeError('Matrix instance expected, not "{}"'.format(type(other)))
+                self._logger.error("'Matrix' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'Matrix' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
         return Matrix(rdd, new_shape, coord_format=coord_format)
 
     def norm(self):
-        """
-        Calculate the norm of this matrix.
+        """Calculate the norm of this matrix.
 
         Returns
         -------
@@ -185,8 +179,7 @@ class Matrix(Base):
         return math.sqrt(n)
 
     def is_unitary(self):
-        """
-        Check if this matrix is unitary by calculating its norm.
+        """Check if this matrix is unitary by calculating its norm.
 
         Returns
         -------
@@ -202,7 +195,7 @@ class Matrix(Base):
         if self._shape[1] != other.shape[0]:
             if self._logger:
                 self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError('incompatible shapes {} and {}'.format(self._shape, other.shape))
+            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
 
         shape = (self._shape[0], other.shape[1])
         num_partitions = max(self.data.getNumPartitions(), other.data.getNumPartitions())
@@ -253,26 +246,24 @@ class Matrix(Base):
         return Vector(rdd, shape)
 
     def multiply(self, other, coord_format=Utils.CoordinateDefault):
-        """
-        Multiply this matrix with another one or with a vector.
+        """Multiply this matrix with another one or with a vector.
 
         Parameters
         ----------
-        other :obj:Matrix or :obj:Vector
-            A Matrix if multiplying another matrix, Vector otherwise.
+        other `Matrix` or `Vector`
+            A `Matrix` if multiplying another matrix, `Vector` otherwise.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault. Not applicable when multiplying a Vector.
+            Default value is `Utils.CoordinateDefault`. Not applicable when multiplying a `Vector`.
 
         Returns
         -------
-        :obj:Matrix or :obj:Vector
-            A Matrix if multiplying another matrix, Vector otherwise.
+        `Matrix` or `Vector`
+            A `Matrix` if multiplying another matrix, `Vector` otherwise.
 
         Raises
         ------
-        TypeError
-            If other is neither a matrix nor a vector.
+        `TypeError`
 
         """
         if is_matrix(other):
@@ -281,13 +272,12 @@ class Matrix(Base):
             return self._multiply_vector(other)
         else:
             if self._logger:
-                self._logger.error('Matrix or Vector instance expected, not "{}"'.format(type(other)))
-            raise TypeError('Matrix or Vector instance expected, not "{}"'.format(type(other)))
+                self._logger.error("'Matrix' or 'Vector' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'Matrix' or 'Vector' instance expected, not '{}'".format(type(other)))
 
 
 def is_matrix(obj):
-    """
-    Check whether argument is a Matrix object.
+    """Check whether argument is a `Matrix` object.
 
     Parameters
     ----------
@@ -297,7 +287,7 @@ def is_matrix(obj):
     Returns
     -------
     bool
-        True if argument is a Matrix object, False otherwise.
+        True if argument is a `Matrix` object, False otherwise.
 
     """
     return isinstance(obj, Matrix)

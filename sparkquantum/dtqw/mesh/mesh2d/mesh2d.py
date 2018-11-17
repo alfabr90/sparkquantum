@@ -9,20 +9,21 @@ __all__ = ['Mesh2D']
 
 
 class Mesh2D(Mesh):
-    """Top-level class for 2-dimensional Meshes."""
+    """Top-level class for 2-dimensional meshes."""
 
     def __init__(self, spark_context, size, broken_links=None):
         """
-        Build a top-level 2-dimensional Mesh object.
+        Build a top-level 2-dimensional `Mesh` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         size : tuple
             Size of the mesh.
-        broken_links : BrokenLinks, optional
-            A BrokenLinks object.
+        broken_links : `BrokenLinks`, optional
+            A `BrokenLinks` object.
+
         """
         super().__init__(spark_context, size, broken_links=broken_links)
 
@@ -66,20 +67,8 @@ class Mesh2D(Mesh):
             indexing='ij'
         )
 
-    def is_1d(self):
-        """
-        Check if this is a 1-dimensional Mesh.
-
-        Returns
-        -------
-        bool
-
-        """
-        return False
-
     def is_2d(self):
-        """
-        Check if this is a 2-dimensional Mesh.
+        """Check if this is a 2-dimensional mesh.
 
         Returns
         -------
@@ -89,8 +78,7 @@ class Mesh2D(Mesh):
         return True
 
     def check_steps(self, steps):
-        """
-        Check if the number of steps is valid for the size of the mesh.
+        """Check if the number of steps is valid for the size of the mesh.
 
         Parameters
         ----------
@@ -98,26 +86,25 @@ class Mesh2D(Mesh):
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
     def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the mesh operator.
+        """Build the mesh operator.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError

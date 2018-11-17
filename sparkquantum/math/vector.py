@@ -13,17 +13,16 @@ class Vector(Base):
     """Class for vectors."""
 
     def __init__(self, rdd, shape, data_type=complex):
-        """
-        Build a Vector object.
+        """Build a `Vector` object.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this vector object. Must be a 2-dimensional tuple.
         data_type : type, optional
-            The Python type of all values in this object. Default is complex.
+            The Python type of all values in this object. Default value is complex.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -54,32 +53,30 @@ class Vector(Base):
         return rdd, new_shape
 
     def kron(self, other):
-        """
-        Perform a tensor (Kronecker) product with another vector.
+        """Perform a tensor (Kronecker) product with another vector.
 
         Parameters
         ----------
-        other : :obj:Vector
+        other : `Vector`
             The other vector.
 
         Returns
         -------
-        :obj:Vector
+        `Vector`
             The resulting vector.
 
         """
         if not is_vector(other):
             if self._logger:
-                self._logger.error('Vector instance expected, not "{}"'.format(type(other)))
-            raise TypeError('Vector instance expected, not "{}"'.format(type(other)))
+                self._logger.error("'Vector' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'Vector' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
         return Vector(rdd, new_shape)
 
     def norm(self):
-        """
-        Calculate the norm of this vector.
+        """Calculate the norm of this vector.
 
         Returns
         -------
@@ -100,8 +97,7 @@ class Vector(Base):
         return math.sqrt(n)
 
     def is_unitary(self):
-        """
-        Check if this vector is unitary by calculating its norm.
+        """Check if this vector is unitary by calculating its norm.
 
         Returns
         -------
@@ -115,8 +111,7 @@ class Vector(Base):
 
 
 def is_vector(obj):
-    """
-    Check whether argument is a Vector object.
+    """Check whether argument is a `Vector` object.
 
     Parameters
     ----------
@@ -126,7 +121,7 @@ def is_vector(obj):
     Returns
     -------
     bool
-        True if argument is a Vector object, False otherwise.
+        True if argument is a `Vector` object, False otherwise.
 
     """
     return isinstance(obj, Vector)

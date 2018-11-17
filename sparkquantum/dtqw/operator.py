@@ -12,8 +12,7 @@ class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.CoordinateDefault):
-        """
-        Build an Operator object.
+        """Build an `Operator` object.
 
         Parameters
         ----------
@@ -22,10 +21,11 @@ class Operator(Matrix):
         shape : tuple
             The shape of this operator object. Must be a 2-dimensional tuple.
         data_type : type, optional
-            The Python type of all values in this object. Default is complex.
+            The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
+            Default value is `Utils.CoordinateDefault`.
+
         """
         super().__init__(rdd, shape, data_type=data_type)
 
@@ -36,27 +36,26 @@ class Operator(Matrix):
         return self._coordinate_format
 
     def kron(self, other, coord_format=Utils.CoordinateDefault):
-        """
-        Perform a tensor (Kronecker) product with another operator.
+        """Perform a tensor (Kronecker) product with another operator.
 
         Parameters
         ----------
-        other : :obj:Operator
+        other : `Operator`
             The other operator.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
+            Default value is `Utils.CoordinateDefault`.
 
         Returns
         -------
-        :obj:Operator
+        `Operator`
             The resulting operator.
 
         """
         if not is_operator(other):
             if self._logger:
-                self._logger.error('Operator instance expected, not "{}"'.format(type(other)))
-            raise TypeError('Operator instance expected, not "{}"'.format(type(other)))
+                self._logger.error("'Operator' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'Operator' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -66,7 +65,7 @@ class Operator(Matrix):
         if self._shape[1] != other.shape[0]:
             if self._logger:
                 self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError('incompatible shapes {} and {}'.format(self._shape, other.shape))
+            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
 
         shape = (self._shape[0], other.shape[1])
         num_partitions = max(self.data.getNumPartitions(), other.data.getNumPartitions())
@@ -117,26 +116,24 @@ class Operator(Matrix):
         return State(rdd, shape, other.mesh, other.num_particles)
 
     def multiply(self, other, coord_format=Utils.CoordinateDefault):
-        """
-        Multiply this operator with another one or with a system state.
+        """Multiply this operator with another one or with a system state.
 
         Parameters
         ----------
-        other :obj:Operator or :obj:State
+        other `Operator` or `State`
             An operator if multiplying another operator, State otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault. Not applicable when multiplying a State.
+            Default value is `Utils.CoordinateDefault`. Not applicable when multiplying a State.
 
         Returns
         -------
-        :obj:Operator or :obj:State
-            An operator if multiplying another operator, State otherwise.
+        `Operator` or `State`
+            `Operator` if multiplying another operator, `State` otherwise.
 
         Raises
         ------
-        TypeError
-            If other is neither an operator nor a state.
+        `TypeError`
 
         """
         if is_operator(other):
@@ -145,13 +142,12 @@ class Operator(Matrix):
             return self._multiply_state(other)
         else:
             if self._logger:
-                self._logger.error('State or Operator instance expected, not "{}"'.format(type(other)))
-            raise TypeError('State or Operator instance expected, not "{}"'.format(type(other)))
+                self._logger.error("'State' or 'Operator' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 
 
 def is_operator(obj):
-    """
-    Check whether argument is an Operator object.
+    """Check whether argument is an Operator object.
 
     Parameters
     ----------

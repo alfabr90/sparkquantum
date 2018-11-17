@@ -31,7 +31,7 @@ representationFormat = Utils.RepresentationFormatCoinPosition
 sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
 sparkConf = sparkConf.set('quantum.representationFormat', representationFormat)
 sparkContext = SparkContext(conf=sparkConf)
-sparkContext.setLogLevel("ERROR")
+sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
 coin = Hadamard1D(sparkContext)
@@ -160,7 +160,7 @@ joint.plot_contour(sim_path + 'joint_1d2p_contour', dpi=300)
 collision.plot(sim_path + 'collision_1d2p', dpi=300)
 
 for p in range(len(marginal)):
-    marginal[p].plot(sim_path + 'marginal{}_1d2p'.format(p + 1), dpi=300)
+    marginal[p].plot('{}marginal{}_1d2p'.format(sim_path, p + 1), dpi=300)
 
 # Exporting the profiling data
 profiler.export(sim_path)

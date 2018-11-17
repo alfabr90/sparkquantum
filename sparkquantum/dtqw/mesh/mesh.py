@@ -11,20 +11,20 @@ __all__ = ['Mesh', 'is_mesh']
 
 
 class Mesh:
-    """Top-level class for Meshes."""
+    """Top-level class for meshes."""
 
     def __init__(self, spark_context, size, broken_links=None):
-        """
-        Build a top-level Mesh object.
+        """Build a top-level `Mesh` object.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         size : int or tuple
             Size of the mesh.
-        broken_links : BrokenLinks, optional
-            A BrokenLinks object.
+        broken_links : `BrokenLinks`, optional
+            A `BrokenLinks` object.
+
         """
         self._spark_context = spark_context
         self._size = self._define_size(size)
@@ -34,8 +34,8 @@ class Mesh:
 
         if broken_links:
             if not is_broken_links(broken_links):
-                # self._logger.error('broken links instance expected, not "{}"'.format(type(broken_links)))
-                raise TypeError('broken links instance expected, not "{}"'.format(type(broken_links)))
+                # self._logger.error("'BrokenLinks' instance expected, not '{}'".format(type(broken_links)))
+                raise TypeError("'BrokenLinks' instance expected, not '{}'".format(type(broken_links)))
 
         self._broken_links = broken_links
 
@@ -44,71 +44,65 @@ class Mesh:
 
     @property
     def spark_context(self):
+        """`SparkContext`"""
         return self._spark_context
 
     @property
     def size(self):
+        """int or tuple"""
         return self._size
 
     @property
     def num_edges(self):
+        """int"""
         return self._num_edges
 
     @property
     def broken_links(self):
+        """`BrokenLinks`"""
         return self._broken_links
 
     @property
     def coin_size(self):
+        """int"""
         return self._coin_size
 
     @property
     def dimension(self):
+        """int"""
         return self._dimension
 
     @property
     def logger(self):
+        """`Logger`.
+
+        To disable logging, set it to `None`.
+
+        """
         return self._logger
 
     @property
     def profiler(self):
+        """`Profiler`.
+
+        To disable profiling, set it to `None`.
+
+        """
         return self._profiler
 
     @logger.setter
     def logger(self, logger):
-        """
-        Parameters
-        ----------
-        logger : Logger
-            A Logger object or None to disable logging.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError('logger instance expected, not "{}"'.format(type(logger)))
+            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
-        """
-        Parameters
-        ----------
-        profiler : Profiler
-            A Profiler object or None to disable profiling.
-
-        Raises
-        ------
-        TypeError
-
-        """
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError('profiler instance expected, not "{}"'.format(type(profiler)))
+            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -154,30 +148,27 @@ class Mesh:
         raise NotImplementedError
 
     def is_1d(self):
-        """
-        Check if this is a 1-dimensional Mesh.
+        """Check if this is a 1-dimensional mesh.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
+        Bool
 
         """
-        raise NotImplementedError
+        return False
 
     def is_2d(self):
-        """
-        Check if this is a 2-dimensional Mesh.
+        """Check if this is a 2-dimensional mesh.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
+        Bool
 
         """
-        raise NotImplementedError
+        return False
 
     def check_steps(self, steps):
-        """
-        Check if the number of steps is valid for the size of the mesh.
+        """Check if the number of steps is valid for the size of the mesh.
 
         Parameters
         ----------
@@ -185,34 +176,32 @@ class Mesh:
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
     def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Build the mesh operator.
+        """Build the mesh operator.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is Utils.CoordinateDefault.
-        storage_level : StorageLevel, optional
-            The desired storage level when materializing the RDD. Default value is StorageLevel.MEMORY_AND_DISK.
+            Default value is `Utils.CoordinateDefault`.
+        storage_level : `StorageLevel`, optional
+            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         raise NotImplementedError
 
 
 def is_mesh(obj):
-    """
-    Check whether argument is a Mesh object.
+    """Check whether argument is a `Mesh` object.
 
     Parameters
     ----------
@@ -222,7 +211,7 @@ def is_mesh(obj):
     Returns
     -------
     bool
-        True if argument is a Mesh object, False otherwise.
+        True if argument is a `Mesh` object, False otherwise.
 
     """
     return isinstance(obj, Mesh)

@@ -18,24 +18,23 @@ class State(Vector):
     """Class for the system state."""
 
     def __init__(self, rdd, shape, mesh, num_particles):
-        """
-        Build a State object.
+        """Build a `State` object.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this state object. Must be a 2-dimensional tuple.
-        mesh : Mesh
-            The mesh where the particles will walk on.
+        mesh : `Mesh`
+            The mesh where the particles are walking on.
         num_particles : int
             The number of particles present in the walk.
 
         """
         if not is_mesh(mesh):
-            # self._logger.error('Mesh instance expected, not "{}"'.format(type(mesh)))
-            raise TypeError('mesh instance expected, not "{}"'.format(type(mesh)))
+            # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
+            raise TypeError("'Mesh' instance expected, not '{}'".format(type(mesh)))
 
         super().__init__(rdd, shape, data_type=complex)
 
@@ -44,54 +43,54 @@ class State(Vector):
 
     @property
     def mesh(self):
+        """`Mesh`"""
         return self._mesh
 
     @property
     def num_particles(self):
+        """int"""
         return self._num_particles
 
     def kron(self, other):
-        """
-        Perform a tensor (Kronecker) product with another system state.
+        """Perform a tensor (Kronecker) product with another system state.
 
         Parameters
         ----------
-        other : :obj:State
+        other : `State`
             The other system state.
 
         Returns
         -------
-        :obj:State
+        `State`
             The resulting state.
 
         """
         if not is_state(other):
             if self._logger:
-                self._logger.error('State instance expected, not "{}"'.format(type(other)))
-            raise TypeError('State instance expected, not "{}"'.format(type(other)))
+                self._logger.error("`State` instance expected, not '{}'".format(type(other)))
+            raise TypeError("`State` instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
         return State(rdd, new_shape, self._mesh, self._num_particles)
 
     def measure_system(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Perform the measurement of the entire system state.
+        """Perform the measurement of the entire system state.
 
         Parameters
         ----------
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :obj:JointPDF
+        `JointPDF`
             The PDF of the entire system.
 
         Raises
         ------
-        NotImplementedError
-        ValueError
+        `NotImplementedError`
+        `ValueError`
 
         """
         if self._logger:
@@ -251,25 +250,24 @@ class State(Vector):
         return pdf
 
     def measure_collision(self, full_measurement, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Filter the measurement of the entire system by checking when
+        """Filter the measurement of the entire system by checking when
         all particles are located at the same site of the mesh.
 
         Parameters
         ----------
-        full_measurement : :obj:PDF
+        full_measurement : `PDF`
             The measurement of the entire system.
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :obj:CollisionPDF
+        `CollisionPDF`
             The PDF of the system when all particles are located at the same site.
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._num_particles <= 1:
@@ -284,8 +282,8 @@ class State(Vector):
 
         if not is_pdf(full_measurement):
             if self._logger:
-                self._logger.error('PDF instance expected, not "{}"'.format(type(full_measurement)))
-            raise TypeError('PDF instance expected, not "{}"'.format(type(full_measurement)))
+                self._logger.error("'PDF' instance expected, not '{}'".format(type(full_measurement)))
+            raise TypeError("'PDF' instance expected, not '{}'".format(type(full_measurement)))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -358,25 +356,24 @@ class State(Vector):
         return pdf
 
     def measure_particle(self, particle, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Perform the partial measurement of a particle of the system state.
+        """Perform the partial measurement of a particle of the system state.
 
         Parameters
         ----------
         particle : int
             The desired particle to be measured. The particle number starts by 0.
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :obj:MarginalPDF
+        `MarginalPDF`
             The PDF of each particle.
 
         Raises
         ------
-        NotImplementedError
-        ValueError
+        `NotImplementedError`
+        `ValueError`
 
         """
         if particle >= self._num_particles:
@@ -505,12 +502,11 @@ class State(Vector):
         return pdf
 
     def measure_particles(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Perform the partial measurement of each particle of the system state.
+        """Perform the partial measurement of each particle of the system state.
 
         Parameters
         ----------
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
@@ -522,8 +518,7 @@ class State(Vector):
         return [self.measure_particle(p, storage_level) for p in range(self._num_particles)]
 
     def measure(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Perform the measurement of the system state.
+        """Perform the measurement of the system state.
 
         If the state is composed by only one particle, the full measurement of the
         system is performed and returned. In other cases, the measurement process will return a tuple containing
@@ -532,13 +527,13 @@ class State(Vector):
 
         Parameters
         ----------
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :obj:PDF or tuple
-            PDF if the system is composed by only one particle, tuple otherwise.
+        `PDF` or tuple
+            `PDF` if the system is composed by only one particle, tuple otherwise.
 
         """
         if self._num_particles == 1:
@@ -552,8 +547,7 @@ class State(Vector):
 
 
 def is_state(obj):
-    """
-    Check whether argument is a State object.
+    """Check whether argument is a `State` object.
 
     Parameters
     ----------
@@ -563,7 +557,7 @@ def is_state(obj):
     Returns
     -------
     bool
-        True if argument is a State object, False otherwise.
+        True if argument is a `State` object, False otherwise.
 
     """
     return isinstance(obj, State)

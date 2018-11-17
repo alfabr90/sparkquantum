@@ -8,20 +8,20 @@ __all__ = ['CollisionPDF']
 
 
 class CollisionPDF(PDF):
-    """Class for probability distribution function of the quantum system when the particles are at the same sites."""
+    """Class for probability distribution function (PDF) of the quantum system when the particles are at the same sites."""
 
     def __init__(self, rdd, shape, mesh, num_particles):
         """
-        Build an object for probability distribution function of the quantum system when the particles are at the same sites.
+        Build an object for probability distribution function (PDF) of the quantum system when the particles are at the same sites.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : `RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
-        mesh : Mesh
-            The mesh where the particles will walk on.
+        mesh : `Mesh`
+            The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
 
@@ -29,8 +29,7 @@ class CollisionPDF(PDF):
         super().__init__(rdd, shape, mesh, num_particles)
 
     def sum_values(self):
-        """
-        Sum the probabilities of this PDF.
+        """Sum the probabilities of this PDF.
 
         Returns
         -------
@@ -39,7 +38,7 @@ class CollisionPDF(PDF):
 
         Raises
         ------
-        NotImplementedError
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -62,13 +61,16 @@ class CollisionPDF(PDF):
         )
 
     def norm(self):
-        """
-        Calculate the norm of this PDF.
+        """Calculate the norm of this PDF.
 
         Returns
         -------
         float
             The norm of this PDF.
+
+        Raises
+        ------
+        `NotImplementedError`
 
         """
         if self._mesh.is_1d():
@@ -93,17 +95,17 @@ class CollisionPDF(PDF):
         return math.sqrt(n)
 
     def normalize(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """
-        Normalize this PDF.
+        """Normalize this PDF.
 
         Parameters
         ----------
-        storage_level : StorageLevel
+        storage_level : `StorageLevel`
             The desired storage level when materializing the RDD.
+            Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        :obj:CollisionPDF
+        `CollisionPDF`
 
         """
         norm = self.norm()
@@ -119,30 +121,3 @@ class CollisionPDF(PDF):
         return CollisionPDF(
             rdd, self._shape, self._mesh, self._num_particles
         ).materialize(storage_level)
-
-    def expected_value(self):
-        """
-        Calculate the expected value of this PDF.
-
-        Raises
-        -------
-        NotImplementedError
-
-        """
-        raise NotImplementedError
-
-    def variance(self, mean=None):
-        """
-        Calculate the variance of this PDF.
-
-        Parameters
-        ----------
-        mean : float, optional
-            The mean of this PDF. When None is passed as argument, the mean is calculated.
-
-        Raises
-        ------
-        NotImplementedError
-
-        """
-        raise NotImplementedError

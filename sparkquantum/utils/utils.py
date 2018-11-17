@@ -7,32 +7,34 @@ __all__ = ['Utils']
 
 
 class Utils():
+    """A class that provides utility static methods."""
+
     CoordinateDefault = 0
     """
     CoordinateDefault : int
-        Indicate that the Operator object must have its entries stored as (i,j,value) coordinates.
+        Indicate that the `Matrix` object must have its entries stored as (i,j,value) coordinates.
     """
     CoordinateMultiplier = 1
     """
     CoordinateMultiplier : int
-        Indicate that the Operator object must have its entries stored as (j,(i,value)) coordinates. This is mandatory
+        Indicate that the `Matrix` object must have its entries stored as (j,(i,value)) coordinates. This is mandatory
         when the object is the multiplier operand.
     """
     CoordinateMultiplicand = 2
     """
     CoordinateMultiplicand : int
-        Indicate that the Operator object must have its entries stored as (i,(j,value)) coordinates. This is mandatory
+        Indicate that the `Matrix` object must have its entries stored as (i,(j,value)) coordinates. This is mandatory
         when the object is the multiplicand operand.
     """
     RepresentationFormatCoinPosition = 0
     """
     RepresentationFormatCoinPosition : int
-        Indicate that the quantum system is represented as the kronecker product between the Coin and the Position subspaces.
+        Indicate that the quantum system is represented as the kronecker product between the coin and position subspaces.
     """
     RepresentationFormatPositionCoin = 1
     """
     RepresentationFormatPositionCoin : int
-        Indicate that the quantum system is represented as the kronecker product between the Position and the Coin subspaces.
+        Indicate that the quantum system is represented as the kronecker product between the position and coin subspaces.
     """
 
     def __init__(self):
@@ -40,12 +42,11 @@ class Utils():
 
     @staticmethod
     def is_shape(shape):
-        """
-        Check if an object is a shape, i.e., a list or a tuple.
+        """Check if an object is a shape, i.e., a list or a tuple.
 
         Parameters
         ----------
-        shape : :obj:
+        shape :
             The object to be checked if it is a shape.
 
         Returns
@@ -58,41 +59,39 @@ class Utils():
 
     @staticmethod
     def broadcast(sc, data):
-        """
-        Broadcast some data.
+        """Broadcast some data.
 
         Parameters
         ----------
-        sc : SparkContext
-            The SparkContext object.
-        data : :obj:
+        sc : `SparkContext`
+            The `SparkContext` object.
+        data :
             The data to be broadcast.
 
         Returns
         -------
-        Broadcast
-            The Broadcast object that contains the broadcast data.
+        `Broadcast`
+            The `Broadcast` object that contains the broadcast data.
 
         """
         return sc.broadcast(data)
 
     @staticmethod
     def get_conf(sc, config_str, default=None):
-        """
-        Get a configuration value from the SparkContext object.
+        """Get a configuration value from the `SparkContext` object.
 
         Parameters
         ----------
-        sc : SparkContext
-            The SparkContext object.
+        sc : `SparkContext`
+            The `SparkContext` object.
         config_str : str
             The configuration string to have its correspondent value obtained.
-        default : :obj:
-            The default value of the configuration string. Default is None.
+        default :
+            The default value of the configuration string. Default value is `None`.
 
         Returns
         -------
-        :obj:
+        str
             The configuration value.
 
         """
@@ -105,22 +104,21 @@ class Utils():
 
     @staticmethod
     def change_coordinate(rdd, old_coord, new_coord=CoordinateDefault):
-        """
-        Change the coordinate format of a RDD.
+        """Change the coordinate format of a `Matrix` object's RDD.
 
         Parameters
         ----------
-        rdd : RDD
-            The RDD to have its coordinate format changed.
+        rdd : `RDD`
+            The `Matrix` object's RDD to have its coordinate format changed.
         old_coord : int
-            The original coordinate format of the RDD.
+            The original coordinate format of the `Matrix` object's RDD.
         new_coord : int
-            The new coordinate format. Default is Utils.CoordinateDefault.
+            The new coordinate format. Default value is `Utils.CoordinateDefault`.
 
         Returns
         -------
-        RDD
-            A new RDD with the coordinate format changed.
+        `RDD`
+            A new `RDD` with the coordinate format changed.
 
         """
         if old_coord == Utils.CoordinateMultiplier:
@@ -159,8 +157,7 @@ class Utils():
 
     @staticmethod
     def filename(mesh_filename, steps, num_particles):
-        """
-        Build a filename concatenating the parameters.
+        """Build a filename concatenating the parameters.
 
         Parameters
         ----------
@@ -181,8 +178,7 @@ class Utils():
 
     @staticmethod
     def get_precendent_type(type1, type2):
-        """
-        Compare and return the most precendent type between two types.
+        """Compare and return the most precendent type between two types.
 
         Parameters
         ----------
@@ -207,8 +203,7 @@ class Utils():
 
     @staticmethod
     def get_size_of_type(data_type):
-        """
-        Get the size in bytes of a Python type.
+        """Get the size in bytes of a Python type.
 
         Parameters
         ----------
@@ -225,13 +220,12 @@ class Utils():
 
     @staticmethod
     def get_num_partitions(spark_context, expected_size):
-        """
-        Calculate the number of partitions for a RDD based on its expected size in bytes.
+        """Calculate the number of partitions for a `RDD` based on its expected size in bytes.
 
         Parameters
         ----------
-        spark_context : SparkContext
-            The SparkContext object.
+        spark_context : `SparkContext`
+            The `SparkContext` object.
         expected_size : int
             The expected size in bytes of the RDD.
 
@@ -242,7 +236,7 @@ class Utils():
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor', default=1.3))
@@ -262,8 +256,7 @@ class Utils():
 
     @staticmethod
     def create_dir(path):
-        """
-        Create a directory in the filesystem.
+        """Create a directory in the filesystem.
 
         Parameters
         ----------
@@ -272,19 +265,18 @@ class Utils():
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if os.path.exists(path):
             if not os.path.isdir(path):
-                raise ValueError('"{}" is an invalid path'.format(path))
+                raise ValueError("'{}' is an invalid path".format(path))
         else:
             os.makedirs(path)
 
     @staticmethod
     def get_temp_path(d):
-        """
-        Create a temp directory in the filesystem.
+        """Create a temp directory in the filesystem.
 
         Parameters
         ----------
@@ -299,8 +291,7 @@ class Utils():
 
     @staticmethod
     def remove_path(path):
-        """
-        Delete a directory in the filesystem.
+        """Delete a directory in the filesystem.
 
         Parameters
         ----------
@@ -309,22 +300,21 @@ class Utils():
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if os.path.exists(path):
             if os.path.isdir(path):
                 if path != '/':
                     for i in os.listdir(path):
-                        Utils.remove_path(path + "/" + i)
+                        Utils.remove_path(path + '/' + i)
                     os.rmdir(path)
             else:
                 os.remove(path)
 
     @staticmethod
     def clear_path(path):
-        """
-        Empty a directory in the filesystem.
+        """Empty a directory in the filesystem.
 
         Parameters
         ----------
@@ -333,21 +323,20 @@ class Utils():
 
         Raises
         ------
-        ValueError
+        `ValueError`
 
         """
         if os.path.exists(path):
             if os.path.isdir(path):
                 if path != '/':
                     for i in os.listdir(path):
-                        Utils.remove_path(path + "/" + i)
+                        Utils.remove_path(path + '/' + i)
             else:
-                raise ValueError('"{}" is an invalid path'.format(path))
+                raise ValueError("'{}' is an invalid path".format(path))
 
     @staticmethod
     def get_size_of_path(path):
-        """
-        Get the size in bytes of a directory in the filesystem.
+        """Get the size in bytes of a directory in the filesystem.
 
         Parameters
         ----------
@@ -363,7 +352,7 @@ class Utils():
         if os.path.isdir(path):
             size = 0
             for i in os.listdir(path):
-                size += Utils.get_size_of_path(path + "/" + i)
+                size += Utils.get_size_of_path(path + '/' + i)
             return size
         else:
             return os.stat(path).st_size

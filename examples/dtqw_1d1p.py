@@ -28,7 +28,7 @@ representationFormat = Utils.RepresentationFormatCoinPosition
 sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
 sparkConf = sparkConf.set('quantum.representationFormat', representationFormat)
 sparkContext = SparkContext(conf=sparkConf)
-sparkContext.setLogLevel("ERROR")
+sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
 coin = Hadamard1D(sparkContext)
