@@ -4,7 +4,6 @@ from pyspark import StorageLevel
 
 from sparkquantum.dtqw.coin.coin import Coin
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.utils.utils import Utils
 
@@ -43,7 +42,7 @@ class Coin1D(Coin):
         shape = (self._data.shape[0] * mesh_size, self._data.shape[1] * mesh_size)
         data = Utils.broadcast(self._spark_context, self._data)
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
 
         if repr_format == Utils.RepresentationFormatCoinPosition:
             # The coin operator is built by applying a tensor product between the chosen coin and

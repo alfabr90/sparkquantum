@@ -49,12 +49,12 @@ class Segment(Mesh1D):
         shape = (coin_size * size, coin_size * size)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
+            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == 'rdd':
                 if repr_format == Utils.RepresentationFormatCoinPosition:

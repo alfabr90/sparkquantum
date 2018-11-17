@@ -46,7 +46,7 @@ class RandomBrokenLinks(BrokenLinks):
 
         """
         probability = self._probability
-        seed = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.randomBrokenLinks.seed', default=None)
+        seed = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.randomBrokenLinks.seed')
 
         def __map(e):
             random.seed(seed)
@@ -60,7 +60,7 @@ class RandomBrokenLinks(BrokenLinks):
             lambda m: m[1] is True
         )
 
-        generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode', default='broadcast')
+        generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == 'rdd':
             return rdd

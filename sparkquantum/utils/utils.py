@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import time
 import tempfile as tf
 
 __all__ = ['Utils']
@@ -35,6 +36,28 @@ class Utils():
     """
     RepresentationFormatPositionCoin : int
         Indicate that the quantum system is represented as the kronecker product between the position and coin subspaces.
+    """
+
+    ConfigDefaults = {
+        'quantum.representationFormat': RepresentationFormatCoinPosition,
+        'quantum.math.roundPrecision': 10,
+        'quantum.cluster.numPartitionsSafetyFactor': 1.3,
+        'quantum.cluster.useSparkDefaultNumPartitions': 'False',
+        'quantum.cluster.totalCores': 1,
+        'quantum.cluster.maxPartitionSize': 64 * 10 ** 6,
+        'quantum.dtqw.tempPath': './',
+        'quantum.dtqw.mesh.brokenLinks.generationMode': 'broadcast',
+        'quantum.dtqw.mesh.randomBrokenLinks.seed': time.time(),
+        'quantum.dtqw.interactionOperator.checkpoint': 'False',
+        'quantum.dtqw.walkOperator.checkpoint': 'False',
+        'quantum.dtqw.walkOperator.kroneckerMode': 'broadcast',
+        'quantum.dtqw.walk.checkpointStates': 'False',
+        'quantum.dtqw.walk.checkpointFrequency': -1,
+        'quantum.dtqw.profiler.logExecutors': 'False'
+    }
+    """
+    ConfigDefaults: dict
+        Dict with the default values for all accepted configurations of the package.
     """
 
     def __init__(self):
@@ -77,7 +100,7 @@ class Utils():
         return sc.broadcast(data)
 
     @staticmethod
-    def get_conf(sc, config_str, default=None):
+    def get_conf(sc, config_str):
         """Get a configuration value from the `SparkContext` object.
 
         Parameters
@@ -86,19 +109,19 @@ class Utils():
             The `SparkContext` object.
         config_str : str
             The configuration string to have its correspondent value obtained.
-        default :
-            The default value of the configuration string. Default value is `None`.
 
         Returns
         -------
         str
-            The configuration value.
+            The configuration value or `None` if the configuration is not found.
 
         """
         c = sc.getConf().get(config_str)
 
-        if not c and (default is not None):
-            return default
+        if not c:
+            if config_str not in Utils.ConfigDefaults[config_str]:
+                return None
+            return Utils.ConfigDefaults[config_str]
 
         return c
 
@@ -239,17 +262,17 @@ class Utils():
         `ValueError`
 
         """
-        safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor', default=1.3))
+        safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
         num_partitions = None
 
-        if Utils.get_conf(spark_context, 'quantum.dtqw.useSparkDefaultPartitions', default='False') == 'False':
-            num_cores = Utils.get_conf(spark_context, 'quantum.cluster.totalCores', default=None)
+        if Utils.get_conf(spark_context, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
+            num_cores = Utils.get_conf(spark_context, 'quantum.cluster.totalCores')
 
             if not num_cores:
                 raise ValueError("invalid number of total cores in the cluster: {}".format(num_cores))
 
             num_cores = int(num_cores)
-            max_partition_size = int(Utils.get_conf(spark_context, 'quantum.cluster.maxPartitionSize', default=64 * 10 ** 6))
+            max_partition_size = int(Utils.get_conf(spark_context, 'quantum.cluster.maxPartitionSize'))
             num_partitions = math.ceil(safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 
         return num_partitions

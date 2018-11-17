@@ -44,7 +44,7 @@ class Coin2D(Coin):
         shape = (self._data.shape[0] * mesh_size, self._data.shape[1] * mesh_size)
         data = Utils.broadcast(self._spark_context, self._data)
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
 
         if repr_format == Utils.RepresentationFormatCoinPosition:
             # The coin operator is built by applying a tensor product between the chosen coin and

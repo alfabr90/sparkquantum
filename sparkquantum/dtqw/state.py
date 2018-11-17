@@ -98,7 +98,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -222,7 +222,7 @@ class State(Vector):
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision', default='10'))
+        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:
@@ -386,7 +386,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat', default=Utils.RepresentationFormatCoinPosition))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -469,7 +469,7 @@ class State(Vector):
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision', default='10'))
+        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:

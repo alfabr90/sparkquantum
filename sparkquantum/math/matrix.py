@@ -186,7 +186,7 @@ class Matrix(Base):
             True if the norm of this matrix is 1.0, False otherwise.
 
         """
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision', default='10'))
+        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 

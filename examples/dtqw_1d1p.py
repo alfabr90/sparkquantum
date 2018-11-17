@@ -59,7 +59,7 @@ coin_size = coin.size
 mesh_size = mesh.size
 
 # Center of the mesh
-position = int((mesh_size - 1) / 2) - 5
+position = int((mesh_size - 1) / 2)
 
 # Options of initial states
 if representationFormat == Utils.RepresentationFormatCoinPosition:
