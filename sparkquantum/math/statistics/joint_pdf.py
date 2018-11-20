@@ -294,11 +294,9 @@ class JointPDF(PDF):
             plt.cla()
             plt.clf()
 
-            mesh_size = self._mesh.size
-
             axis = np.meshgrid(
-                range(- int((mesh_size - 1) / 2), int((mesh_size - 1) / 2) + 1),
-                range(- int((mesh_size - 1) / 2), int((mesh_size - 1) / 2) + 1),
+                self._mesh.axis(),
+                self._mesh.axis(),
                 indexing='ij'
             )
 
@@ -389,11 +387,9 @@ class JointPDF(PDF):
             plt.cla()
             plt.clf()
 
-            mesh_size = self._mesh.size
-
             axis = np.meshgrid(
-                range(- int((mesh_size - 1) / 2), int((mesh_size - 1) / 2) + 1),
-                range(- int((mesh_size - 1) / 2), int((mesh_size - 1) / 2) + 1),
+                self._mesh.axis(),
+                self._mesh.axis(),
                 indexing='ij'
             )
 

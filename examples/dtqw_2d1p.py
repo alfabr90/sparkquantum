@@ -21,12 +21,15 @@ num_particles = 1
 steps = 30
 size = 30
 
-representationFormat = Utils.RepresentationFormatCoinPosition
-# representationFormat = Utils.RepresentationFormatPositionCoin
+representationFormat = Utils.StateRepresentationFormatCoinPosition
+# representationFormat = Utils.StateRepresentationFormatPositionCoin
 
-# Initiallizing the SparkContext
-sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
-sparkConf = sparkConf.set('quantum.representationFormat', representationFormat)
+# Initiallizing the SparkContext with some options
+sparkConf = SparkConf().set(
+    'quantum.cluster.totalCores', num_cores
+).set(
+    'quantum.dtqw.state.representationFormat', representationFormat
+)
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
@@ -62,7 +65,7 @@ mesh_size = mesh.size[0] * mesh.size[1]
 position = int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2)
 
 # Options of initial states
-if representationFormat == Utils.RepresentationFormatCoinPosition:
+if representationFormat == Utils.StateRepresentationFormatCoinPosition:
     # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
     state = (
         (0 * mesh_size + position, (1.0 + 0.0j) / 2),
@@ -84,7 +87,7 @@ if representationFormat == Utils.RepresentationFormatCoinPosition:
         (2 * mesh_size + position, (-1.0 - 0.0j) / 2),
         (3 * mesh_size + position, (1.0 + 0.0j) / 2)
     )'''
-elif representationFormat == Utils.RepresentationFormatPositionCoin:
+elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
     # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> - i|0,0>|1,0> + |0,0>|1,1>) / 2
     state = (
         (position * coin_size + 0, (1.0 + 0.0j) / 2),

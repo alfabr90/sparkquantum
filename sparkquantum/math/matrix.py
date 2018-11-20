@@ -11,7 +11,7 @@ __all__ = ['Matrix', 'is_matrix']
 class Matrix(Base):
     """Class for matrices."""
 
-    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.CoordinateDefault):
+    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
         """Build a `Matrix` object.
 
         Parameters
@@ -24,7 +24,7 @@ class Matrix(Base):
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -35,30 +35,45 @@ class Matrix(Base):
     def coordinate_format(self):
         return self._coordinate_format
 
-    def dump(self, path):
-        """Dump this object's RDD into disk.
-        This method automatically converts the coordinate format to the default.
+    def dump(self, path, glue=None, codec=None):
+        """Dump this object's RDD to disk in many part-* files.
+
+        Notes
+        -----
+        This method exports the data in the `Utils.MatrixCoordinateDefault`.
 
         Parameters
         ----------
         path : str
-            The path where the dumped RDD will be located at
+            The path where the dumped RDD will be located at.
+        glue : str, optional
+            The glue string that connects each coordinate and value of each element in the RDD.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+        codec : str, optional
+            Codec name used to compress the dumped data.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
 
         """
-        if self._coordinate_format == Utils.CoordinateMultiplier:
+        if glue is None:
+            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+
+        if codec is None:
+            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+
+        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             rdd = self.data.map(
-                lambda m: "{}, {}, {}".format(m[1][0], m[0], m[1][1])
+                lambda m: glue.join((str(m[1][0]), str(m[0]), str(m[1][1])))
             )
-        elif self._coordinate_format == Utils.CoordinateMultiplicand:
+        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
             rdd = self.data.map(
-                lambda m: "{}, {}, {}".format(m[0], m[1][0], m[1][1])
+                lambda m: glue.join((str(m[0]), str(m[1][0]), str(m[1][1])))
             )
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             rdd = self.data.map(
-                lambda m: " ".join([str(e) for e in m])
+                lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
             )
 
-        rdd.saveAsTextFile(path)
+        rdd.saveAsTextFile(path, codec)
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
@@ -72,13 +87,13 @@ class Matrix(Base):
         data = self.data.collect()
         result = np.zeros(self._shape, dtype=self._data_type)
 
-        if self._coordinate_format == Utils.CoordinateMultiplier:
+        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             for e in data:
                 result[e[1][0], e[0]] = e[1][1]
-        elif self._coordinate_format == Utils.CoordinateMultiplicand:
+        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
             for e in data:
                 result[e[0], e[1][0]] = e[1][1]
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             for e in data:
                 result[e[0], e[1]] = e[2]
 
@@ -104,26 +119,26 @@ class Matrix(Base):
             lambda m: (m[1][0], m[1][1])
         )
 
-        if self._coordinate_format == Utils.CoordinateMultiplier:
+        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             rdd = rdd.map(
                 lambda m: (m[0][1] * other_shape[1] + m[1][1], (m[0][0] * other_shape[0] + m[1][0], m[0][2] * m[1][2]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        elif self._coordinate_format == Utils.CoordinateMultiplicand:
+        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
             rdd = rdd.map(
                 lambda m: (m[0][0] * other_shape[0] + m[1][0], (m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             rdd = rdd.map(
                 lambda m: (m[0][0] * other_shape[0] + m[1][0], m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2])
             )
 
         return rdd, new_shape
 
-    def kron(self, other, coord_format=Utils.CoordinateDefault):
+    def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Perform a tensor (Kronecker) product with another matrix.
 
         Parameters
@@ -132,7 +147,7 @@ class Matrix(Base):
             The other matrix.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -158,13 +173,13 @@ class Matrix(Base):
             The norm of this matrix.
 
         """
-        if self._coordinate_format == Utils.CoordinateMultiplier or self._coordinate_format == Utils.CoordinateMultiplicand:
+        if self._coordinate_format == Utils.MatrixCoordinateMultiplier or self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
             n = self.data.filter(
                 lambda m: m[1][1] != complex()
             ).map(
                 lambda m: m[1][1].real ** 2 + m[1][1].imag ** 2
             )
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             n = self.data.filter(
                 lambda m: m[2] != complex()
             ).map(
@@ -207,19 +222,19 @@ class Matrix(Base):
             lambda a, b: a + b, numPartitions=num_partitions
         )
 
-        if coord_format == Utils.CoordinateMultiplier:
+        if coord_format == Utils.MatrixCoordinateMultiplier:
             rdd = rdd.map(
                 lambda m: (m[0][1], (m[0][0], m[1]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        elif coord_format == Utils.CoordinateMultiplicand:
+        elif coord_format == Utils.MatrixCoordinateMultiplicand:
             rdd = rdd.map(
                 lambda m: (m[0][0], (m[0][1], m[1]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             rdd = rdd.map(
                 lambda m: (m[0][0], m[0][1], m[1])
             )
@@ -244,7 +259,7 @@ class Matrix(Base):
 
         return Vector(rdd, shape)
 
-    def multiply(self, other, coord_format=Utils.CoordinateDefault):
+    def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Multiply this matrix with another one or with a vector.
 
         Parameters
@@ -253,7 +268,7 @@ class Matrix(Base):
             A `Matrix` if multiplying another matrix, `Vector` otherwise.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`. Not applicable when multiplying a `Vector`.
+            Default value is `Utils.MatrixCoordinateDefault`. Not applicable when multiplying a `Vector`.
 
         Returns
         -------

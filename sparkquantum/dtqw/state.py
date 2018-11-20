@@ -51,6 +51,144 @@ class State(Vector):
         """int"""
         return self._num_particles
 
+    def dump(self, path, glue=None, codec=None, dumping_format=None):
+        """Dump this object's RDD to disk in many part-* files.
+
+        Notes
+        -----
+        This method checks the dumping format by using the 'quantum.dtqw.state.dumpingFormat' configuration value.
+        In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
+
+        Parameters
+        ----------
+        path : str
+            The path where the dumped RDD will be located at.
+        glue : str, optional
+            The glue string that connects each coordinate and value of each element in the RDD.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+        codec : str, optional
+            Codec name used to compress the dumped data.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+        dumping_format : int, optional
+            Printing format used to dump this state.
+            Default value is `None`. In this case, it uses the 'quantum.dtqw.state.dumpingFormat' configuration value.
+
+        """
+        if glue is None:
+            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+
+        if codec is None:
+            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+
+        if dumping_format is None:
+            dumping_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
+
+        if dumping_format == Utils.StateDumpingFormatIndex:
+            def __map(m):
+                return glue.join([str(e) for e in m])
+        elif dumping_format == Utils.StateDumpingFormatCoordinate:
+            repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+
+            if self._mesh.is_1d():
+                ndim = self._mesh.dimension
+                coin_size = self._mesh.coin_size
+                size = self._mesh.size
+                num_particles = self._num_particles
+                size_per_coin = int(coin_size / ndim)
+                cs_size = size_per_coin * size
+
+                mesh_offset = min(self._mesh.axis())
+
+                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                    def __map(m):
+                        ix = []
+
+                        for p in range(num_particles):
+                            # Coin
+                            ix.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p) * size)) % size_per_coin))
+                            # Position
+                            ix.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size + mesh_offset))
+
+                        ix.append(str(m[1]))
+
+                        return glue.join(ix)
+                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                    def __map(m):
+                        xi = []
+
+                        for p in range(num_particles):
+                            # Position
+                            xi.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size + mesh_offset))
+                            # Coin
+                            xi.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size_per_coin))
+
+                        xi.append(str(m[1]))
+
+                        return glue.join(xi)
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
+            elif self._mesh.is_2d():
+                ndim = self._mesh.dimension
+                coin_size = self._mesh.coin_size
+                size_x, size_y = self._mesh.size
+                num_particles = self._num_particles
+                size_per_coin = int(coin_size / ndim)
+                cs_size_x = size_per_coin * size_x
+                cs_size_y = size_per_coin * size_y
+                cs_size_xy = cs_size_x * cs_size_y
+
+                axis = self._mesh.axis()
+                mesh_offset_x, mesh_offset_y = axis[0][0][0], axis[1][0][0]
+
+                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                    def __map(m):
+                        ijxy = []
+
+                        for p in range(num_particles):
+                            # Coin
+                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * cs_size_x * size_y)) % size_per_coin))
+                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_x * size_y)) % size_per_coin))
+                            # Position
+                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x + mesh_offset_x))
+                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y + mesh_offset_y))
+
+                        ijxy.append(str(m[1]))
+
+                        return glue.join(ijxy)
+                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                    def __map(m):
+                        xyij = []
+
+                        for p in range(num_particles):
+                            # Position
+                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x + mesh_offset_x))
+                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y + mesh_offset_y))
+                            # Coin
+                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_per_coin)) % size_per_coin))
+                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_per_coin))
+
+                        xyij.append(str(m[1]))
+
+                        return glue.join(xyij)
+                else:
+                    if self._logger:
+                        self._logger.error("invalid representation format")
+                    raise ValueError("invalid representation format")
+            else:
+                if self._logger:
+                    self._logger.error("mesh dimension not implemented")
+                raise NotImplementedError("mesh dimension not implemented")
+        else:
+            if self._logger:
+                self._logger.error("invalid dumping format")
+            raise NotImplementedError("invalid dumping format")
+
+        self.data.map(
+            __map
+        ).saveAsTextFile(path, codec)
+
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
 
@@ -98,7 +236,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -107,7 +245,8 @@ class State(Vector):
             num_particles = self._num_particles
             ind = ndim * num_particles
             expected_elems = size
-            cs_size = int(coin_size / ndim) * size
+            size_per_coin = int(coin_size / ndim)
+            cs_size = size_per_coin * size
             dims = [size for p in range(ind)]
 
             if self._num_particles == 1:
@@ -115,7 +254,7 @@ class State(Vector):
 
             shape = tuple(dims)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
@@ -123,12 +262,12 @@ class State(Vector):
                         x.append(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
 
                     return tuple(x), (abs(m[1]) ** 2).real
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
                     for p in range(num_particles):
-                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p) * coin_size)) % size)
+                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size)
 
                     return tuple(x), (abs(m[1]) ** 2).real
             else:
@@ -164,7 +303,7 @@ class State(Vector):
 
             shape = tuple(dims)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
@@ -173,7 +312,7 @@ class State(Vector):
                         xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
 
                     return tuple(xy), (abs(m[1]) ** 2).real
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 
@@ -386,7 +525,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -394,16 +533,17 @@ class State(Vector):
             size = self._mesh.size
             num_particles = self._num_particles
             expected_elems = size
-            cs_size = int(coin_size / ndim) * size
+            size_per_coin = int(coin_size / ndim)
+            cs_size = size_per_coin * size
             shape = (size, 1)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = int(m[0] / (cs_size ** (num_particles - 1 - particle))) % size
                     return x, (abs(m[1]) ** 2).real
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
-                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle) * coin_size)) % size
+                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle) * size_per_coin)) % size
                     return x, (abs(m[1]) ** 2).real
             else:
                 if self._logger:
@@ -418,19 +558,20 @@ class State(Vector):
             size_x, size_y = self._mesh.size
             num_particles = self._num_particles
             expected_elems = size_x * size_y
-            cs_size_x = int(coin_size / ndim) * size_x
-            cs_size_y = int(coin_size / ndim) * size_y
+            size_per_coin = int(coin_size / ndim)
+            cs_size_x = size_per_coin * size_x
+            cs_size_y = size_per_coin * size_y
             cs_size_xy = cs_size_x * cs_size_y
             shape = (size_x, size_y)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = (
                         int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * size_y)) % size_x,
                         int(m[0] / (cs_size_xy ** (num_particles - 1 - particle))) % size_y
                     )
                     return xy, (abs(m[1]) ** 2).real
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = (
                         int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * coin_size * size_y)) % size_x,

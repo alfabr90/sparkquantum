@@ -276,18 +276,30 @@ class Base:
 
         return self
 
-    def dump(self, path):
-        """Dump this object's RDD to disk.
+    def dump(self, path, glue=None, codec=None):
+        """Dump this object's RDD to disk in many part-* files.
 
         Parameters
         ----------
         path : str
             The path where the dumped RDD will be located at.
+        glue : str, optional
+            The glue string that connects each coordinate and value of each element in the RDD.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+        codec : str, optional
+            Codec name used to compress the dumped data.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
 
         """
+        if glue is None:
+            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+
+        if codec is None:
+            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+
         self.data.map(
-            lambda m: " ".join([str(e) for e in m])
-        ).saveAsTextFile(path)
+            lambda m: glue.join([str(e) for e in m])
+        ).saveAsTextFile(path, codec)
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.

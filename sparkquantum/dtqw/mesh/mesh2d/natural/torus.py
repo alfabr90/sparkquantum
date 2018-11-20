@@ -53,7 +53,7 @@ class TorusNatural(Natural):
         shape = (coin_size * size_xy, coin_size * size_xy)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
@@ -61,7 +61,7 @@ class TorusNatural(Natural):
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == 'rdd':
-                if repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -87,7 +87,7 @@ class TorusNatural(Natural):
                             n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                             yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -128,7 +128,7 @@ class TorusNatural(Natural):
                     __map
                 )
             elif generation_mode == 'broadcast':
-                if repr_format == Utils.RepresentationFormatCoinPosition:
+                if repr_format == Utils.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -156,7 +156,7 @@ class TorusNatural(Natural):
                             n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
 
                             yield m, n, 1
-                elif repr_format == Utils.RepresentationFormatPositionCoin:
+                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -199,7 +199,7 @@ class TorusNatural(Natural):
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -214,7 +214,7 @@ class TorusNatural(Natural):
                             n = (i * size_per_coin + j) * size_xy + x * size[1] + y
 
                             yield m, n, 1
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -240,9 +240,9 @@ class TorusNatural(Natural):
                 __map
             )
 
-        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
             rdd = Utils.change_coordinate(
-                rdd, Utils.CoordinateDefault, new_coord=coord_format
+                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
             )
 
             expected_elems = coin_size * size_xy
@@ -256,14 +256,14 @@ class TorusNatural(Natural):
 
         return (rdd, shape, broken_links)
 
-    def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the shift operator for the walk.
 
         Parameters
         ----------
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 

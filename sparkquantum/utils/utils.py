@@ -10,49 +10,68 @@ __all__ = ['Utils']
 class Utils():
     """A class that provides utility static methods."""
 
-    CoordinateDefault = 0
+    MatrixCoordinateDefault = 0
     """
-    CoordinateDefault : int
+    MatrixCoordinateDefault : int
         Indicate that the `Matrix` object must have its entries stored as (i,j,value) coordinates.
     """
-    CoordinateMultiplier = 1
+    MatrixCoordinateMultiplier = 1
     """
-    CoordinateMultiplier : int
+    MatrixCoordinateMultiplier : int
         Indicate that the `Matrix` object must have its entries stored as (j,(i,value)) coordinates. This is mandatory
         when the object is the multiplier operand.
     """
-    CoordinateMultiplicand = 2
+    MatrixCoordinateMultiplicand = 2
     """
-    CoordinateMultiplicand : int
+    MatrixCoordinateMultiplicand : int
         Indicate that the `Matrix` object must have its entries stored as (i,(j,value)) coordinates. This is mandatory
         when the object is the multiplicand operand.
     """
-    RepresentationFormatCoinPosition = 0
+    StateRepresentationFormatCoinPosition = 0
     """
-    RepresentationFormatCoinPosition : int
+    StateRepresentationFormatCoinPosition : int
         Indicate that the quantum system is represented as the kronecker product between the coin and position subspaces.
     """
-    RepresentationFormatPositionCoin = 1
+    StateRepresentationFormatPositionCoin = 1
     """
-    RepresentationFormatPositionCoin : int
+    StateRepresentationFormatPositionCoin : int
         Indicate that the quantum system is represented as the kronecker product between the position and coin subspaces.
+    """
+    StateDumpingFormatIndex = 0
+    """
+    StateDumpingFormatIndex : int
+        Indicate that the quantum system will be dumped to disk with the format (i,value).
+    """
+    StateDumpingFormatCoordinate = 1
+    """
+    StateDumpingFormatCoordinate : int
+        Indicate that the quantum system will be dumped to disk with the format (i1,x1,...,in,xn,value),
+        for one-dimensional meshes, or (i1,j1,x1,y1,...,in,jn,xn,yn,value), for two-dimensional meshes,
+        for example, where n is the number of particles.
     """
 
     ConfigDefaults = {
-        'quantum.representationFormat': RepresentationFormatCoinPosition,
+        'quantum.dumpingGlue': ' ',
+        'quantum.dumpingCompressionCodec': None,
         'quantum.math.roundPrecision': 10,
         'quantum.cluster.numPartitionsSafetyFactor': 1.3,
         'quantum.cluster.useSparkDefaultNumPartitions': 'False',
         'quantum.cluster.totalCores': 1,
         'quantum.cluster.maxPartitionSize': 64 * 10 ** 6,
-        'quantum.dtqw.tempPath': './',
         'quantum.dtqw.mesh.brokenLinks.generationMode': 'broadcast',
         'quantum.dtqw.mesh.randomBrokenLinks.seed': time.time(),
         'quantum.dtqw.interactionOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.kroneckerMode': 'broadcast',
+        'quantum.dtqw.walkOperator.tempPath': './',
         'quantum.dtqw.walk.checkpointStates': 'False',
-        'quantum.dtqw.walk.checkpointFrequency': -1,
+        'quantum.dtqw.walk.checkpointingFrequency': -1,
+        'quantum.dtqw.walk.dumpStates': 'False',
+        'quantum.dtqw.walk.dumpingFrequency': -1,
+        'quantum.dtqw.walk.dumpingPath': './',
+        'quantum.dtqw.walk.checkUnitary': 'False',
+        'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
+        'quantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
         'quantum.dtqw.profiler.logExecutors': 'False'
     }
     """
@@ -119,14 +138,14 @@ class Utils():
         c = sc.getConf().get(config_str)
 
         if not c:
-            if config_str not in Utils.ConfigDefaults[config_str]:
+            if config_str not in Utils.ConfigDefaults:
                 return None
             return Utils.ConfigDefaults[config_str]
 
         return c
 
     @staticmethod
-    def change_coordinate(rdd, old_coord, new_coord=CoordinateDefault):
+    def change_coordinate(rdd, old_coord, new_coord=MatrixCoordinateDefault):
         """Change the coordinate format of a `Matrix` object's RDD.
 
         Parameters
@@ -136,7 +155,7 @@ class Utils():
         old_coord : int
             The original coordinate format of the `Matrix` object's RDD.
         new_coord : int
-            The new coordinate format. Default value is `Utils.CoordinateDefault`.
+            The new coordinate format. Default value is `Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -144,38 +163,38 @@ class Utils():
             A new `RDD` with the coordinate format changed.
 
         """
-        if old_coord == Utils.CoordinateMultiplier:
-            if new_coord == Utils.CoordinateMultiplier:
+        if old_coord == Utils.MatrixCoordinateMultiplier:
+            if new_coord == Utils.MatrixCoordinateMultiplier:
                 return rdd
-            elif new_coord == Utils.CoordinateMultiplicand:
+            elif new_coord == Utils.MatrixCoordinateMultiplicand:
                 return rdd.map(
                     lambda m: (m[1][0], (m[0], m[1][1]))
                 )
-            else:  # Utils.CoordinateDefault
+            else:  # Utils.MatrixCoordinateDefault
                 return rdd.map(
                     lambda m: (m[1][0], m[0], m[1][1])
                 )
-        elif old_coord == Utils.CoordinateMultiplicand:
-            if new_coord == Utils.CoordinateMultiplier:
+        elif old_coord == Utils.MatrixCoordinateMultiplicand:
+            if new_coord == Utils.MatrixCoordinateMultiplier:
                 return rdd.map(
                     lambda m: (m[1][0], (m[0], m[1][1]))
                 )
-            elif new_coord == Utils.CoordinateMultiplicand:
+            elif new_coord == Utils.MatrixCoordinateMultiplicand:
                 return rdd
-            else:  # Utils.CoordinateDefault
+            else:  # Utils.MatrixCoordinateDefault
                 return rdd.map(
                     lambda m: (m[0], m[1][0], m[1][1])
                 )
-        else:  # Utils.CoordinateDefault
-            if new_coord == Utils.CoordinateMultiplier:
+        else:  # Utils.MatrixCoordinateDefault
+            if new_coord == Utils.MatrixCoordinateMultiplier:
                 return rdd.map(
                     lambda m: (m[1], (m[0], m[2]))
                 )
-            elif new_coord == Utils.CoordinateMultiplicand:
+            elif new_coord == Utils.MatrixCoordinateMultiplicand:
                 return rdd.map(
                     lambda m: (m[0], (m[1], m[2]))
                 )
-            else:  # Utils.CoordinateDefault
+            else:  # Utils.MatrixCoordinateDefault
                 return rdd
 
     @staticmethod

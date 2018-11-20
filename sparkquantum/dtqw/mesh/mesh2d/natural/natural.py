@@ -60,14 +60,14 @@ class Natural(Mesh2D):
         """
         raise NotImplementedError
 
-    def create_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 

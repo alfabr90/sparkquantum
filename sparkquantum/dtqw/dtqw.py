@@ -187,14 +187,14 @@ class DiscreteTimeQuantumWalk:
     def title(self):
         return "Quantum Walk with {} Particle(s) on a {}".format(self._num_particles, self._mesh.title())
 
-    def create_interaction_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_interaction_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the particles' interaction operator for the walk.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
@@ -217,7 +217,7 @@ class DiscreteTimeQuantumWalk:
         phase = cmath.exp(self._phase * (0.0+1.0j))
         num_particles = self._num_particles
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -228,7 +228,7 @@ class DiscreteTimeQuantumWalk:
             rdd_range = cs_size ** num_particles
             shape = (rdd_range, rdd_range)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
@@ -241,7 +241,7 @@ class DiscreteTimeQuantumWalk:
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
@@ -269,7 +269,7 @@ class DiscreteTimeQuantumWalk:
             rdd_range = cs_size_xy ** num_particles
             shape = (rdd_range, rdd_range)
 
-            if repr_format == Utils.RepresentationFormatCoinPosition:
+            if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
@@ -287,7 +287,7 @@ class DiscreteTimeQuantumWalk:
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == Utils.RepresentationFormatPositionCoin:
+            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 
@@ -320,9 +320,9 @@ class DiscreteTimeQuantumWalk:
             __map
         )
 
-        if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
             rdd = Utils.change_coordinate(
-                rdd, Utils.CoordinateDefault, new_coord=coord_format
+                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
             )
 
             # The walk operators must be guaranteed to be previously built
@@ -371,7 +371,7 @@ class DiscreteTimeQuantumWalk:
             if Utils.get_conf(self._spark_context, 'quantum.dtqw.profiler.logExecutors') == 'True':
                 self._profiler.log_executors(app_id=app_id)
 
-    def create_walk_operator(self, coord_format=Utils.CoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_walk_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the walk operator for the walk.
 
         When performing a multiparticle walk, this method builds a list with n operators,
@@ -383,13 +383,13 @@ class DiscreteTimeQuantumWalk:
             Wn = I1 (X) ... (X) In-1 (X) Wn
 
         Regardless the number of particles, the walk operators have their (i,j,value) coordinates converted to
-        appropriate coordinates for multiplication, in this case, the `Utils.CoordinateMultiplier`.
+        appropriate coordinates for multiplication, in this case, the `Utils.MatrixCoordinateMultiplier`.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
@@ -401,7 +401,7 @@ class DiscreteTimeQuantumWalk:
             if self._logger:
                 self._logger.info("no coin operator has been set. A new one will be built")
             self._coin_operator = self._coin.create_operator(
-                self._mesh, coord_format=Utils.CoordinateMultiplicand, storage_level=storage_level
+                self._mesh, coord_format=Utils.MatrixCoordinateMultiplicand, storage_level=storage_level
             )
 
             if self._profiler:
@@ -412,7 +412,7 @@ class DiscreteTimeQuantumWalk:
             if self._logger:
                 self._logger.info("no shift operator has been set. A new one will be built")
             self._shift_operator = self._mesh.create_operator(
-                coord_format=Utils.CoordinateMultiplier, storage_level=storage_level
+                coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level
             )
 
             if self._profiler:
@@ -425,7 +425,7 @@ class DiscreteTimeQuantumWalk:
 
             t1 = datetime.now()
 
-            evolution_operator = self._shift_operator.multiply(self._coin_operator, coord_format=Utils.CoordinateMultiplier)
+            evolution_operator = self._shift_operator.multiply(self._coin_operator, coord_format=Utils.MatrixCoordinateMultiplier)
 
             eo = evolution_operator.persist(storage_level)
 
@@ -462,7 +462,7 @@ class DiscreteTimeQuantumWalk:
             t_tmp = datetime.now()
 
             evolution_operator = self._shift_operator.multiply(
-                self._coin_operator, coord_format=Utils.CoordinateDefault
+                self._coin_operator, coord_format=Utils.MatrixCoordinateDefault
             ).persist(storage_level).materialize(storage_level)
 
             self._coin_operator.unpersist()
@@ -555,9 +555,9 @@ class DiscreteTimeQuantumWalk:
 
                             shape = (rdd_shape[0] * shape[0], rdd_shape[1] * shape[1])
 
-                    if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+                    if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
                         rdd = Utils.change_coordinate(
-                            rdd, Utils.CoordinateDefault, new_coord=coord_format
+                            rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
                         )
 
                         expected_elems = evolution_operator.num_nonzero_elements * evolution_operator.shape[0] ** (self._num_particles - 1)
@@ -605,7 +605,7 @@ class DiscreteTimeQuantumWalk:
                 eo.unpersist()
             elif kron_mode == 'dump':
                 path = Utils.get_temp_path(
-                    Utils.get_conf(self._spark_context, 'quantum.dtqw.tempPath')
+                    Utils.get_conf(self._spark_context, 'quantum.dtqw.walkOperator.tempPath')
                 )
 
                 evolution_operator.dump(path)
@@ -689,9 +689,9 @@ class DiscreteTimeQuantumWalk:
 
                             shape = (rdd_shape[0] * shape_tmp[0], rdd_shape[1] * shape_tmp[1])
 
-                    if coord_format == Utils.CoordinateMultiplier or coord_format == Utils.CoordinateMultiplicand:
+                    if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
                         rdd = Utils.change_coordinate(
-                            rdd, Utils.CoordinateDefault, new_coord=coord_format
+                            rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
                         )
 
                         expected_elems = evolution_operator.num_nonzero_elements * evolution_operator.shape[0] ** (self._num_particles - 1)
@@ -861,12 +861,12 @@ class DiscreteTimeQuantumWalk:
                 if self._walk_operator is None:
                     if self._logger:
                         self._logger.info("no walk operator has been set. A new one will be built")
-                    self.create_walk_operator(coord_format=Utils.CoordinateMultiplier, storage_level=storage_level)
+                    self.create_walk_operator(coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
             if self._num_particles > 1 and self._phase and self._interaction_operator is None:
                 if self._logger:
                     self._logger.info("no interaction operator has been set. A new one will be built")
-                self.create_interaction_operator(coord_format=Utils.CoordinateMultiplier, storage_level=storage_level)
+                self.create_interaction_operator(coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
             t1 = datetime.now()
 
@@ -879,18 +879,44 @@ class DiscreteTimeQuantumWalk:
             )
 
             if checkpoint_states == 'True':
-                checkpoint_frequency = int(
+                checkpointing_frequency = int(
                     Utils.get_conf(
                         self._spark_context,
-                        'quantum.dtqw.walk.checkpointFrequency'
+                        'quantum.dtqw.walk.checkpointingFrequency'
                     )
                 )
+
+            dump_states = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpStates'
+            )
+
+            if dump_states == 'True':
+                dumping_frequency = int(
+                    Utils.get_conf(
+                        self._spark_context,
+                        'quantum.dtqw.walk.dumpingFrequency'
+                    )
+                )
+
+                dumping_path = Utils.get_conf(
+                    self._spark_context,
+                    'quantum.dtqw.walk.dumpingPath'
+                )
+
+                if not dumping_path.endswith('/'):
+                    dumping_path += '/'
+
+            check_unitary = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.checkUnitary'
+            )
 
             for i in range(1, steps + 1, 1):
                 if self._mesh.broken_links:
                     self.destroy_shift_operator()
                     self.destroy_walk_operator()
-                    self.create_walk_operator(coord_format=Utils.CoordinateMultiplier, storage_level=storage_level)
+                    self.create_walk_operator(coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
                 t_tmp = datetime.now()
 
@@ -917,8 +943,18 @@ class DiscreteTimeQuantumWalk:
                         result_tmp.define_partitioner(num_partitions)
 
                 if checkpoint_states == 'True':
-                    if i % checkpoint_frequency == 0:
+                    if i % checkpointing_frequency == 0:
                         result_tmp.persist(storage_level).checkpoint()
+
+                if dump_states == 'True':
+                    if i % dumping_frequency == 0:
+                        result_tmp.persist(storage_level).dump(dumping_path + str(i))
+
+                if check_unitary == 'True':
+                    if not result_tmp.is_unitary():
+                        if self._logger:
+                            self._logger.error("the state {} is not unitary".format(i))
+                        raise ValueError("the state {} is not unitary".format(i))
 
                 result_tmp.materialize(storage_level)
                 result.unpersist()

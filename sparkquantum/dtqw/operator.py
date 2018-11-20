@@ -11,7 +11,7 @@ __all__ = ['Operator', 'is_operator']
 class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
-    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.CoordinateDefault):
+    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
         """Build an `Operator` object.
 
         Parameters
@@ -24,7 +24,7 @@ class Operator(Matrix):
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -35,7 +35,7 @@ class Operator(Matrix):
     def coordinate_format(self):
         return self._coordinate_format
 
-    def kron(self, other, coord_format=Utils.CoordinateDefault):
+    def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Perform a tensor (Kronecker) product with another operator.
 
         Parameters
@@ -44,7 +44,7 @@ class Operator(Matrix):
             The other operator.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`.
+            Default value is `Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -78,19 +78,19 @@ class Operator(Matrix):
             lambda a, b: a + b, numPartitions=num_partitions
         )
 
-        if coord_format == Utils.CoordinateMultiplier:
+        if coord_format == Utils.MatrixCoordinateMultiplier:
             rdd = rdd.map(
                 lambda m: (m[0][1], (m[0][0], m[1]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        elif coord_format == Utils.CoordinateMultiplicand:
+        elif coord_format == Utils.MatrixCoordinateMultiplicand:
             rdd = rdd.map(
                 lambda m: (m[0][0], (m[0][1], m[1]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
-        else:  # Utils.CoordinateDefault
+        else:  # Utils.MatrixCoordinateDefault
             rdd = rdd.map(
                 lambda m: (m[0][0], m[0][1], m[1])
             )
@@ -115,7 +115,7 @@ class Operator(Matrix):
 
         return State(rdd, shape, other.mesh, other.num_particles)
 
-    def multiply(self, other, coord_format=Utils.CoordinateDefault):
+    def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Multiply this operator with another one or with a system state.
 
         Parameters
@@ -124,7 +124,7 @@ class Operator(Matrix):
             An operator if multiplying another operator, State otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.CoordinateDefault`. Not applicable when multiplying a State.
+            Default value is `Utils.MatrixCoordinateDefault`. Not applicable when multiplying a State.
 
         Returns
         -------

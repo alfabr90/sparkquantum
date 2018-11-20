@@ -24,12 +24,15 @@ size = 30
 entangled = True
 phase = 1.0 * cmath.pi
 
-representationFormat = Utils.RepresentationFormatCoinPosition
-# representationFormat = Utils.RepresentationFormatPositionCoin
+representationFormat = Utils.StateRepresentationFormatCoinPosition
+# representationFormat = Utils.StateRepresentationFormatPositionCoin
 
-# Initiallizing the SparkContext
-sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
-sparkConf = sparkConf.set('quantum.representationFormat', representationFormat)
+# Initiallizing the SparkContext with some options
+sparkConf = SparkConf().set(
+    'quantum.cluster.totalCores', num_cores
+).set(
+    'quantum.dtqw.state.representationFormat', representationFormat
+)
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
@@ -73,7 +76,7 @@ position = int((mesh_size - 1) / 2)
 
 # Options of initial states
 if not entangled:
-    if representationFormat == Utils.RepresentationFormatCoinPosition:
+    if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
         state1 = (
             (0 * mesh_size + position, (1.0 + 0.0j) / math.sqrt(2)),
@@ -93,7 +96,7 @@ if not entangled:
         # state2 = ((0 * mesh_size + position, (1.0 + 0.0j)), )
         # |i>|x> --> |1>|0>
         # state2 = ((1 * mesh_size + position, (1.0 + 0.0j)), )
-    elif representationFormat == Utils.RepresentationFormatPositionCoin:
+    elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
         # |x>|i> --> (|0>|0> - i|0>|1>) / sqrt(2)
         state1 = (
             (position * coin_size + 0, (1.0 + 0.0j) / math.sqrt(2)),
@@ -124,13 +127,13 @@ if not entangled:
     base_state1.destroy()
     base_state2.destroy()
 else:
-    if representationFormat == Utils.RepresentationFormatCoinPosition:
+    if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|0>|0>|0> - |0>|0>|1>|0>) / sqrt(2)
         state = (
             ((1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1.0 / math.sqrt(2)),
             ((0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, -1.0 / math.sqrt(2)),
         )
-    elif representationFormat == Utils.RepresentationFormatPositionCoin:
+    elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|0>|1>|0>|0> - |0>|0>|0>|1>) / sqrt(2)
         state = (
             ((position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1.0 / math.sqrt(2)),
