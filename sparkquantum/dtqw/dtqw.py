@@ -478,7 +478,7 @@ class DiscreteTimeQuantumWalk:
 
             kron_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.walkOperator.kroneckerMode')
 
-            if kron_mode == 'broadcast':
+            if kron_mode == Utils.KroneckerModeBroadcast:
                 eo = Utils.broadcast(self._spark_context, evolution_operator.data.collect())
                 evolution_operator.unpersist()
 
@@ -603,7 +603,7 @@ class DiscreteTimeQuantumWalk:
                             self._profiler.log_executors(app_id=app_id)
 
                 eo.unpersist()
-            elif kron_mode == 'dump':
+            elif kron_mode == Utils.KroneckerModeDump:
                 path = Utils.get_temp_path(
                     Utils.get_conf(self._spark_context, 'quantum.dtqw.walkOperator.tempPath')
                 )

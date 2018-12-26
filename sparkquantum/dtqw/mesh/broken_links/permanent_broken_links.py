@@ -77,9 +77,9 @@ class PermanentBrokenLinks(BrokenLinks):
 
         generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
-        if generation_mode == 'rdd':
+        if generation_mode == Utils.BrokenLinksGenerationModeRDD:
             return rdd
-        elif generation_mode == 'broadcast':
+        elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
             return Utils.broadcast(self._spark_context, rdd.collectAsMap())
         else:
             raise ValueError("invalid broken links generation mode")

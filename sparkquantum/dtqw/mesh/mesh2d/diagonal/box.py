@@ -61,7 +61,7 @@ class BoxDiagonal(Diagonal):
 
             generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
-            if generation_mode == 'rdd':
+            if generation_mode == Utils.BrokenLinksGenerationModeRDD:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
@@ -126,7 +126,7 @@ class BoxDiagonal(Diagonal):
                 ).flatMap(
                     __map
                 )
-            elif generation_mode == 'broadcast':
+            elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         for i in range(size_per_coin):
