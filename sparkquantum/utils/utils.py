@@ -10,6 +10,18 @@ __all__ = ['Utils']
 class Utils():
     """A class that provides utility static methods."""
 
+    DumpingModeUniqueFile = 0
+    """
+    DumpingModeUniqueFile : int
+        Indicate that the mathematical entity will be dumped to a unique file in disk. This is not suitable for large working sets,
+        as all data must be collected to the driver node of the cluster and may not fit into memory.
+    """
+    DumpingModePartFiles = 1
+    """
+    DumpingModePartFiles : int
+        Indicate that the mathematical entity will be dumped to part-* files in disk. This is done in a parallel/distributed way.
+        This is the default behaviour.
+    """
     MatrixCoordinateDefault = 0
     """
     MatrixCoordinateDefault : int
@@ -81,6 +93,7 @@ class Utils():
         'quantum.dumpingGlue': ' ',
         'quantum.dumpingCompressionCodec': None,
         'quantum.math.roundPrecision': 10,
+        'quantum.math.dumpingMode': DumpingModePartFiles,
         'quantum.cluster.numPartitionsSafetyFactor': 1.3,
         'quantum.cluster.useSparkDefaultNumPartitions': 'False',
         'quantum.cluster.totalCores': 1,
@@ -99,6 +112,7 @@ class Utils():
         'quantum.dtqw.walk.checkUnitary': 'False',
         'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
         'quantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
+        'quantum.dtqw.state.dumpingMode': DumpingModePartFiles,
         'quantum.dtqw.profiler.logExecutors': 'False'
     }
     """
@@ -322,6 +336,21 @@ class Utils():
             num_partitions = math.ceil(safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 
         return num_partitions
+
+    @staticmethod
+    def append_slash_dir(path):
+        """Append a slash in a path if it does not end with one.
+
+        Parameters
+        ----------
+        path : str
+            The directory name with its path.
+
+        """
+        if not path.endswith('/'):
+            path += '/'
+
+        return path
 
     @staticmethod
     def create_dir(path):

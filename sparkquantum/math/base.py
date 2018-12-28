@@ -276,8 +276,13 @@ class Base:
 
         return self
 
-    def dump(self, path, glue=None, codec=None):
+    def dump(self, path, glue=None, codec=None, filename=None):
         """Dump this object's RDD to disk in many part-* files.
+
+        Notes
+        -----
+        Depending, on the chosen dumping mode, this method calls the `collect` method of RDD.
+        This is not suitable for large working sets, as all data may not fit into main memory.
 
         Parameters
         ----------
@@ -289,6 +294,9 @@ class Base:
         codec : str, optional
             Codec name used to compress the dumped data.
             Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+        filename : str, optional
+            File name used when the dumping mode is in a single file. Default value is None.
+            In this case, a temporary named file is generated inside the informed path.
 
         """
         if glue is None:
@@ -297,12 +305,34 @@ class Base:
         if codec is None:
             codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
 
-        self.data.map(
-            lambda m: glue.join([str(e) for e in m])
-        ).saveAsTextFile(path, codec)
+        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode')
+
+        if dumping_mode == Utils.DumpingModeUniqueFile:
+            data = self.data.collect
+
+            if not filename:
+                filename = Utils.get_temp_path(path)
+
+            if len(data):
+                with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                    for d in data:
+                        f.write(glue.join([str(e) for e in d]))
+        elif dumping_mode == Utils.DumpingModePartFiles:
+            self.data.map(
+                lambda m: glue.join([str(e) for e in m])
+            ).saveAsTextFile(path, codec)
+        else:
+            if self._logger:
+                self._logger.error("invalid dumping mode")
+            raise NotImplementedError("invalid dumping mode")
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
+
+        Notes
+        -----
+        This method calls the `collect` method of RDD. This is not suitable for large working sets,
+        as all data may not fit into main memory.
 
         Returns
         -------

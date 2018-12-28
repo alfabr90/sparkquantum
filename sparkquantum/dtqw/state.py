@@ -51,7 +51,7 @@ class State(Vector):
         """int"""
         return self._num_particles
 
-    def dump(self, path, glue=None, codec=None, dumping_format=None):
+    def dump(self, path, glue=None, codec=None, filename='', dumping_format=None):
         """Dump this object's RDD to disk in many part-* files.
 
         Notes
@@ -69,6 +69,9 @@ class State(Vector):
         codec : str, optional
             Codec name used to compress the dumped data.
             Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+        filename : str, optional
+            File name used when the dumping mode is in a single file. Default value is None.
+            In this case, a temporary named file is generated inside the informed path.
         dumping_format : int, optional
             Printing format used to dump this state.
             Default value is `None`. In this case, it uses the 'quantum.dtqw.state.dumpingFormat' configuration value.
@@ -83,9 +86,26 @@ class State(Vector):
         if dumping_format is None:
             dumping_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
 
+        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingMode')
+
         if dumping_format == Utils.StateDumpingFormatIndex:
-            def __map(m):
-                return glue.join([str(e) for e in m])
+            if dumping_mode == Utils.DumpingModeUniqueFile:
+                data = self.data.collect
+
+                if not filename:
+                    filename = Utils.get_temp_path(path)
+
+                if len(data):
+                    with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                        for d in data:
+                            f.write(glue.join([str(e) for e in d]))
+            elif dumping_mode == Utils.DumpingModePartFiles:
+                def __map(m):
+                    return glue.join([str(e) for e in m])
+            else:
+                if self._logger:
+                    self._logger.error("invalid dumping mode")
+                raise NotImplementedError("invalid dumping mode")
         elif dumping_format == Utils.StateDumpingFormatCoordinate:
             repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
@@ -180,14 +200,29 @@ class State(Vector):
                 if self._logger:
                     self._logger.error("mesh dimension not implemented")
                 raise NotImplementedError("mesh dimension not implemented")
+
+            if dumping_mode == Utils.DumpingModeUniqueFile:
+                data = self.data.collect
+
+                if not filename:
+                    filename = Utils.get_temp_path(path)
+
+                if len(data):
+                    with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                        for d in data:
+                            f.write(glue.join(d))
+            elif dumping_mode == Utils.DumpingModePartFiles:
+                self.data.map(
+                    __map
+                ).saveAsTextFile(path, codec)
+            else:
+                if self._logger:
+                    self._logger.error("invalid dumping mode")
+                raise NotImplementedError("invalid dumping mode")
         else:
             if self._logger:
                 self._logger.error("invalid dumping format")
             raise NotImplementedError("invalid dumping format")
-
-        self.data.map(
-            __map
-        ).saveAsTextFile(path, codec)
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.

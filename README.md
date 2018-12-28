@@ -105,6 +105,7 @@ Below, there is a list of the current configuration parameters that the user can
 | quantum.dumpingGlue | ' ' | A string to connect the coordinates of each RDD's element when dumping its data. |
 | quantum.dumpingCompressionCodec | None | Compression coded class used by Spark when saving data to disk. |
 | quantum.math.roundPrecision | 10 | Decimal precision when rounding numbers. |
+| quantum.math.dumpingMode | `Utils.DumpingModePartFiles` | Whether the mathematical entity corresponding RDD has its data dumped to a single file or to multiple part-* files in disk. |
 | quantum.cluster.numPartitionsSafetyFactor | 1.3 | A safety factor when calculating the best possible number of partitions of each RDD produced by the application. |
 | quantum.cluster.useSparkDefaultNumPartitions | False | Whether to use the default number of partitions defined by Spark when partitioning the RDD produced by the application. |
 | quantum.cluster.totalCores | 1 | Total number of cores used by the application. |
@@ -123,4 +124,5 @@ Below, there is a list of the current configuration parameters that the user can
 | quantum.dtqw.walk.checkUnitary | False | Whether to check if every state is unitary. |
 | quantum.dtqw.state.representationFormat | `Utils.StateRepresentationFormatCoinPosition` | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces. |
 | quantum.dtqw.state.dumpingFormat | `Utils.StateDumpingFormatIndex` | Whether the system state has each of its elements dumped as vector indexes followed by their values or as mesh/cartesian coordinates followed by their values. |
+| quantum.dtqw.state.dumpingMode | `Utils.DumpingModePartFiles` | Whether the system state has its data dumped to a single file or to multiple part-* files in disk. |
 | quantum.dtqw.profiler.logExecutors | False | Whether to log executors' data if a profiler was provided. |
