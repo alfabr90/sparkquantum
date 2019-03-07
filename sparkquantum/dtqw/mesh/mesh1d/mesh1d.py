@@ -77,35 +77,3 @@ class Mesh1D(Mesh):
 
         """
         return True
-
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-
-        Raises
-        -------
-        `NotImplementedError`
-
-        """
-        raise NotImplementedError
-
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the mesh operator.
-
-        Parameters
-        ----------
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
-
-        Raises
-        -------
-        `NotImplementedError`
-
-        """
-        raise NotImplementedError
