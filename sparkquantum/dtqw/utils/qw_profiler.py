@@ -1,6 +1,6 @@
 from sparkquantum.utils.profiler import Profiler
-from sparkquantum.dtqw.operator import is_operator
-from sparkquantum.dtqw.state import is_state
+from sparkquantum.dtqw.math.operator import is_operator
+from sparkquantum.dtqw.math.state import is_state
 from sparkquantum.math.statistics.pdf import is_pdf
 
 __all__ = ['QuantumWalkProfiler']

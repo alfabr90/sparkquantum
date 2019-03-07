@@ -5,8 +5,8 @@ from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
-from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.math.state import State
+from sparkquantum.dtqw.utils.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
 from sparkquantum.utils.logger import Logger

@@ -3,7 +3,7 @@ from datetime import datetime
 from pyspark import StorageLevel
 
 from sparkquantum.dtqw.mesh.mesh1d.mesh1d import Mesh1D
-from sparkquantum.dtqw.operator import Operator
+from sparkquantum.dtqw.math.operator import Operator
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Segment']

@@ -6,8 +6,8 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
-from sparkquantum.dtqw.operator import Operator, is_operator
-from sparkquantum.dtqw.state import State
+from sparkquantum.dtqw.math.operator import Operator, is_operator
+from sparkquantum.dtqw.math.state import State
 from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils

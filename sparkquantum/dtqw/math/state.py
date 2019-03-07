@@ -5,9 +5,9 @@ from pyspark import StorageLevel
 
 from sparkquantum.math.vector import Vector
 from sparkquantum.math.statistics.pdf import is_pdf
-from sparkquantum.math.statistics.joint_pdf import JointPDF
-from sparkquantum.math.statistics.collision_pdf import CollisionPDF
-from sparkquantum.math.statistics.marginal_pdf import MarginalPDF
+from sparkquantum.dtqw.math.statistics.joint_pdf import JointPDF
+from sparkquantum.dtqw.math.statistics.collision_pdf import CollisionPDF
+from sparkquantum.dtqw.math.statistics.marginal_pdf import MarginalPDF
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.utils.utils import Utils
 

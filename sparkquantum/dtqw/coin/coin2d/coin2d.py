@@ -3,7 +3,7 @@ from datetime import datetime
 from pyspark import StorageLevel
 
 from sparkquantum.dtqw.coin.coin import Coin
-from sparkquantum.dtqw.operator import Operator
+from sparkquantum.dtqw.math.operator import Operator
 from sparkquantum.utils.utils import Utils
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 

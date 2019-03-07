@@ -4,7 +4,7 @@ from datetime import datetime
 from pyspark import StorageLevel
 
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.diagonal import Diagonal
-from sparkquantum.dtqw.operator import Operator
+from sparkquantum.dtqw.math.operator import Operator
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['LatticeDiagonal']
