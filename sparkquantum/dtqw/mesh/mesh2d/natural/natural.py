@@ -9,20 +9,20 @@ __all__ = ['Natural']
 class Natural(Mesh2D):
     """Top-level class for Natural meshes."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, spark_session, size, broken_links=None):
         """Build a top-level Natural `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         size : tuple
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(spark_session, size, broken_links=broken_links)
 
     def _define_num_edges(self, size):
         # The number of edges is based on the size of the mesh.

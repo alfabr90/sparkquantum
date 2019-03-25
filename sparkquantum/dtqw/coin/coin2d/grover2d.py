@@ -8,16 +8,16 @@ __all__ = ['Grover2D']
 class Grover2D(Coin2D):
     """Class that represents the 2-dimensional Grover coin."""
 
-    def __init__(self, spark_context):
+    def __init__(self, spark_session):
         """Build a 2-dimensional Grover `Coin` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
 
         """
-        super().__init__(spark_context)
+        super().__init__(spark_session)
 
         self._data = np.array(
             [[-1, 1, 1, 1],

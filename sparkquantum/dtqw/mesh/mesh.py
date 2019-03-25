@@ -13,20 +13,20 @@ __all__ = ['Mesh', 'is_mesh']
 class Mesh:
     """Top-level class for meshes."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, spark_session, size, broken_links=None):
         """Build a top-level `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         size : int or tuple
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        self._spark_context = spark_context
+        self._spark_session = spark_session
         self._size = self._define_size(size)
         self._num_edges = self._define_num_edges(size)
         self._coin_size = None
@@ -43,9 +43,9 @@ class Mesh:
         self._profiler = None
 
     @property
-    def spark_context(self):
-        """`SparkContext`"""
-        return self._spark_context
+    def spark_session(self):
+        """`SparkSession`"""
+        return self._spark_session
 
     @property
     def size(self):
@@ -118,7 +118,7 @@ class Mesh:
 
     def _profile(self, operator, initial_time):
         if self._profiler is not None:
-            app_id = self._spark_context.applicationId
+            app_id = self._spark_session.sparkContext.applicationId
 
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
@@ -181,16 +181,13 @@ class Mesh:
         """
         raise NotImplementedError
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
         Parameters
         ----------
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the DataFrame. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------

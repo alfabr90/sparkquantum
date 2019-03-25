@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
-from sparkquantum.math.vector import Vector
+from sparkquantum.math.vector import Vector, is_vector
 from sparkquantum.math.statistics.pdf import is_pdf
 from sparkquantum.dtqw.math.statistics.joint_pdf import JointPDF
 from sparkquantum.dtqw.math.statistics.collision_pdf import CollisionPDF
@@ -17,13 +17,13 @@ __all__ = ['State', 'is_state']
 class State(Vector):
     """Class for the system state."""
 
-    def __init__(self, rdd, shape, mesh, num_particles):
+    def __init__(self, df, shape, mesh, num_particles):
         """Build a `State` object.
 
         Parameters
         ----------
-        rdd : `RDD`
-            The base RDD of this object.
+        df : `DataFrame`
+            The base DataFrame of this object.
         shape : tuple
             The shape of this state object. Must be a 2-dimensional tuple.
         mesh : `Mesh`
@@ -36,7 +36,7 @@ class State(Vector):
             # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
             raise TypeError("'Mesh' instance expected, not '{}'".format(type(mesh)))
 
-        super().__init__(rdd, shape, data_type=complex)
+        super().__init__(df, shape, data_type=complex)
 
         self._mesh = mesh
         self._num_particles = num_particles
@@ -50,6 +50,32 @@ class State(Vector):
     def num_particles(self):
         """int"""
         return self._num_particles
+
+    @staticmethod
+    def from_vector(other, mesh, num_particles):
+        """Instantiate an operator from an existing vector object.
+
+        Parameters
+        ----------
+        other : `Vector`
+            The vector to be the origin for the new operator.
+        mesh : `Mesh`
+            The mesh where the particles are walking on.
+        num_particles : int
+            The number of particles present in the walk.
+
+        Returns
+        -------
+        `State`
+            The resulting state.
+
+        """
+        if not is_vector(other):
+            #if self._logger:
+            #   self._logger.error("'Vector' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'Vector' instance expected, not '{}'".format(type(other)))
+
+        return State(other.data, other.shape, mesh, num_particles)
 
     def dump(self, path, glue=None, codec=None, filename='', dumping_format=None):
         """Dump this object's RDD to disk in many part-* files.
@@ -78,15 +104,15 @@ class State(Vector):
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = Utils.get_conf(self._spark_session, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(self._spark_session, 'quantum.dumpingCompressionCodec')
 
         if dumping_format is None:
-            dumping_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
+            dumping_format = int(Utils.get_conf(self._spark_session, 'quantum.dtqw.state.dumpingFormat'))
 
-        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingMode')
+        dumping_mode = Utils.get_conf(self._spark_session, 'quantum.dtqw.state.dumpingMode')
 
         if dumping_format == Utils.StateDumpingFormatIndex:
             if dumping_mode == Utils.DumpingModeUniqueFile:
@@ -107,7 +133,7 @@ class State(Vector):
                     self._logger.error("invalid dumping mode")
                 raise NotImplementedError("invalid dumping mode")
         elif dumping_format == Utils.StateDumpingFormatCoordinate:
-            repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+            repr_format = int(Utils.get_conf(self._spark_session, 'quantum.dtqw.state.representationFormat'))
 
             if self._mesh.is_1d():
                 ndim = self._mesh.dimension
@@ -253,7 +279,7 @@ class State(Vector):
         Parameters
         ----------
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
 
         Returns
         -------
@@ -271,7 +297,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_session, 'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -396,14 +422,14 @@ class State(Vector):
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(self._spark_session, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:
                 self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
-        app_id = self._spark_context.applicationId
+        app_id = self._spark_session.sparkContext.applicationId
 
         if self._profiler:
             self._profiler.profile_resources(app_id)
@@ -432,7 +458,7 @@ class State(Vector):
         full_measurement : `PDF`
             The measurement of the entire system.
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
 
         Returns
         -------
@@ -509,7 +535,7 @@ class State(Vector):
 
         pdf = CollisionPDF(rdd, shape, self._mesh, self._num_particles).materialize(storage_level)
 
-        app_id = self._spark_context.applicationId
+        app_id = self._spark_session.sparkContext.applicationId
 
         if self._profiler:
             self._profiler.profile_resources(app_id)
@@ -537,7 +563,7 @@ class State(Vector):
         particle : int
             The desired particle to be measured. The particle number starts by 0.
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
 
         Returns
         -------
@@ -560,7 +586,7 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_session, 'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -645,14 +671,14 @@ class State(Vector):
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(self._spark_session, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:
                 self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
-        app_id = self._spark_context.applicationId
+        app_id = self._spark_session.sparkContext.applicationId
 
         if self._profiler:
             self._profiler.profile_resources(app_id)
@@ -683,7 +709,7 @@ class State(Vector):
         Parameters
         ----------
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
 
         Returns
         -------
@@ -704,7 +730,7 @@ class State(Vector):
         Parameters
         ----------
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
 
         Returns
         -------

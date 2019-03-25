@@ -12,20 +12,20 @@ __all__ = ['Segment']
 class Segment(Mesh1D):
     """Class for Segment mesh."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, spark_session, size, broken_links=None):
         """Build a Segment `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         size : int
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(spark_session, size, broken_links=broken_links)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -49,12 +49,12 @@ class Segment(Mesh1D):
         shape = (coin_size * size, coin_size * size)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_session, 'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+            generation_mode = Utils.get_conf(self._spark_session, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == Utils.BrokenLinksGenerationModeRDD:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -98,7 +98,7 @@ class Segment(Mesh1D):
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
-                rdd = self._spark_context.range(
+                rdd = self._spark_session.range(
                     num_edges
                 ).map(
                     lambda m: (m, m)
@@ -147,7 +147,7 @@ class Segment(Mesh1D):
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
-                rdd = self._spark_context.range(
+                rdd = self._spark_session.range(
                     num_edges
                 ).flatMap(
                     __map
@@ -184,7 +184,7 @@ class Segment(Mesh1D):
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
-            rdd = self._spark_context.range(
+            rdd = self._spark_session.range(
                 size
             ).flatMap(
                 __map
@@ -197,7 +197,7 @@ class Segment(Mesh1D):
 
             expected_elems = coin_size * size
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+            num_partitions = Utils.get_num_partitions(self._spark_session, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(
@@ -215,7 +215,7 @@ class Segment(Mesh1D):
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is `Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the DataFrame. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------

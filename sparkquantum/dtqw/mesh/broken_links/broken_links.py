@@ -6,20 +6,20 @@ __all__ = ['BrokenLinks']
 class BrokenLinks():
     """Top-level class for broken links."""
 
-    def __init__(self, spark_context):
+    def __init__(self, spark_session):
         """Build a top-level `BrokenLinks` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
 
         """
-        self._spark_context = spark_context
+        self._spark_session = spark_session
 
     @property
-    def spark_context(self):
-        return self._spark_context
+    def spark_session(self):
+        return self._spark_session
 
     def generate(self, num_edges):
         """

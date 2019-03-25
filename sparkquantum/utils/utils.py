@@ -146,8 +146,8 @@ class Utils():
 
         Parameters
         ----------
-        sc : `SparkContext`
-            The `SparkContext` object.
+        sc : `SparkSession`
+            The `SparkSession` object.
         data :
             The data to be broadcast.
 
@@ -161,12 +161,12 @@ class Utils():
 
     @staticmethod
     def get_conf(sc, config_str):
-        """Get a configuration value from the `SparkContext` object.
+        """Get a configuration value from the `SparkSession` object.
 
         Parameters
         ----------
-        sc : `SparkContext`
-            The `SparkContext` object.
+        sc : `SparkSession`
+            The `SparkSession` object.
         config_str : str
             The configuration string to have its correspondent value obtained.
 
@@ -302,13 +302,13 @@ class Utils():
         return sys.getsizeof(data_type())
 
     @staticmethod
-    def get_num_partitions(spark_context, expected_size):
+    def get_num_partitions(spark_session, expected_size):
         """Calculate the number of partitions for a `RDD` based on its expected size in bytes.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         expected_size : int
             The expected size in bytes of the RDD.
 
@@ -322,17 +322,17 @@ class Utils():
         `ValueError`
 
         """
-        safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
+        safety_factor = float(Utils.get_conf(spark_session, 'quantum.cluster.numPartitionsSafetyFactor'))
         num_partitions = None
 
-        if Utils.get_conf(spark_context, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
-            num_cores = Utils.get_conf(spark_context, 'quantum.cluster.totalCores')
+        if Utils.get_conf(spark_session, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
+            num_cores = Utils.get_conf(spark_session, 'quantum.cluster.totalCores')
 
             if not num_cores:
                 raise ValueError("invalid number of total cores in the cluster: {}".format(num_cores))
 
             num_cores = int(num_cores)
-            max_partition_size = int(Utils.get_conf(spark_context, 'quantum.cluster.maxPartitionSize'))
+            max_partition_size = int(Utils.get_conf(spark_session, 'quantum.cluster.maxPartitionSize'))
             num_partitions = math.ceil(safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 
         return num_partitions

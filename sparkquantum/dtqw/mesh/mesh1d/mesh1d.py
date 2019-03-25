@@ -9,20 +9,20 @@ __all__ = ['Mesh1D']
 class Mesh1D(Mesh):
     """Top-level class for 1-dimensional meshes."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, spark_session, size, broken_links=None):
         """Build a top-level 1-dimensional `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         size : int
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(spark_session, size, broken_links=broken_links)
 
         self._coin_size = 2
         self._dimension = 1

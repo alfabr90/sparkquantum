@@ -79,7 +79,7 @@ class QuantumWalkProfiler(Profiler):
 
         self._operators[name].append(self._default_operator())
 
-        app_id = operator.spark_context.applicationId
+        app_id = operator.spark_session.sparkContext.applicationId
         rdd_id = operator.data.id()
         data = self.request_rdd(app_id, rdd_id)
 
@@ -129,7 +129,7 @@ class QuantumWalkProfiler(Profiler):
 
         self._states[name].append(self._default_state())
 
-        app_id = state.spark_context.applicationId
+        app_id = state.spark_session.sparkContext.applicationId
         rdd_id = state.data.id()
         data = self.request_rdd(app_id, rdd_id)
 
@@ -179,7 +179,7 @@ class QuantumWalkProfiler(Profiler):
 
         self._pdfs[name].append(self._default_pdf())
 
-        app_id = pdf.spark_context.applicationId
+        app_id = pdf.spark_session.sparkContext.applicationId
         rdd_id = pdf.data.id()
         data = self.request_rdd(app_id, rdd_id)
 

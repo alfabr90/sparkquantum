@@ -1,5 +1,7 @@
 import numpy as np
-from pyspark import RDD, StorageLevel
+
+from pyspark import StorageLevel
+from pyspark.sql import DataFrame
 
 from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
@@ -11,43 +13,45 @@ __all__ = ['Base']
 class Base:
     """Top-level class for some matrix-based elements."""
 
-    def __init__(self, rdd, shape, data_type=complex):
-        """Build a top-level object for some matrix-based elements. It is a container of RDD.
+    def __init__(self, df, shape, data_type=complex):
+        """Build a top-level object for some matrix-based elements. It is a container of DataFrame.
 
         Parameters
         ----------
-        rdd : `RDD`
-            The base RDD of this object.
+        df : `DataFrame`
+            The base DataFrame of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
 
         """
-        if not isinstance(rdd, RDD):
-            # self._logger.error("invalid argument to instantiate an RDD-based object")
-            raise TypeError("'RDD' instance expected, not '{}'".format(type(rdd)))
+        if not isinstance(df, DataFrame):
+            # self._logger.error("'DataFrame' instance expected, not '{}'".format(type(df)))
+            raise TypeError("'DataFrame' instance expected, not '{}'".format(type(df)))
 
         if shape is not None:
             if not Utils.is_shape(shape):
                 # self._logger.error("invalid shape")
                 raise ValueError("invalid shape")
 
-        self._spark_context = rdd.context
+        self._spark_session = df.sql_ctx.sparkSession
         self._shape = shape
         self._num_elements = self._shape[0] * self._shape[1]
         self._num_nonzero_elements = 0
         self._data_type = data_type
+        self._is_checkpointed = False
 
-        self.data = rdd
+        self.data = df
+        self._fields = self.data.schema.names
 
         self._logger = None
         self._profiler = None
 
     @property
-    def spark_context(self):
-        """`SparkContext`"""
-        return self._spark_context
+    def spark_session(self):
+        """`SparkSession`"""
+        return self._spark_session
 
     @property
     def shape(self):
@@ -66,7 +70,7 @@ class Base:
 
     @property
     def data_type(self):
-        """`RDD`"""
+        """`DataFrame`"""
         return self._data_type
 
     @property
@@ -107,6 +111,18 @@ class Base:
     def to_string(self):
         return self.__str__()
 
+    def rdd(self):
+        """Return the corresponding `RDD` of this object's `DataFrame`."""
+        return self.data.rdd
+
+    def isCached(self):
+        """Return if this object's `DataFrame` is cached."""
+        return self.data.is_cached
+
+    def isCheckpointed(self):
+        """Return if this object's `DataFrame` is checkpointed."""
+        return self._is_checkpointed
+
     def sparsity(self):
         """Calculate the sparsity of this object.
 
@@ -119,12 +135,12 @@ class Base:
         return 1.0 - self.num_nonzero_elements / self._num_elements
 
     def repartition(self, num_partitions):
-        """Changes the number of partitions of this object's RDD.
+        """Change the number of partitions of this object's DataFrame.
 
         Parameters
         ----------
         num_partitions : int
-            The target number of partitions of the RDD.
+            The target number of partitions of the DataFrame.
 
         Returns
         -------
@@ -132,20 +148,20 @@ class Base:
             A reference to this object.
 
         """
-        if num_partitions > self.data.getNumPartitions():
-            self.data = self.data.repartition(num_partitions)
-        elif num_partitions < self.data.getNumPartitions():
-            self.data = self.data.coalesce(num_partitions)
+        if num_partitions > self.data.rdd.getNumPartitions():
+            self.data = self.data.rdd.repartition(num_partitions)
+        elif num_partitions < self.data.rdd.getNumPartitions():
+            self.data = self.data.rdd.coalesce(num_partitions)
 
         return self
 
     def define_partitioner(self, num_partitions):
-        """Define the hash partitioner with the chosen number of partitions for this object's RDD.
+        """Define the hash partitioner with the chosen number of partitions for this object's DataFrame.
 
         Parameters
         ----------
         num_partitions : int
-            The target number of partitions of the RDD.
+            The target number of partitions of the DataFrame.
 
         Returns
         -------
@@ -160,12 +176,12 @@ class Base:
         return self
 
     def persist(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Persist this object's RDD considering the chosen storage level.
+        """Persist this object's DataFrame considering the chosen storage level.
 
         Parameters
         ----------
         storage_level : `StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the DataFrame. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
@@ -174,13 +190,13 @@ class Base:
 
         """
         if self.data is not None:
-            if not self.data.is_cached:
+            if not self.isCached():
                 self.data.persist(storage_level)
                 if self._logger:
-                    self._logger.info("RDD {} was persisted".format(self.data.id()))
+                    self._logger.info("DataFrame {} was persisted".format(self.data.id()))
             else:
                 if self._logger:
-                    self._logger.info("RDD {} has already been persisted".format(self.data.id()))
+                    self._logger.info("DataFrame {} has already been persisted".format(self.data.id()))
         else:
             if self._logger:
                 self._logger.warning("there is no data to be persisted")
@@ -188,7 +204,7 @@ class Base:
         return self
 
     def unpersist(self):
-        """Unpersist this object's RDD.
+        """Unpersist this object's DataFrame.
 
         Returns
         -------
@@ -197,13 +213,13 @@ class Base:
 
         """
         if self.data is not None:
-            if self.data.is_cached:
+            if self.isCached():
                 self.data.unpersist()
                 if self._logger:
-                    self._logger.info("RDD {} was unpersisted".format(self.data.id()))
+                    self._logger.info("DataFrame {} was unpersisted".format(self.data.id()))
             else:
                 if self._logger:
-                    self._logger.info("RDD {} has already been unpersisted".format(self.data.id()))
+                    self._logger.info("DataFrame {} has already been unpersisted".format(self.data.id()))
         else:
             if self._logger:
                 self._logger.warning("there is no data to be unpersisted")
@@ -222,15 +238,15 @@ class Base:
         return self.unpersist()
 
     def materialize(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Materialize this object's RDD considering the chosen storage level.
+        """Materialize this object's DataFrame considering the chosen storage level.
 
-        This method calls persist and right after counts how many elements there are in the RDD to force its
+        This method calls persist and right after counts how many elements there are in the DataFrame to force its
         persistence.
 
         Parameters
         ----------
         storage_level : `StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the DataFrame. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
@@ -242,17 +258,17 @@ class Base:
         self._num_nonzero_elements = self.data.count()
 
         if self._logger:
-            self._logger.info("RDD {} was materialized".format(self.data.id()))
+            self._logger.info("DataFrame {} was materialized".format(self.data.id()))
 
         return self
 
     def checkpoint(self):
-        """Checkpoint this object's RDD.
+        """Checkpoint this object's DataFrame.
 
         Notes
         -----
         If it is intended to use this method in an application, it is necessary to define
-        the checkpoint dir using the `SparkContext` object.
+        the checkpoint dir using the `SparkSession` object.
 
         Returns
         -------
@@ -260,36 +276,38 @@ class Base:
             A reference to this object.
 
         """
-        if self.data.isCheckpointed():
+        if self.isCheckpointed():
             if self._logger:
-                self._logger.info("RDD already checkpointed")
+                self._logger.info("DataFrame already checkpointed")
             return self
 
-        if not self.data.is_cached:
+        if not self.isCached():
             if self._logger:
-                self._logger.warning("it is recommended to cache the RDD before checkpointing it")
+                self._logger.warning("it is recommended to cache the DataFrame before checkpointing it")
 
         self.data.checkpoint()
 
         if self._logger:
-            self._logger.info("RDD {} was checkpointed in {}".format(self.data.id(), self.data.getCheckpointFile()))
+            self._logger.info("DataFrame {} was checkpointed in {}".format(self.data.id(), self.data.getCheckpointFile()))
+
+        self._is_checkpointed = True
 
         return self
 
     def dump(self, path, glue=None, codec=None, filename=None):
-        """Dump this object's RDD to disk in many part-* files.
+        """Dump this object's DataFrame to disk in many part-* files.
 
         Notes
         -----
-        Depending, on the chosen dumping mode, this method calls the `collect` method of RDD.
+        Depending, on the chosen dumping mode, this method calls the `collect` method of DataFrame.
         This is not suitable for large working sets, as all data may not fit into main memory.
 
         Parameters
         ----------
         path : str
-            The path where the dumped RDD will be located at.
+            The path where the dumped DataFrame will be located at.
         glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
+            The glue string that connects each coordinate and value of each element in the DataFrame.
             Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
@@ -300,15 +318,15 @@ class Base:
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = Utils.get_conf(self._spark_session, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(self._spark_session, 'quantum.dumpingCompressionCodec')
 
-        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode')
+        dumping_mode = Utils.get_conf(self._spark_session, 'quantum.math.dumpingMode')
 
         if dumping_mode == Utils.DumpingModeUniqueFile:
-            data = self.data.collect
+            data = self.data.collect()
 
             if not filename:
                 filename = Utils.get_temp_path(path)
@@ -316,7 +334,7 @@ class Base:
             if len(data):
                 with open(Utils.append_slash_dir(path) + filename, 'a') as f:
                     for d in data:
-                        f.write(glue.join([str(e) for e in d]))
+                        f.write(glue.join([str(d[f]) for field in self._fields]))
         elif dumping_mode == Utils.DumpingModePartFiles:
             self.data.map(
                 lambda m: glue.join([str(e) for e in m])
@@ -327,11 +345,11 @@ class Base:
             raise NotImplementedError("invalid dumping mode")
 
     def numpy_array(self):
-        """Create a numpy array containing this object's RDD data.
+        """Create a numpy array containing this object's DataFrame data.
 
         Notes
         -----
-        This method calls the `collect` method of RDD. This is not suitable for large working sets,
+        This method calls the `collect` method of DataFrame. This is not suitable for large working sets,
         as all data may not fit into main memory.
 
         Returns

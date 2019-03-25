@@ -12,16 +12,16 @@ __all__ = ['Coin', 'is_coin']
 class Coin:
     """Top-level class for coins."""
 
-    def __init__(self, spark_context):
+    def __init__(self, spark_session):
         """Build a top-level `Coin` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
 
         """
-        self._spark_context = spark_context
+        self._spark_session = spark_session
         self._size = None
         self._data = None
 
@@ -29,9 +29,9 @@ class Coin:
         self._profiler = None
 
     @property
-    def spark_context(self):
-        """`SparkContext`"""
-        return self._spark_context
+    def spark_session(self):
+        """`SparkSession`"""
+        return self._spark_session
 
     @property
     def size(self):
@@ -80,7 +80,7 @@ class Coin:
 
     def _profile(self, operator, initial_time):
         if self._profiler is not None:
-            app_id = self._spark_context.applicationId
+            app_id = self._spark_session.sparkContext.applicationId
 
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
@@ -120,7 +120,7 @@ class Coin:
         """
         return False
 
-    def create_operator(self, mesh, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, mesh, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the coin operator.
 
         Raises

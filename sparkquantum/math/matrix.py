@@ -1,6 +1,8 @@
 import math
 import numpy as np
 
+from pyspark.sql import functions
+
 from sparkquantum.math.base import Base
 from sparkquantum.math.vector import Vector, is_vector
 from sparkquantum.utils.utils import Utils
@@ -11,43 +13,30 @@ __all__ = ['Matrix', 'is_matrix']
 class Matrix(Base):
     """Class for matrices."""
 
-    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
+    def __init__(self, df, shape, data_type=complex):
         """Build a `Matrix` object.
 
         Parameters
         ----------
-        rdd : `RDD`
-            The base RDD of this object.
+        df : `DataFrame`
+            The base DataFrame of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
 
         """
-        super().__init__(rdd, shape, data_type=data_type)
-
-        self._coordinate_format = coord_format
-
-    @property
-    def coordinate_format(self):
-        return self._coordinate_format
+        super().__init__(df, shape, data_type=data_type)
 
     def dump(self, path, glue=None, codec=None):
-        """Dump this object's RDD to disk in many part-* files.
-
-        Notes
-        -----
-        This method exports the data in the `Utils.MatrixCoordinateDefault`.
+        """Dump this object's DataFrame to disk in many part-* files.
 
         Parameters
         ----------
         path : str
-            The path where the dumped RDD will be located at.
+            The path where the dumped DataFrame will be located at.
         glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
+            The glue string that connects each coordinate and value of each element in the DataFrame.
             Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
@@ -55,28 +44,19 @@ class Matrix(Base):
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = Utils.get_conf(self._spark_session, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(self._spark_session, 'quantum.dumpingCompressionCodec')
 
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[1][0]), str(m[0]), str(m[1][1])))
-            )
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[0]), str(m[1][0]), str(m[1][1])))
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
-            )
+        df = self.data.map(
+            lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
+        )
 
-        rdd.saveAsTextFile(path, codec)
+        df.saveAsTextFile(path, codec)
 
     def numpy_array(self):
-        """Create a numpy array containing this object's RDD data.
+        """Create a numpy array containing this object's DataFrame data.
 
         Returns
         -------
@@ -87,67 +67,18 @@ class Matrix(Base):
         data = self.data.collect()
         result = np.zeros(self._shape, dtype=self._data_type)
 
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            for e in data:
-                result[e[1][0], e[0]] = e[1][1]
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            for e in data:
-                result[e[0], e[1][0]] = e[1][1]
-        else:  # Utils.MatrixCoordinateDefault
-            for e in data:
-                result[e[0], e[1]] = e[2]
+        for d in data:
+            result[d['i'], d['j']] = d['v']
 
         return result
 
-    def _kron(self, other):
-        other_shape = other.shape
-        new_shape = (self._shape[0] * other_shape[0], self._shape[1] * other_shape[1])
-        data_type = Utils.get_precendent_type(self._data_type, other.data_type)
-
-        expected_elems = self._num_nonzero_elements * other.num_nonzero_elements
-        expected_size = Utils.get_size_of_type(data_type) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
-
-        rdd = self.data.map(
-            lambda m: (0, m)
-        ).join(
-            other.data.map(
-                lambda m: (0, m)
-            ),
-            numPartitions=num_partitions
-        ).map(
-            lambda m: (m[1][0], m[1][1])
-        )
-
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            rdd = rdd.map(
-                lambda m: (m[0][1] * other_shape[1] + m[1][1], (m[0][0] * other_shape[0] + m[1][0], m[0][2] * m[1][2]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = rdd.map(
-                lambda m: (m[0][0] * other_shape[0] + m[1][0], (m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = rdd.map(
-                lambda m: (m[0][0] * other_shape[0] + m[1][0], m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2])
-            )
-
-        return rdd, new_shape
-
-    def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
+    def kron(self, other):
         """Perform a tensor (Kronecker) product with another matrix.
 
         Parameters
         ----------
         other : `Matrix`
             The other matrix.
-        coord_format : int, optional
-            Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -160,9 +91,25 @@ class Matrix(Base):
                 self._logger.error("'Matrix' instance expected, not '{}'".format(type(other)))
             raise TypeError("'Matrix' instance expected, not '{}'".format(type(other)))
 
-        rdd, new_shape = self._kron(other)
+        other_shape = other.shape
+        new_shape = (self._shape[0] * other_shape[0], self._shape[1] * other_shape[1])
+        data_type = Utils.get_precendent_type(self._data_type, other.data_type)
 
-        return Matrix(rdd, new_shape, coord_format=coord_format)
+        a = self.data.select(
+            functions.col('0').alias('a'), self.data['i'].alias('a_i'), self.data['j'].alias('a_j'), self.data['v'].alias('a_v')
+        )
+
+        b = other.data.select(
+            functions.col('0').alias('b'), self.data['i'].alias('b_i'), self.data['j'].alias('b_j'), self.data['v'].alias('b_v')
+        )
+
+        df = a.join(
+            b, a['a'] == b['b'], 'inner'
+        ).select(
+            a['a_i'] * other_shape[0] + b['b_i'], a['a_j'] * other_shape[1] + b['b_j'], a['a_v'] * b['b_v']
+        )
+
+        return Matrix(df, new_shape, data_type=data_type)
 
     def norm(self):
         """Calculate the norm of this matrix.
@@ -173,24 +120,16 @@ class Matrix(Base):
             The norm of this matrix.
 
         """
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier or self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            n = self.data.filter(
-                lambda m: m[1][1] != complex()
-            ).map(
-                lambda m: m[1][1].real ** 2 + m[1][1].imag ** 2
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            n = self.data.filter(
-                lambda m: m[2] != complex()
-            ).map(
-                lambda m: m[2].real ** 2 + m[2].imag ** 2
-            )
+        n = self.data.filter(
+            self.data['v'] != self._data_type()
+        ).agg(
+            functions.sum(functions.abs(self.data['v']) ** 2).alias('v')
+        ).take(1)[0]['v']
 
-        n = n.reduce(
-            lambda a, b: a + b
-        )
-
-        return math.sqrt(n)
+        if n is None:
+            return 0
+        else:
+            return math.sqrt(n)
 
     def is_unitary(self):
         """Check if this matrix is unitary by calculating its norm.
@@ -201,45 +140,36 @@ class Matrix(Base):
             True if the norm of this matrix is 1.0, False otherwise.
 
         """
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(self._spark_session, 'quantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 
-    def _multiply_matrix(self, other, coord_format):
+    def _multiply_matrix(self, other):
         if self._shape[1] != other.shape[0]:
             if self._logger:
                 self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
             raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
 
         shape = (self._shape[0], other.shape[1])
-        num_partitions = max(self.data.getNumPartitions(), other.data.getNumPartitions())
 
-        rdd = self.data.join(
-            other.data, numPartitions=num_partitions
-        ).map(
-            lambda m: ((m[1][0][0], m[1][1][0]), m[1][0][1] * m[1][1][1])
-        ).reduceByKey(
-            lambda a, b: a + b, numPartitions=num_partitions
+        a = self.data.select(
+            self.data['i'].alias('a_i'), self.data['j'].alias('a_j'), self.data['v'].alias('a_v'),
+        )
+        b = other.data.select(
+            other.data['i'].alias('b_i'), other.data['j'].alias('b_j'), other.data['v'].alias('b_v'),
         )
 
-        if coord_format == Utils.MatrixCoordinateMultiplier:
-            rdd = rdd.map(
-                lambda m: (m[0][1], (m[0][0], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        elif coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = rdd.map(
-                lambda m: (m[0][0], (m[0][1], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = rdd.map(
-                lambda m: (m[0][0], m[0][1], m[1])
-            )
+        df = a.join(
+            b, a['a_j'] == b['b_i'], 'inner'
+        ).select(
+            a['a_i'].alias('i'), b['b_j'].alias('j'), (a['a_v'] * b['b_v']).alias('v')
+        ).groupBy(
+            'i', 'j'
+        ).agg(
+            functions.sum('v').alias('v')
+        )
 
-        return Matrix(rdd, shape, coord_format=coord_format)
+        return Matrix(df, shape)
 
     def _multiply_vector(self, other):
         if self._shape[1] != other.shape[0]:
@@ -249,26 +179,32 @@ class Matrix(Base):
 
         shape = other.shape
 
-        rdd = self.data.join(
-            other.data, numPartitions=self.data.getNumPartitions()
-        ).map(
-            lambda m: (m[1][0][0], m[1][0][1] * m[1][1])
-        ).reduceByKey(
-            lambda a, b: a + b, numPartitions=self.data.getNumPartitions()
+        m = self.data.select(
+            self.data['i'].alias('m_i'), self.data['j'].alias('m_j'), self.data['v'].alias('m_v'),
+        )
+        v = other.data.select(
+            other.data['i'].alias('v_i'), other.data['v'].alias('v_v'),
         )
 
-        return Vector(rdd, shape)
+        df = m.join(
+            v, m['m_j'] == v['v_i'], 'inner'
+        ).select(
+            m['m_i'].alias('i'), (m['m_v'] * v['v_v']).alias('v')
+        ).groupBy(
+            'i'
+        ).agg(
+            functions.sum('v').alias('v')
+        )
 
-    def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
+        return Vector(df, shape)
+
+    def multiply(self, other):
         """Multiply this matrix with another one or with a vector.
 
         Parameters
         ----------
         other `Matrix` or `Vector`
             A `Matrix` if multiplying another matrix, `Vector` otherwise.
-        coord_format : int, optional
-            Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`. Not applicable when multiplying a `Vector`.
 
         Returns
         -------
@@ -281,7 +217,7 @@ class Matrix(Base):
 
         """
         if is_matrix(other):
-            return self._multiply_matrix(other, coord_format)
+            return self._multiply_matrix(other)
         elif is_vector(other):
             return self._multiply_vector(other)
         else:

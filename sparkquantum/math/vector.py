@@ -1,7 +1,7 @@
 import math
-from datetime import datetime
+import numpy as np
 
-from pyspark import StorageLevel
+from pyspark.sql import functions
 
 from sparkquantum.math.base import Base
 from sparkquantum.utils.utils import Utils
@@ -12,13 +12,13 @@ __all__ = ['Vector', 'is_vector']
 class Vector(Base):
     """Class for vectors."""
 
-    def __init__(self, rdd, shape, data_type=complex):
+    def __init__(self, df, shape, data_type=complex):
         """Build a `Vector` object.
 
         Parameters
         ----------
-        rdd : `RDD`
-            The base RDD of this object.
+        df : `DataFrame`
+            The base DataFrame of this object.
         shape : tuple
             The shape of this vector object. Must be a 2-dimensional tuple.
         data_type : type, optional
@@ -27,30 +27,49 @@ class Vector(Base):
         """
         super().__init__(rdd, shape, data_type=data_type)
 
-    def _kron(self, other):
-        other_shape = other.shape
-        new_shape = (self._shape[0] * other_shape[0], 1)
+    def dump(self, path, glue=None, codec=None):
+        """Dump this object's DataFrame to disk in many part-* files.
 
-        expected_elems = new_shape[0]
-        expected_size = Utils.get_size_of_type(self.data_type) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        Parameters
+        ----------
+        path : str
+            The path where the dumped DataFrame will be located at.
+        glue : str, optional
+            The glue string that connects each coordinate and value of each element in the DataFrame.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+        codec : str, optional
+            Codec name used to compress the dumped data.
+            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
 
-        rdd = self.data.map(
-            lambda m: (0, m)
-        ).join(
-            other.data.map(
-                lambda m: (0, m)
-            ),
-            numPartitions=num_partitions
-        ).map(
-            lambda m: (m[1][0], m[1][1])
+        """
+        if glue is None:
+            glue = Utils.get_conf(self._spark_session, 'quantum.dumpingGlue')
+
+        if codec is None:
+            codec = Utils.get_conf(self._spark_session, 'quantum.dumpingCompressionCodec')
+
+        df = self.data.map(
+            lambda m: glue.join((str(m[0]), str(m[1])))
         )
 
-        rdd = rdd.map(
-            lambda m: (m[0][0] * other_shape[0] + m[1][0], m[0][1] * m[1][1])
-        )
+        df.saveAsTextFile(path, codec)
 
-        return rdd, new_shape
+    def numpy_array(self):
+        """Create a numpy array containing this object's DataFrame data.
+
+        Returns
+        -------
+        ndarray
+            The numpy array
+
+        """
+        data = self.data.collect()
+        result = np.zeros(self._shape, dtype=self._data_type)
+
+        for d in data:
+            result[d['i']] = d['v']
+
+        return result
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another vector.
@@ -71,9 +90,25 @@ class Vector(Base):
                 self._logger.error("'Vector' instance expected, not '{}'".format(type(other)))
             raise TypeError("'Vector' instance expected, not '{}'".format(type(other)))
 
-        rdd, new_shape = self._kron(other)
+        other_shape = other.shape
+        new_shape = (self._shape[0] * other_shape[0], 1)
+        data_type = Utils.get_precendent_type(self._data_type, other.data_type)
 
-        return Vector(rdd, new_shape)
+        a = self.data.select(
+            functions.col('0').alias('a'), self.data['i'].alias('a_i'), self.data['v'].alias('a_v')
+        )
+
+        b = other.data.select(
+            functions.col('0').alias('b'), self.data['i'].alias('b_i'), self.data['v'].alias('b_v')
+        )
+
+        df = a.join(
+            b, a['a'] == b['b'], 'inner'
+        ).select(
+            a['a_i'] * other_shape[0] + b['b_i'], a['a_v'] * b['b_v']
+        )
+
+        return Vector(df, new_shape, data_type=data_type)
 
     def norm(self):
         """Calculate the norm of this vector.
@@ -84,17 +119,16 @@ class Vector(Base):
             The norm of this vector.
 
         """
-        data_type = self._data_type()
-
         n = self.data.filter(
-            lambda m: m[1] != data_type
-        ).map(
-            lambda m: m[1].real ** 2 + m[1].imag ** 2
-        ).reduce(
-            lambda a, b: a + b
-        )
+            self.data['v'] != self._data_type()
+        ).agg(
+            functions.sum(functions.abs(self.data['v']) ** 2).alias('v')
+        ).take(1)[0]['v']
 
-        return math.sqrt(n)
+        if n is None:
+            return 0
+        else:
+            return math.sqrt(n)
 
     def is_unitary(self):
         """Check if this vector is unitary by calculating its norm.
@@ -105,7 +139,7 @@ class Vector(Base):
             True if the norm of this vector is 1.0, False otherwise.
 
         """
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(self._spark_session, 'quantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 

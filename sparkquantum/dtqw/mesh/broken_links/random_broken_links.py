@@ -9,18 +9,18 @@ __all__ = ['RandomBrokenLinks']
 class RandomBrokenLinks(BrokenLinks):
     """Class for generating random broken links for a mesh."""
 
-    def __init__(self, spark_context, probability):
+    def __init__(self, spark_session, probability):
         """Build a random broken links generator object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         probability : float
             Probability of the occurences of broken links in the mesh.
 
         """
-        super().__init__(spark_context)
+        super().__init__(spark_session)
 
         if probability <= 0:
             # self._logger.error("probability of broken links must be positive")
@@ -46,13 +46,13 @@ class RandomBrokenLinks(BrokenLinks):
 
         """
         probability = self._probability
-        seed = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.randomBrokenLinks.seed')
+        seed = Utils.get_conf(self._spark_session, 'quantum.dtqw.mesh.randomBrokenLinks.seed')
 
         def __map(e):
             random.seed(seed)
             return e, random.random() < probability
 
-        rdd = self._spark_context.range(
+        rdd = self._spark_session.sparkContext.range(
             num_edges
         ).map(
             __map
@@ -60,11 +60,11 @@ class RandomBrokenLinks(BrokenLinks):
             lambda m: m[1] is True
         )
 
-        generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+        generation_mode = Utils.get_conf(self._spark_session, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == Utils.BrokenLinksGenerationModeRDD:
             return rdd
         elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-            return Utils.broadcast(self._spark_context, rdd.collectAsMap())
+            return Utils.broadcast(self._spark_session, rdd.collectAsMap())
         else:
             raise ValueError("invalid broken links generation mode")

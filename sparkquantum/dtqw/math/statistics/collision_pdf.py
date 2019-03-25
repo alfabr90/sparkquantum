@@ -100,7 +100,7 @@ class CollisionPDF(PDF):
         Parameters
         ----------
         storage_level : `StorageLevel`
-            The desired storage level when materializing the RDD.
+            The desired storage level when materializing the DataFrame.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns

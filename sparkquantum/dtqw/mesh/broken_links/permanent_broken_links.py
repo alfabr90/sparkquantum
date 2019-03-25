@@ -9,18 +9,18 @@ __all__ = ['PermanentBrokenLinks']
 class PermanentBrokenLinks(BrokenLinks):
     """Class for permanent broken links of a mesh."""
 
-    def __init__(self, spark_context, edges):
+    def __init__(self, spark_session, edges):
         """Build a permanent `BrokenLinks` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_session : `SparkSession`
+            The `SparkSession` object.
         edges : collection
             Collection of the edges that are broken.
 
         """
-        super().__init__(spark_context)
+        super().__init__(spark_session)
 
         if not (isinstance(edges, range) or isinstance(edges, (list, tuple))):
             raise ValueError("invalid edges format")
@@ -56,7 +56,7 @@ class PermanentBrokenLinks(BrokenLinks):
                     )
                 )
 
-            rdd = self._spark_context.range(
+            rdd = self._spark_session.sparkContext.range(
                 self._edges
             )
         elif isinstance(self._edges, (list, tuple)):
@@ -67,7 +67,7 @@ class PermanentBrokenLinks(BrokenLinks):
                     )
                 )
 
-            rdd = self._spark_context.parallelize(
+            rdd = self._spark_session.sparkContext.parallelize(
                 self._edges
             )
 
@@ -75,11 +75,11 @@ class PermanentBrokenLinks(BrokenLinks):
             lambda m: (m, True)
         )
 
-        generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+        generation_mode = Utils.get_conf(self._spark_session, 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == Utils.BrokenLinksGenerationModeRDD:
             return rdd
         elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-            return Utils.broadcast(self._spark_context, rdd.collectAsMap())
+            return Utils.broadcast(self._spark_session, rdd.collectAsMap())
         else:
             raise ValueError("invalid broken links generation mode")
