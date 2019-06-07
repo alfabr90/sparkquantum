@@ -110,9 +110,9 @@ class Utils():
         'quantum.dtqw.walk.dumpingFrequency': -1,
         'quantum.dtqw.walk.dumpingPath': './',
         'quantum.dtqw.walk.checkUnitary': 'False',
+        'quantum.dtqw.walk.dumpStatesPDF': 'False',
         'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
         'quantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
-        'quantum.dtqw.state.dumpingMode': DumpingModePartFiles,
         'quantum.dtqw.profiler.logExecutors': 'False'
     }
     """

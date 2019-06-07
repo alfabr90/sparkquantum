@@ -52,12 +52,14 @@ class State(Vector):
         return self._num_particles
 
     def dump(self, path, glue=None, codec=None, filename='', dumping_format=None):
-        """Dump this object's RDD to disk in many part-* files.
+        """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
         -----
         This method checks the dumping format by using the 'quantum.dtqw.state.dumpingFormat' configuration value.
         In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
+        Depending on the chosen dumping mode, this method calls the RDD's `collect` method.
+        This is not suitable for large working sets, as all data may not fit into driver's main memory.
 
         Parameters
         ----------
@@ -74,7 +76,7 @@ class State(Vector):
             In this case, a temporary named file is generated inside the informed path.
         dumping_format : int, optional
             Printing format used to dump this state.
-            Default value is `None`. In this case, it uses the 'quantum.dtqw.state.dumpingFormat' configuration value.
+            Default value is `None`. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
 
         """
         if glue is None:
@@ -86,22 +88,27 @@ class State(Vector):
         if dumping_format is None:
             dumping_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
 
-        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingMode')
+        dumping_mode = int(Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode'))
 
         if dumping_format == Utils.StateDumpingFormatIndex:
             if dumping_mode == Utils.DumpingModeUniqueFile:
-                data = self.data.collect
+                data = self.data.collect()
+
+                Utils.create_dir(path)
 
                 if not filename:
                     filename = Utils.get_temp_path(path)
+                else:
+                    filename = Utils.append_slash_dir(path) + filename
 
                 if len(data):
-                    with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                    with open(filename, 'a') as f:
                         for d in data:
-                            f.write(glue.join([str(e) for e in d]))
+                            f.write(glue.join([str(e) for e in d]) + "\n")
             elif dumping_mode == Utils.DumpingModePartFiles:
-                def __map(m):
-                    return glue.join([str(e) for e in m])
+                self.data.map(
+                    lambda m: glue.join([str(e) for e in m])
+                ).saveAsTextFile(path, codec)
             else:
                 if self._logger:
                     self._logger.error("invalid dumping mode")
@@ -202,15 +209,19 @@ class State(Vector):
                 raise NotImplementedError("mesh dimension not implemented")
 
             if dumping_mode == Utils.DumpingModeUniqueFile:
-                data = self.data.collect
+                data = self.data.collect()
+
+                Utils.create_dir(path)
 
                 if not filename:
                     filename = Utils.get_temp_path(path)
+                else:
+                    filename = Utils.append_slash_dir(path) + filename
 
                 if len(data):
-                    with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                    with open(filename, 'a') as f:
                         for d in data:
-                            f.write(glue.join(d))
+                            f.write(glue.join(d) + "\n")
             elif dumping_mode == Utils.DumpingModePartFiles:
                 self.data.map(
                     __map

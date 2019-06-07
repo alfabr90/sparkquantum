@@ -277,12 +277,12 @@ class Base:
         return self
 
     def dump(self, path, glue=None, codec=None, filename=None):
-        """Dump this object's RDD to disk in many part-* files.
+        """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
         -----
-        Depending, on the chosen dumping mode, this method calls the `collect` method of RDD.
-        This is not suitable for large working sets, as all data may not fit into main memory.
+        Depending on the chosen dumping mode, this method calls the RDD's `collect` method.
+        This is not suitable for large working sets, as all data may not fit into driver's main memory.
 
         Parameters
         ----------
@@ -305,18 +305,22 @@ class Base:
         if codec is None:
             codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
 
-        dumping_mode = Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode')
+        dumping_mode = int(Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode'))
 
         if dumping_mode == Utils.DumpingModeUniqueFile:
-            data = self.data.collect
+            data = self.data.collect()
+
+            Utils.create_dir(path)
 
             if not filename:
                 filename = Utils.get_temp_path(path)
+            else:
+                filename = Utils.append_slash_dir(path) + filename
 
             if len(data):
-                with open(Utils.append_slash_dir(path) + filename, 'a') as f:
+                with open(filename, 'a') as f:
                     for d in data:
-                        f.write(glue.join([str(e) for e in d]))
+                        f.write(glue.join([str(e) for e in d]) + "\n")
         elif dumping_mode == Utils.DumpingModePartFiles:
             self.data.map(
                 lambda m: glue.join([str(e) for e in m])

@@ -912,6 +912,20 @@ class DiscreteTimeQuantumWalk:
                 'quantum.dtqw.walk.checkUnitary'
             )
 
+            dump_states_pdf = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpStatesPDF'
+            )
+
+            if dump_states_pdf == 'True':
+                dumping_path = Utils.get_conf(
+                    self._spark_context,
+                    'quantum.dtqw.walk.dumpingPath'
+                )
+
+                if not dumping_path.endswith('/'):
+                    dumping_path += '/'
+
             for i in range(1, steps + 1, 1):
                 if self._mesh.broken_links:
                     self.destroy_shift_operator()
@@ -942,13 +956,16 @@ class DiscreteTimeQuantumWalk:
                     if num_partitions:
                         result_tmp.define_partitioner(num_partitions)
 
+                result_tmp.materialize(storage_level)
+                result.unpersist()
+
                 if checkpoint_states == 'True':
                     if i % checkpointing_frequency == 0:
-                        result_tmp.persist(storage_level).checkpoint()
+                        result_tmp.checkpoint()
 
                 if dump_states == 'True':
                     if i % dumping_frequency == 0:
-                        result_tmp.persist(storage_level).dump(dumping_path + str(i))
+                        result_tmp.dump(dumping_path + "states/" + str(i))
 
                 if check_unitary == 'True':
                     if not result_tmp.is_unitary():
@@ -956,8 +973,16 @@ class DiscreteTimeQuantumWalk:
                             self._logger.error("the state {} is not unitary".format(i))
                         raise ValueError("the state {} is not unitary".format(i))
 
-                result_tmp.materialize(storage_level)
-                result.unpersist()
+                if dump_states_pdf == 'True':
+                    if self._num_particles == 1:
+                        result_tmp.measure().dump(dumping_path + "pdf/" + str(i))
+                    else:
+                        joint, collision, marginal = result_tmp.measure()
+
+                        joint.dump(dumping_path + "pdf/joint/" + str(i))
+                        collision.dump(dumping_path + "pdf/collision/" + str(i))
+                        for p in range(len(marginal)):
+                            marginal[p].dump(dumping_path + "pdf/marginal/particle" + str(p+1) + "/" + str(i))
 
                 result = result_tmp
 
