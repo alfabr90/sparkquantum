@@ -982,7 +982,7 @@ class DiscreteTimeQuantumWalk:
                         joint.dump(dumping_path + "pdf/joint/" + str(i))
                         collision.dump(dumping_path + "pdf/collision/" + str(i))
                         for p in range(len(marginal)):
-                            marginal[p].dump(dumping_path + "pdf/marginal/particle" + str(p+1) + "/" + str(i))
+                            marginal[p].dump(dumping_path + "pdf/marginal/" + str(i) + "/particle" + str(p+1))
 
                 result = result_tmp
 
