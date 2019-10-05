@@ -11,21 +11,19 @@ __all__ = ['Mesh2D']
 class Mesh2D(Mesh):
     """Top-level class for 2-dimensional meshes."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, size, broken_links=None):
         """
         Build a top-level 2-dimensional `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         size : tuple
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(size, broken_links=broken_links)
 
         self._coin_size = 4
         self._dimension = 2

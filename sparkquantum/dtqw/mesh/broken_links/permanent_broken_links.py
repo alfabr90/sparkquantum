@@ -9,18 +9,16 @@ __all__ = ['PermanentBrokenLinks']
 class PermanentBrokenLinks(BrokenLinks):
     """Class for permanent broken links of a mesh."""
 
-    def __init__(self, spark_context, edges):
+    def __init__(self, edges):
         """Build a permanent `BrokenLinks` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         edges : collection
             Collection of the edges that are broken.
 
         """
-        super().__init__(spark_context)
+        super().__init__()
 
         if not (isinstance(edges, range) or isinstance(edges, (list, tuple))):
             raise ValueError("invalid edges format")

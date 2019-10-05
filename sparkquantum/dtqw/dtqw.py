@@ -4,7 +4,7 @@ import fileinput
 from glob import glob
 from datetime import datetime
 
-from pyspark import StorageLevel
+from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.operator import Operator, is_operator
 from sparkquantum.dtqw.state import State
@@ -18,13 +18,11 @@ __all__ = ['DiscreteTimeQuantumWalk']
 class DiscreteTimeQuantumWalk:
     """Build the necessary operators and perform a discrete time quantum walk."""
 
-    def __init__(self, spark_context, coin, mesh, num_particles, phase=None):
+    def __init__(self, coin, mesh, num_particles, phase=None):
         """Build a discrete time quantum walk object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         coin : `Coin`
             A Coin object.
         mesh : `Mesh`
@@ -35,7 +33,7 @@ class DiscreteTimeQuantumWalk:
             The collision phase of the particles.
 
         """
-        self._spark_context = spark_context
+        self._spark_context = SparkContext.getOrCreate()
         self._coin = coin
         self._mesh = mesh
         self._num_particles = num_particles

@@ -12,20 +12,18 @@ __all__ = ['Line']
 class Line(Mesh1D):
     """Class for Line mesh."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, size, broken_links=None):
         """Build a Line `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         size : int
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(size, broken_links=broken_links)
 
     def _define_size(self, size):
         if not self._validate(size):

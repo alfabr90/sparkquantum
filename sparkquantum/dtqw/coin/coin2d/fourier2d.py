@@ -8,16 +8,9 @@ __all__ = ['Fourier2D']
 class Fourier2D(Coin2D):
     """Class that represents the 2-dimensional Fourier coin."""
 
-    def __init__(self, spark_context):
-        """Build a 2-dimensional Fourier `Coin` object.
-
-        Parameters
-        ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
-
-        """
-        super().__init__(spark_context)
+    def __init__(self):
+        """Build a 2-dimensional Fourier `Coin` object."""
+        super().__init__()
 
         self._data = np.array(
             [[1, 1, 1, 1],

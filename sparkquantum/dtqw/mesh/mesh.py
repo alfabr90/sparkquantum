@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pyspark import StorageLevel
+from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
 from sparkquantum.utils.logger import is_logger
@@ -13,20 +13,18 @@ __all__ = ['Mesh', 'is_mesh']
 class Mesh:
     """Top-level class for meshes."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, size, broken_links=None):
         """Build a top-level `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         size : int or tuple
             Size of the mesh.
         broken_links : `BrokenLinks`, optional
             A `BrokenLinks` object.
 
         """
-        self._spark_context = spark_context
+        self._spark_context = SparkContext.getOrCreate()
         self._size = self._define_size(size)
         self._num_edges = self._define_num_edges(size)
         self._coin_size = None

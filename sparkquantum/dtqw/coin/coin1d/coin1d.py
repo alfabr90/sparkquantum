@@ -13,16 +13,9 @@ __all__ = ['Coin1D']
 class Coin1D(Coin):
     """Top-level class for 1-dimensional coins."""
 
-    def __init__(self, spark_context):
-        """Build a top-level 1-dimensional `Coin` object.
-
-        Parameters
-        ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
-
-        """
-        super().__init__(spark_context)
+    def __init__(self):
+        """Build a top-level 1-dimensional `Coin` object."""
+        super().__init__()
 
         self._size = 2
 

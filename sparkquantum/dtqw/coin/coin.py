@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pyspark import StorageLevel
+from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
@@ -12,16 +12,9 @@ __all__ = ['Coin', 'is_coin']
 class Coin:
     """Top-level class for coins."""
 
-    def __init__(self, spark_context):
-        """Build a top-level `Coin` object.
-
-        Parameters
-        ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
-
-        """
-        self._spark_context = spark_context
+    def __init__(self):
+        """Build a top-level `Coin` object."""
+        self._spark_context = SparkContext.getOrCreate()
         self._size = None
         self._data = None
 

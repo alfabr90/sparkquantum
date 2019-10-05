@@ -1,21 +1,16 @@
 import random
 
+from pyspark import SparkContext
+
 __all__ = ['BrokenLinks']
 
 
 class BrokenLinks():
     """Top-level class for broken links."""
 
-    def __init__(self, spark_context):
-        """Build a top-level `BrokenLinks` object.
-
-        Parameters
-        ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
-
-        """
-        self._spark_context = spark_context
+    def __init__(self):
+        """Build a top-level `BrokenLinks` object."""
+        self._spark_context = SparkContext.getOrCreate()
 
     @property
     def spark_context(self):

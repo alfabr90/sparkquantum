@@ -37,8 +37,8 @@ sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard2D(sparkContext)
-mesh = LatticeDiagonal(sparkContext, (size, size))
+coin = Hadamard2D()
+mesh = LatticeDiagonal((size, size))
 
 # Adding a directory to store plots and logs
 if entangled:
@@ -193,7 +193,7 @@ else:
     initial_state = State(rdd, shape, mesh, num_particles)
 
 # Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(sparkContext, coin, mesh, num_particles, phase=phase)
+dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles, phase=phase)
 
 dtqw.logger = Logger(dtqw.to_string(), sim_path)
 dtqw.profiler = profiler

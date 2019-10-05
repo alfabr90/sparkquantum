@@ -12,13 +12,11 @@ __all__ = ['Segment']
 class Segment(Mesh1D):
     """Class for Segment mesh."""
 
-    def __init__(self, spark_context, size, broken_links=None):
+    def __init__(self, size, broken_links=None):
         """Build a Segment `Mesh` object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         size : int
             Size of the mesh.
         broken_links : `BrokenLinks`, optional

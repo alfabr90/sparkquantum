@@ -9,18 +9,16 @@ __all__ = ['RandomBrokenLinks']
 class RandomBrokenLinks(BrokenLinks):
     """Class for generating random broken links for a mesh."""
 
-    def __init__(self, spark_context, probability):
+    def __init__(self, probability):
         """Build a random broken links generator object.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
         probability : float
             Probability of the occurences of broken links in the mesh.
 
         """
-        super().__init__(spark_context)
+        super().__init__()
 
         if probability <= 0:
             # self._logger.error("probability of broken links must be positive")
