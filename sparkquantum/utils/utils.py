@@ -1,7 +1,6 @@
 import os
 import sys
 import math
-import time
 import tempfile as tf
 
 __all__ = ['Utils']
@@ -99,7 +98,6 @@ class Utils():
         'quantum.cluster.totalCores': 1,
         'quantum.cluster.maxPartitionSize': 64 * 10 ** 6,
         'quantum.dtqw.mesh.brokenLinks.generationMode': BrokenLinksGenerationModeBroadcast,
-        'quantum.dtqw.mesh.randomBrokenLinks.seed': time.time(),
         'quantum.dtqw.interactionOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.kroneckerMode': KroneckerModeBroadcast,
