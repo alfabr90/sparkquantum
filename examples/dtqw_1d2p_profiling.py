@@ -16,6 +16,7 @@ from sparkquantum.utils.logger import Logger
 '''
 base_path = './output/'
 num_cores = 4
+profile = True
 
 num_particles = 2
 steps = 30
@@ -55,6 +56,17 @@ else:
 
 sim_path = walk_path
 Utils.create_dir(sim_path)
+
+# Adding the profiler to the classes and starting it
+profiler = QuantumWalkProfiler()
+
+coin.logger = Logger(coin.to_string(), sim_path)
+mesh.logger = Logger(mesh.to_string(), sim_path)
+coin.profiler = profiler
+mesh.profiler = profiler
+
+profiler.logger = Logger(profiler.to_string(), sim_path)
+profiler.start()
 
 coin_size = coin.size
 mesh_size = mesh.size
@@ -135,8 +147,14 @@ else:
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles, phase=phase)
 
+dtqw.logger = Logger(dtqw.to_string(), sim_path)
+dtqw.profiler = profiler
+
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
+
+final_state.logger = Logger(final_state.to_string(), sim_path)
+final_state.profiler = profiler
 
 # Measuring the state of the system and plotting its PDF
 joint, collision, marginal = final_state.measure()
@@ -146,6 +164,9 @@ collision.plot(sim_path + 'collision_1d2p', dpi=300)
 
 for p in range(len(marginal)):
     marginal[p].plot('{}marginal{}_1d2p'.format(sim_path, p + 1), dpi=300)
+
+# Exporting the profiling data
+profiler.export(sim_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()

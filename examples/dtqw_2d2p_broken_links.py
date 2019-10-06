@@ -5,6 +5,7 @@ from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
+from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
@@ -18,10 +19,12 @@ base_path = './output/'
 num_cores = 4
 
 num_particles = 2
-steps = 3
-size = 3
+steps = 5
+size = 5
 entangled = True
 phase = 1.0 * cmath.pi
+
+bl_prob = 0.2
 
 representationFormat = Utils.StateRepresentationFormatCoinPosition
 # representationFormat = Utils.StateRepresentationFormatPositionCoin
@@ -35,9 +38,12 @@ sparkConf = SparkConf().set(
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
+# Choosing a broken links generator
+broken_links = RandomBrokenLinks(bl_prob)
+
 # Choosing a coin and a mesh for the walk
 coin = Hadamard2D()
-mesh = LatticeDiagonal((size, size))
+mesh = LatticeDiagonal((size, size), broken_links=broken_links)
 
 # Adding a directory to store plots and logs
 if entangled:

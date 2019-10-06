@@ -5,14 +5,17 @@ from pyspark import SparkContext, SparkConf
 from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.state import State
+from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
+from sparkquantum.utils.logger import Logger
 
 '''
     DTQW 1D - 1 particle
 '''
 base_path = './output/'
 num_cores = 4
+profile = True
 
 num_particles = 1
 steps = 30
@@ -43,6 +46,17 @@ walk_path = "{}/".format(
 
 sim_path = walk_path
 Utils.create_dir(sim_path)
+
+# Adding the profiler to the classes and starting it
+profiler = QuantumWalkProfiler()
+
+coin.logger = Logger(coin.to_string(), sim_path)
+mesh.logger = Logger(mesh.to_string(), sim_path)
+coin.profiler = profiler
+mesh.profiler = profiler
+
+profiler.logger = Logger(profiler.to_string(), sim_path)
+profiler.start()
 
 coin_size = coin.size
 mesh_size = mesh.size
@@ -80,12 +94,21 @@ initial_state = State(rdd, shape, mesh, num_particles)
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
 
+dtqw.logger = Logger(dtqw.to_string(), sim_path)
+dtqw.profiler = profiler
+
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
+
+final_state.logger = Logger(final_state.to_string(), sim_path)
+final_state.profiler = profiler
 
 # Measuring the state of the system and plotting its PDF
 joint = final_state.measure()
 joint.plot(sim_path + 'joint_1d1p', dpi=300)
+
+# Exporting the profiling data
+profiler.export(sim_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()
