@@ -11,81 +11,68 @@ class Utils():
 
     DumpingModeUniqueFile = 0
     """
-    DumpingModeUniqueFile : int
-        Indicate that the mathematical entity will be dumped to a unique file in disk. This is not suitable for large working sets,
-        as all data must be collected to the driver node of the cluster and may not fit into memory.
+    Indicate that the mathematical entity will be dumped to a unique file in disk. This is not suitable for large working sets,
+    as all data must be collected to the driver node of the cluster and may not fit into memory.
     """
     DumpingModePartFiles = 1
     """
-    DumpingModePartFiles : int
-        Indicate that the mathematical entity will be dumped to part-* files in disk. This is done in a parallel/distributed way.
-        This is the default behaviour.
+    Indicate that the mathematical entity will be dumped to part-* files in disk. This is done in a parallel/distributed way.
+    This is the default behaviour.
     """
     MatrixCoordinateDefault = 0
     """
-    MatrixCoordinateDefault : int
-        Indicate that the `Matrix` object must have its entries stored as (i,j,value) coordinates.
+    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(i,j,value)`` coordinates.
     """
     MatrixCoordinateMultiplier = 1
     """
-    MatrixCoordinateMultiplier : int
-        Indicate that the `Matrix` object must have its entries stored as (j,(i,value)) coordinates. This is mandatory
-        when the object is the multiplier operand.
+    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(j,(i,value))`` coordinates. This is mandatory
+    when the object is the multiplier operand.
     """
     MatrixCoordinateMultiplicand = 2
     """
-    MatrixCoordinateMultiplicand : int
-        Indicate that the `Matrix` object must have its entries stored as (i,(j,value)) coordinates. This is mandatory
-        when the object is the multiplicand operand.
+    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(i,(j,value))`` coordinates. This is mandatory
+    when the object is the multiplicand operand.
     """
     StateRepresentationFormatCoinPosition = 0
     """
-    StateRepresentationFormatCoinPosition : int
-        Indicate that the quantum system is represented as the kronecker product between the coin and position subspaces.
+    Indicate that the quantum system is represented as the kronecker product between the coin and position subspaces.
     """
     StateRepresentationFormatPositionCoin = 1
     """
-    StateRepresentationFormatPositionCoin : int
-        Indicate that the quantum system is represented as the kronecker product between the position and coin subspaces.
+    Indicate that the quantum system is represented as the kronecker product between the position and coin subspaces.
     """
     StateDumpingFormatIndex = 0
     """
-    StateDumpingFormatIndex : int
-        Indicate that the quantum system will be dumped to disk with the format (i,value).
+    Indicate that the quantum system will be dumped to disk with the format ``(i,value)``.
     """
     StateDumpingFormatCoordinate = 1
     """
-    StateDumpingFormatCoordinate : int
-        Indicate that the quantum system will be dumped to disk with the format (i1,x1,...,in,xn,value),
-        for one-dimensional meshes, or (i1,j1,x1,y1,...,in,jn,xn,yn,value), for two-dimensional meshes,
-        for example, where n is the number of particles.
+    Indicate that the quantum system will be dumped to disk with the format ``(i1,x1,...,in,xn,value)``,
+    for one-dimensional meshes, or ``(i1,j1,x1,y1,...,in,jn,xn,yn,value)``, for two-dimensional meshes,
+    for example, where n is the number of particles.
     """
     KroneckerModeBroadcast = 0
     """
-    KroneckerModeBroadcast : int
-        Indicate that the kronecker operation will be performed with the right operand in a broadcast variable.
-        Suitable for small working sets, providing the best performance due to all the data be located
-        locally in every node of the cluster.
+    Indicate that the kronecker operation will be performed with the right operand in a broadcast variable.
+    Suitable for small working sets, providing the best performance due to all the data be located
+    locally in every node of the cluster.
     """
     KroneckerModeDump = 1
     """
-    KroneckerModeDump : int
-        Indicate that the kronecker operation will be performed with the right operand previously dumped to disk.
-        Suitable for working sets that do not fit in cache provided by Spark.
+    Indicate that the kronecker operation will be performed with the right operand previously dumped to disk.
+    Suitable for working sets that do not fit in cache provided by Spark.
     """
     BrokenLinksGenerationModeBroadcast = 0
     """
-    BrokenLinksGenerationModeBroadcast : int
-        Indicate that the broken links/mesh percolation will be generated by a broadcast variable
-        containing the edges that are broken. Suitable for small meshes, providing the best performance
-        due to all the data be located locally in every node of the cluster.
+    Indicate that the broken links/mesh percolation will be generated by a broadcast variable
+    containing the edges that are broken. Suitable for small meshes, providing the best performance
+    due to all the data be located locally in every node of the cluster.
     """
     BrokenLinksGenerationModeRDD = 1
     """
-    BrokenLinksGenerationModeRDD : int
-        Indicate that the broken links/mesh percolation will be generated by a RDD containing the edges that are broken.
-        Suitable for meshes that their corresponding data do not fit in the cache provided by Spark. Also, with this mode,
-        a left join is performed, making it not the best mode.
+    Indicate that the broken links/mesh percolation will be generated by a RDD containing the edges that are broken.
+    Suitable for meshes that their corresponding data do not fit in the cache provided by Spark. Also, with this mode,
+    a left join is performed, making it not the best mode.
     """
 
     ConfigDefaults = {
@@ -114,8 +101,7 @@ class Utils():
         'quantum.dtqw.profiler.logExecutors': 'False'
     }
     """
-    ConfigDefaults: dict
-        Dict with the default values for all accepted configurations of the package.
+    Dict with the default values for all accepted configurations of the package.
     """
 
     def __init__(self):
@@ -127,7 +113,7 @@ class Utils():
 
         Parameters
         ----------
-        shape :
+        shape : list or tuple
             The object to be checked if it is a shape.
 
         Returns
@@ -144,34 +130,34 @@ class Utils():
 
         Parameters
         ----------
-        sc : `SparkContext`
-            The `SparkContext` object.
-        data :
+        sc : :py:class:`pyspark.SparkContext`
+            The :py:class:`pyspark.SparkContext` object.
+        data
             The data to be broadcast.
 
         Returns
         -------
-        `Broadcast`
-            The `Broadcast` object that contains the broadcast data.
+        :py:class:`pyspark.Broadcast`
+            The :py:class:`pyspark.Broadcast` object that contains the broadcast data.
 
         """
         return sc.broadcast(data)
 
     @staticmethod
     def get_conf(sc, config_str):
-        """Get a configuration value from the `SparkContext` object.
+        """Get a configuration value from the :py:class:`pyspark.SparkContext` object.
 
         Parameters
         ----------
-        sc : `SparkContext`
-            The `SparkContext` object.
+        sc : :py:class:`pyspark.SparkContext`
+            The :py:class:`pyspark.SparkContext` object.
         config_str : str
             The configuration string to have its correspondent value obtained.
 
         Returns
         -------
         str
-            The configuration value or `None` if the configuration is not found.
+            The configuration value or None if the configuration is not found.
 
         """
         c = sc.getConf().get(config_str)
@@ -185,21 +171,21 @@ class Utils():
 
     @staticmethod
     def change_coordinate(rdd, old_coord, new_coord=MatrixCoordinateDefault):
-        """Change the coordinate format of a `Matrix` object's RDD.
+        """Change the coordinate format of a :py:class:`sparkquantum.math.Matrix` object's RDD.
 
         Parameters
         ----------
-        rdd : `RDD`
-            The `Matrix` object's RDD to have its coordinate format changed.
+        rdd : :py:class:`pyspark.RDD`
+            The :py:class:`sparkquantum.math.Matrix` object's RDD to have its coordinate format changed.
         old_coord : int
-            The original coordinate format of the `Matrix` object's RDD.
+            The original coordinate format of the :py:class:`sparkquantum.math.Matrix` object's RDD.
         new_coord : int
-            The new coordinate format. Default value is `Utils.MatrixCoordinateDefault`.
+            The new coordinate format. Default value is :py:const:`Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
-        `RDD`
-            A new `RDD` with the coordinate format changed.
+        :py:class:`pyspark.RDD`
+            A new :py:class:`pyspark.RDD` with the coordinate format changed.
 
         """
         if old_coord == Utils.MatrixCoordinateMultiplier:
@@ -301,12 +287,12 @@ class Utils():
 
     @staticmethod
     def get_num_partitions(spark_context, expected_size):
-        """Calculate the number of partitions for a `RDD` based on its expected size in bytes.
+        """Calculate the number of partitions for a :py:class:`pyspark.RDD` based on its expected size in bytes.
 
         Parameters
         ----------
-        spark_context : `SparkContext`
-            The `SparkContext` object.
+        spark_context : :py:class:`pyspark.SparkContext`
+            The :py:class:`pyspark.SparkContext` object.
         expected_size : int
             The expected size in bytes of the RDD.
 
@@ -317,7 +303,8 @@ class Utils():
 
         Raises
         ------
-        `ValueError`
+        ValueError
+            If the number of cores is not informed.
 
         """
         safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
@@ -361,7 +348,8 @@ class Utils():
 
         Raises
         ------
-        `ValueError`
+        ValueError
+            If `path` is not valid.
 
         """
         if os.path.exists(path):
@@ -394,10 +382,6 @@ class Utils():
         path : str
             The directory name with its path.
 
-        Raises
-        ------
-        `ValueError`
-
         """
         if os.path.exists(path):
             if os.path.isdir(path):
@@ -419,7 +403,8 @@ class Utils():
 
         Raises
         ------
-        `ValueError`
+        ValueError
+            If `path` is not valid.
 
         """
         if os.path.exists(path):

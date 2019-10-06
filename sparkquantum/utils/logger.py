@@ -7,7 +7,7 @@ class Logger:
     """Generate a log file and write log data into it."""
 
     def __init__(self, name, path, level=logging.DEBUG):
-        """Build a `Logger` object.
+        """Build a logger.
 
         Parameters
         ----------
@@ -16,7 +16,7 @@ class Logger:
         path : str
             The base path for the log file.
         level : enumerate, optional
-            The severity level for the log data. Default value is `logging.DEBUG`.
+            The severity level for the log data. Default value is :py:const:`logging.DEBUG`.
 
         """
         self._name = name
@@ -39,7 +39,14 @@ class Logger:
         return self._level
 
     def set_level(self, level):
-        """Set the severity level for log writes."""
+        """Set the severity level for log writes.
+
+        Parameters
+        ----------
+        level : int
+            Severity level for future logs.
+
+        """
         self._level = level
 
     def _write_message(self, level, name, message):
@@ -57,28 +64,56 @@ class Logger:
             f.write("# -------------------- #\n")
 
     def debug(self, message):
-        """Write the message in the log file with debug level."""
+        """Write the message in the log file with debug level.
+
+        Parameters
+        ----------
+        message : str
+            Message to be logged.
+
+        """
         if self._level <= logging.DEBUG:
             self._write_message('DEBUG', self._name, message)
 
     def info(self, message):
-        """Write the message in the log file with info level."""
+        """Write the message in the log file with info level.
+
+        Parameters
+        ----------
+        message : str
+            Message to be logged.
+
+        """
         if self._level <= logging.INFO:
             self._write_message('INFO', self._name, message)
 
     def warning(self, message):
-        """Write the message in the log file with warning level."""
+        """Write the message in the log file with warning level.
+
+        Parameters
+        ----------
+        message : str
+            Message to be logged.
+
+        """
         if self._level <= logging.WARNING:
             self._write_message('WARNING', self._name, message)
 
     def error(self, message):
-        """Write the message in the log file with error level."""
+        """Write the message in the log file with error level.
+
+        Parameters
+        ----------
+        message : str
+            Message to be logged.
+
+        """
         if self._level <= logging.ERROR:
             self._write_message('ERROR', self._name, message)
 
 
 def is_logger(obj):
-    """Check whether argument is a `Logger` object.
+    """Check whether argument is a :py:class:`sparkquantum.utils.Logger` object.
 
     Parameters
     ----------
@@ -88,7 +123,7 @@ def is_logger(obj):
     Returns
     -------
     bool
-        True if argument is a `Logger` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.utils.Logger` object, False otherwise.
 
     """
     return isinstance(obj, Logger)

@@ -12,11 +12,11 @@ class Matrix(Base):
     """Class for matrices."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
-        """Build a `Matrix` object.
+        """Build a :py:class:`sparkquantum.math.Matrix` object.
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
@@ -24,7 +24,7 @@ class Matrix(Base):
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -40,7 +40,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This method exports the data in the `Utils.MatrixCoordinateDefault`.
+        This method exports the data in the :py:const:`Utils.MatrixCoordinateDefault`.
 
         Parameters
         ----------
@@ -48,10 +48,10 @@ class Matrix(Base):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
 
         """
         if glue is None:
@@ -143,15 +143,15 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : `Matrix`
+        other : :py:class:`sparkquantum.math.Matrix`
             The other matrix.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
-        `Matrix`
+        :py:class:`sparkquantum.math.Matrix`
             The resulting matrix.
 
         """
@@ -264,20 +264,20 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other `Matrix` or `Vector`
-            A `Matrix` if multiplying another matrix, `Vector` otherwise.
+        other :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
+            A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`. Not applicable when multiplying a `Vector`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`. Not applicable when multiplying a :py:class:`sparkquantum.math.Vector`.
 
         Returns
         -------
-        `Matrix` or `Vector`
-            A `Matrix` if multiplying another matrix, `Vector` otherwise.
+        :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
+            A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
 
         Raises
         ------
-        `TypeError`
+        TypeError
 
         """
         if is_matrix(other):
@@ -291,7 +291,7 @@ class Matrix(Base):
 
 
 def is_matrix(obj):
-    """Check whether argument is a `Matrix` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.Matrix` object.
 
     Parameters
     ----------
@@ -301,7 +301,7 @@ def is_matrix(obj):
     Returns
     -------
     bool
-        True if argument is a `Matrix` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.Matrix` object, False otherwise.
 
     """
     return isinstance(obj, Matrix)

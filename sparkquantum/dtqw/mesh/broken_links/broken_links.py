@@ -42,7 +42,7 @@ class BrokenLinks():
 
         Raises
         -------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError

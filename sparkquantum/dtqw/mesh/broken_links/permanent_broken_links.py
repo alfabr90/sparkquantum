@@ -48,12 +48,12 @@ class PermanentBrokenLinks(BrokenLinks):
 
         Returns
         -------
-        `RDD` or `Broadcast`
-            The `RDD` or `Broadcast` dict which keys are the numbered edges that are broken.
+        :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
+            The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken.
 
         Raises
         ------
-        `ValueError`
+        ValueError
 
         """
         if isinstance(self._edges, range):

@@ -23,7 +23,7 @@ class Coin:
 
     @property
     def spark_context(self):
-        """`SparkContext`"""
+        """:py:class:`pyspark.SparkContext`"""
         return self._spark_context
 
     @property
@@ -33,14 +33,14 @@ class Coin:
 
     @property
     def data(self):
-        """`RDD`"""
+        """:py:class:`pyspark.RDD`"""
         return self._data
 
     @property
     def logger(self):
-        """`Logger`.
+        """:py:class:`sparkquantum.utils.Logger`.
 
-        To disable logging, set it to `None`.
+        To disable logging, set it to None.
 
         """
         return self._logger
@@ -49,7 +49,7 @@ class Coin:
     def profiler(self):
         """`Profiler`.
 
-        To disable profiling, set it to `None`.
+        To disable profiling, set it to None.
 
         """
         return self._profiler
@@ -118,7 +118,7 @@ class Coin:
 
         Raises
         -------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError

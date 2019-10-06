@@ -13,11 +13,11 @@ class Vector(Base):
     """Class for vectors."""
 
     def __init__(self, rdd, shape, data_type=complex):
-        """Build a `Vector` object.
+        """Build a :py:class:`sparkquantum.math.Vector` object.
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this vector object. Must be a 2-dimensional tuple.
@@ -57,12 +57,12 @@ class Vector(Base):
 
         Parameters
         ----------
-        other : `Vector`
+        other : :py:class:`sparkquantum.math.Vector`
             The other vector.
 
         Returns
         -------
-        `Vector`
+        :py:class:`sparkquantum.math.Vector`
             The resulting vector.
 
         """
@@ -111,7 +111,7 @@ class Vector(Base):
 
 
 def is_vector(obj):
-    """Check whether argument is a `Vector` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.Vector` object.
 
     Parameters
     ----------
@@ -121,7 +121,7 @@ def is_vector(obj):
     Returns
     -------
     bool
-        True if argument is a `Vector` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.Vector` object, False otherwise.
 
     """
     return isinstance(obj, Vector)

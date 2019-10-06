@@ -63,7 +63,7 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        `TypeError`
+        TypeError
 
         """
         if self._logger:
@@ -113,7 +113,7 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        `TypeError`
+        TypeError
 
         """
         if self._logger:
@@ -163,7 +163,7 @@ class QuantumWalkProfiler(Profiler):
 
         Raises
         -----
-        `TypeError`
+        TypeError
 
         """
         if self._logger:

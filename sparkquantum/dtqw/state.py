@@ -22,7 +22,7 @@ class State(Vector):
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this state object. Must be a 2-dimensional tuple.
@@ -67,16 +67,16 @@ class State(Vector):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
         dumping_format : int, optional
             Printing format used to dump this state.
-            Default value is `None`. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
+            Default value is None. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
 
         """
         if glue is None:
@@ -273,8 +273,8 @@ class State(Vector):
 
         Raises
         ------
-        `NotImplementedError`
-        `ValueError`
+        NotImplementedError
+        ValueError
 
         """
         if self._logger:
@@ -452,7 +452,7 @@ class State(Vector):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._num_particles <= 1:
@@ -557,8 +557,8 @@ class State(Vector):
 
         Raises
         ------
-        `NotImplementedError`
-        `ValueError`
+        NotImplementedError
+        ValueError
 
         """
         if particle >= self._num_particles:

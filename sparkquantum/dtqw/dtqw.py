@@ -56,7 +56,7 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def spark_context(self):
-        """`SparkContext`"""
+        """:py:class:`pyspark.SparkContext`"""
         return self._spark_context
 
     @property
@@ -91,14 +91,14 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def walk_operator(self):
-        """`Operator` or list of `Operator`s"""
+        """`Operator` or list of `Operator`"""
         return self._walk_operator
 
     @property
     def logger(self):
-        """`Logger`.
+        """:py:class:`sparkquantum.utils.Logger`.
 
-        To disable logging, set it to `None`.
+        To disable logging, set it to None.
 
         """
         return self._logger
@@ -107,7 +107,7 @@ class DiscreteTimeQuantumWalk:
     def profiler(self):
         """`Profiler`.
 
-        To disable profiling, set it to `None`.
+        To disable profiling, set it to None.
 
         """
         return self._profiler
@@ -192,14 +192,14 @@ class DiscreteTimeQuantumWalk:
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         ------
-        `ValueError`
+        ValueError
 
         """
         if not self._phase:
@@ -381,13 +381,13 @@ class DiscreteTimeQuantumWalk:
             Wn = I1 (X) ... (X) In-1 (X) Wn
 
         Regardless the number of particles, the walk operators have their (i,j,value) coordinates converted to
-        appropriate coordinates for multiplication, in this case, the `Utils.MatrixCoordinateMultiplier`.
+        appropriate coordinates for multiplication, in this case, the :py:const:`Utils.MatrixCoordinateMultiplier`.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
@@ -801,7 +801,7 @@ class DiscreteTimeQuantumWalk:
 
         Raises
         ------
-        `ValueError`
+        ValueError
 
         """
         if not self._mesh.check_steps(steps):

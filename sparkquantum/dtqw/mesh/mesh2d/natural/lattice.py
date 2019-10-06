@@ -277,7 +277,7 @@ class LatticeNatural(Natural):
         ----------
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is `Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
         storage_level : `StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
@@ -287,7 +287,7 @@ class LatticeNatural(Natural):
 
         Raises
         ------
-        `ValueError`
+        ValueError
 
         """
         if self._logger:

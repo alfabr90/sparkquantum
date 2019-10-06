@@ -16,7 +16,7 @@ class Base:
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
@@ -46,7 +46,7 @@ class Base:
 
     @property
     def spark_context(self):
-        """`SparkContext`"""
+        """:py:class:`pyspark.SparkContext`"""
         return self._spark_context
 
     @property
@@ -66,14 +66,14 @@ class Base:
 
     @property
     def data_type(self):
-        """`RDD`"""
+        """:py:class:`pyspark.RDD`"""
         return self._data_type
 
     @property
     def logger(self):
-        """`Logger`.
+        """:py:class:`sparkquantum.utils.Logger`.
 
-        To disable logging, set it to `None`.
+        To disable logging, set it to None.
 
         """
         return self._logger
@@ -82,7 +82,7 @@ class Base:
     def profiler(self):
         """`Profiler`.
 
-        To disable profiling, set it to `None`.
+        To disable profiling, set it to None.
 
         """
         return self._profiler
@@ -252,7 +252,7 @@ class Base:
         Notes
         -----
         If it is intended to use this method in an application, it is necessary to define
-        the checkpoint dir using the `SparkContext` object.
+        the checkpoint dir using the :py:class:`pyspark.SparkContext` object.
 
         Returns
         -------
@@ -290,10 +290,10 @@ class Base:
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is `None`. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.

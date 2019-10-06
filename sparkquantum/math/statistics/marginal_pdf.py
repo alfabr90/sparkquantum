@@ -13,7 +13,7 @@ class MarginalPDF(PDF):
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
@@ -35,7 +35,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -67,7 +67,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -101,7 +101,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -139,7 +139,7 @@ class MarginalPDF(PDF):
         Parameters
         ----------
         mean : float, optional
-            The mean of this PDF. When `None` is passed as argument, the mean is calculated.
+            The mean of this PDF. When None is passed as argument, the mean is calculated.
 
         Returns
         -------
@@ -148,7 +148,7 @@ class MarginalPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():

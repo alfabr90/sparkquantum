@@ -18,7 +18,7 @@ class PDF(Base):
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
@@ -46,7 +46,7 @@ class PDF(Base):
 
         Raises
         -------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError
@@ -56,7 +56,7 @@ class PDF(Base):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError
@@ -66,7 +66,7 @@ class PDF(Base):
 
         Raises
         -------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError
@@ -77,11 +77,11 @@ class PDF(Base):
         Parameters
         ----------
         mean : float, optional
-            The mean of this PDF. When `None` is passed as argument, the mean is calculated.
+            The mean of this PDF. When None is passed as argument, the mean is calculated.
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         raise NotImplementedError
@@ -95,7 +95,7 @@ class PDF(Base):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -123,7 +123,7 @@ class PDF(Base):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -158,7 +158,7 @@ class PDF(Base):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._logger:

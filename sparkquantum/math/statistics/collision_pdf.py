@@ -16,7 +16,7 @@ class CollisionPDF(PDF):
 
         Parameters
         ----------
-        rdd : `RDD`
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a 2-dimensional tuple.
@@ -38,7 +38,7 @@ class CollisionPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():
@@ -70,7 +70,7 @@ class CollisionPDF(PDF):
 
         Raises
         ------
-        `NotImplementedError`
+        NotImplementedError
 
         """
         if self._mesh.is_1d():

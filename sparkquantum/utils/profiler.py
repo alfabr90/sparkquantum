@@ -9,10 +9,15 @@ __all__ = ['Profiler']
 
 
 class Profiler:
-    """Profile and export the resources consumed by Spark."""
+    """Profile and export the resources consumed by Spark_.
+
+    .. _Spark:
+        https://spark.apache.org
+
+    """
 
     def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """Build a `Profiler` object.
+        """Build a profiler object.
 
         Parameters
         ----------
@@ -51,9 +56,9 @@ class Profiler:
 
     @property
     def logger(self):
-        """`Logger`.
+        """:py:class:`sparkquantum.utils.Logger`.
 
-        To disable logging, set it to `None`.
+        To disable logging, set it to None.
 
         """
         return self._logger
@@ -89,7 +94,7 @@ class Profiler:
                 for v in values:
                     w.writerow(v)
         else:
-            raise Exception("unsupported file extension")
+            raise NotImplementedError("unsupported file extension")
 
     def __str__(self):
         return self.__class__.__name__
@@ -145,7 +150,7 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's jobs info or a dict with the job info. `None` when an error occurred.
+            A list with all application's jobs info or a dict with the job info. None when an error occurred.
 
         """
         if job_id is None:
@@ -166,7 +171,7 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's stages info or a dict with the stage info. `None` when an error occurred.
+            A list with all application's stages info or a dict with the stage info. None when an error occurred.
 
         """
         if stage_id is None:
@@ -189,7 +194,7 @@ class Profiler:
         Returns
         -------
         dict
-            A dict with an application's stage attempt info. `None` when an error occurred.
+            A dict with an application's stage attempt info. None when an error occurred.
 
         """
         return self._request("/{}/stages/{}/{}".format(app_id, stage_id, stageattempt_id))
@@ -209,7 +214,7 @@ class Profiler:
         Returns
         -------
         dict
-            A dict with the task summary of a stage attempt. `None` when an error occurred.
+            A dict with the task summary of a stage attempt. None when an error occurred.
 
         """
         return self._request("/{}/stages/{}/{}/taskSummary".format(app_id, stage_id, stageattempt_id))
@@ -229,7 +234,7 @@ class Profiler:
         Returns
         -------
         list
-            A list with the task list of a stage attempt. `None` when an error occurred.
+            A list with the task list of a stage attempt. None when an error occurred.
 
         """
         return self._request("/{}/stages/{}/{}/taskList".format(app_id, stage_id, stageattempt_id))
@@ -245,7 +250,7 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's active executors info. `None` when an error occurred.
+            A list with all application's active executors info. None when an error occurred.
 
         """
         return self._request("/{}/executors".format(app_id))
@@ -261,7 +266,7 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's executors info. `None` when an error occurred.
+            A list with all application's executors info. None when an error occurred.
 
         """
         return self._request("/{}/allexecutors".format(app_id))
@@ -279,7 +284,7 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's RDD info or a dict with the RDD info. `None` when an error occurred.
+            A list with all application's RDD info or a dict with the RDD info. None when an error occurred.
 
         """
         if rdd_id is None:
@@ -307,6 +312,11 @@ class Profiler:
             The executors data.
         app_id : int
             The application's id.
+
+        Raises
+        ------
+        ValueError
+            If `app_id` is not valid.
 
         """
         if self._logger:
@@ -339,7 +349,12 @@ class Profiler:
         app_id : int, optional
             The application's id.
         rdd_id : int, optional
-            The `RDD`'s id.
+            The RDD's id.
+
+        Raises
+        ------
+        ValueError
+            If `app_id` is not valid.
 
         """
         if self._logger:
@@ -602,6 +617,11 @@ class Profiler:
         extension: str, optional
             The extension of the files. Default value is 'csv'.
 
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
+
         """
         if self._logger:
             self._logger.info("exporting times in {} format...".format(extension))
@@ -628,6 +648,11 @@ class Profiler:
             The location of the files.
         extension: str, optional
             The extension of the files. Default value is 'csv'.
+
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
 
         """
         if self._logger:
@@ -662,6 +687,11 @@ class Profiler:
             The location of the files.
         extension: str, optional
             The extension of the files. Default value is 'csv'.
+
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
 
         """
         if self._logger:
@@ -704,6 +734,11 @@ class Profiler:
             The location of the files.
         extension: str, optional
             The extension of the files. Default value is 'csv'.
+
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
 
         """
         if self._logger:
