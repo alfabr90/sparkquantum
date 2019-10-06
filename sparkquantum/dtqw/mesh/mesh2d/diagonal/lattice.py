@@ -50,7 +50,7 @@ class LatticeDiagonal(Diagonal):
 
         Returns
         -------
-        :py:func:`numpy.ndarray`
+        :py:class:`numpy.ndarray`
             The meshgrid with the sizes of this mesh.
 
         """
