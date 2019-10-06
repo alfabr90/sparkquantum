@@ -9,7 +9,7 @@ class BrokenLinks():
     """Top-level class for broken links."""
 
     def __init__(self):
-        """Build a top-level `BrokenLinks` object."""
+        """Build a top-level :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object."""
         self._spark_context = SparkContext.getOrCreate()
 
     @property
@@ -21,7 +21,8 @@ class BrokenLinks():
 
         Returns
         -------
-        Bool
+        bool
+            True if this is a random broken links generator, False otherwise.
 
         """
         return False
@@ -31,7 +32,8 @@ class BrokenLinks():
 
         Returns
         -------
-        Bool
+        bool
+            True if this is a permanent broken links generator, False otherwise.
 
         """
         return False
@@ -40,16 +42,22 @@ class BrokenLinks():
         """
         Generate broken links for the mesh.
 
+        Parameters
+        ----------
+        num_edges : int
+            Number of edges of a mesh.
+
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
 
 
 def is_broken_links(obj):
-    """Check whether argument is a `BrokenLinks` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
 
     Parameters
     ----------
@@ -59,7 +67,7 @@ def is_broken_links(obj):
     Returns
     -------
     bool
-        True if argument is a `BrokenLinks` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object, False otherwise.
 
     """
     return isinstance(obj, BrokenLinks)

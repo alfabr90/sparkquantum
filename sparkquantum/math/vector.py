@@ -102,7 +102,7 @@ class Vector(Base):
         Returns
         -------
         bool
-            True if the norm of this vector is 1.0, False otherwise.
+            True if this norm of this vector is 1.0, False otherwise.
 
         """
         round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))

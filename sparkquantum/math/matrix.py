@@ -24,7 +24,7 @@ class Matrix(Base):
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -40,7 +40,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This method exports the data in the :py:const:`Utils.MatrixCoordinateDefault`.
+        This method exports the data in the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Parameters
         ----------
@@ -147,7 +147,7 @@ class Matrix(Base):
             The other matrix.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -198,7 +198,7 @@ class Matrix(Base):
         Returns
         -------
         bool
-            True if the norm of this matrix is 1.0, False otherwise.
+            True if this norm of this matrix is 1.0, False otherwise.
 
         """
         round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
@@ -268,7 +268,7 @@ class Matrix(Base):
             A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`. Not applicable when multiplying a :py:class:`sparkquantum.math.Vector`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a :py:class:`sparkquantum.math.Vector`.
 
         Returns
         -------

@@ -13,19 +13,27 @@ class BoxNatural(Natural):
     """Class for Natural Box mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Natural Box :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a Natural Box mesh object.
 
         Parameters
         ----------
         size : tuple
             Size of the mesh.
-        broken_links : `BrokenLinks`, optional
-            A `BrokenLinks` object.
+        broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
+            A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
 
         """
         super().__init__(size, broken_links=broken_links)
 
     def title(self):
+        """Build a human-readable string with the type of this mesh.
+
+        Returns
+        -------
+        str
+            The string with the type of this mesh.
+
+        """
         return 'Natural Box'
 
     def check_steps(self, steps):
@@ -34,10 +42,12 @@ class BoxNatural(Natural):
         Parameters
         ----------
         steps : int
+            Number of steps of the walk.
 
         Returns
         -------
         bool
+            True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
         return True
@@ -305,17 +315,20 @@ class BoxNatural(Natural):
         ----------
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
         :py:class:`sparkquantum.dtqw.Operator`
+            The created operator using this mesh.
 
         Raises
         ------
         ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         if self._logger:

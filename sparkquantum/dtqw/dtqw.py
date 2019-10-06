@@ -192,10 +192,10 @@ class DiscreteTimeQuantumWalk:
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
-            Default value is `StorageLevel.MEMORY_AND_DISK`.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         ------
@@ -381,16 +381,16 @@ class DiscreteTimeQuantumWalk:
             Wn = I1 (X) ... (X) In-1 (X) Wn
 
         Regardless the number of particles, the walk operators have their (i,j,value) coordinates converted to
-        appropriate coordinates for multiplication, in this case, the :py:const:`Utils.MatrixCoordinateMultiplier`.
+        appropriate coordinates for multiplication, in this case, the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplier`.
 
         Parameters
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
-            Default value is `StorageLevel.MEMORY_AND_DISK`.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         """
         app_id = self._spark_context.applicationId
@@ -792,7 +792,7 @@ class DiscreteTimeQuantumWalk:
             The initial state of the system.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
-            Default value is `StorageLevel.MEMORY_AND_DISK`.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------

@@ -180,7 +180,7 @@ class Utils():
         old_coord : int
             The original coordinate format of the :py:class:`sparkquantum.math.Matrix` object's RDD.
         new_coord : int
-            The new coordinate format. Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            The new coordinate format. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------

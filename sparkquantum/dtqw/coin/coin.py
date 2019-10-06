@@ -91,6 +91,14 @@ class Coin:
                 )
 
     def to_string(self):
+        """Build a string representing this coin.
+
+        Returns
+        -------
+        str
+            The string representation of this coin.
+
+        """
         return self.__str__()
 
     def is_1d(self):
@@ -99,7 +107,7 @@ class Coin:
         Returns
         -------
         Bool
-            True if the coin is for one-dimensional meshes, False otherwise.
+            True if this coin is for one-dimensional meshes, False otherwise.
 
         """
         return False
@@ -110,7 +118,7 @@ class Coin:
         Returns
         -------
         Bool
-            True if the coin is for two-dimensional meshes, False otherwise.
+            True if this coin is for two-dimensional meshes, False otherwise.
 
         """
         return False
@@ -121,6 +129,7 @@ class Coin:
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError

@@ -26,7 +26,7 @@ class Coin2D(Coin):
         Returns
         -------
         bool
-            True if the coin is for two-dimensional meshes, False otherwise.
+            True if this coin is for two-dimensional meshes, False otherwise.
 
         """
         return True
@@ -89,9 +89,9 @@ class Coin2D(Coin):
             A :py:class:`sparkquantum.dtqw.mesh.Mesh` instance.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------

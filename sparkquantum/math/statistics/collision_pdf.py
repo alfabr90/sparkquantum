@@ -101,7 +101,7 @@ class CollisionPDF(PDF):
         ----------
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
-            Default value is `StorageLevel.MEMORY_AND_DISK`.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------

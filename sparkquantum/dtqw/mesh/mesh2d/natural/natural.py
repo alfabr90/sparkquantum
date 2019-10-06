@@ -16,8 +16,8 @@ class Natural(Mesh2D):
         ----------
         size : tuple
             Size of the mesh.
-        broken_links : `BrokenLinks`, optional
-            A `BrokenLinks` object.
+        broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
+            A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
 
         """
         super().__init__(size, broken_links=broken_links)
@@ -50,10 +50,12 @@ class Natural(Mesh2D):
         Parameters
         ----------
         steps : int
+            Number of steps of the walk.
 
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -65,13 +67,14 @@ class Natural(Mesh2D):
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError

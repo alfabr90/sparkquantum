@@ -10,7 +10,7 @@ class RandomBrokenLinks(BrokenLinks):
     """Class for generating random broken links for a mesh."""
 
     def __init__(self, probability):
-        """Build a random broken links generator object.
+        """Build a random broken links object.
 
         Parameters
         ----------
@@ -35,13 +35,14 @@ class RandomBrokenLinks(BrokenLinks):
 
         Returns
         -------
-        Bool
+        bool
+            True if this is a random broken links generator, False otherwise.
 
         """
         return True
 
     def generate(self, num_edges):
-        """Generate broken links for the mesh based on its probability to have a broken link/edge.
+        """Generate broken links for the mesh based on its probability to have a broken link.
 
         Parameters
         ----------
@@ -51,11 +52,13 @@ class RandomBrokenLinks(BrokenLinks):
         Returns
         -------
         :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
-            The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken.
+            The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken,
+            depending on the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration.
 
         Raises
         ------
         ValueError
+            If the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         probability = self._probability

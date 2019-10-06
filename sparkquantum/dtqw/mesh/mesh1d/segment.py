@@ -13,17 +13,17 @@ class Segment(Mesh1D):
     """Class for Segment mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Segment :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a Segment mesh object.
 
         Parameters
         ----------
         size : int
             Size of the mesh.
-        broken_links : `BrokenLinks`, optional
-            A `BrokenLinks` object.
+        broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
+            A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
 
         """
-        super().__init__(spark_context, size, broken_links=broken_links)
+        super().__init__(size, broken_links=broken_links)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -31,10 +31,12 @@ class Segment(Mesh1D):
         Parameters
         ----------
         steps : int
+            Number of steps of the walk.
 
         Returns
         -------
         bool
+            True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
         return True
@@ -211,17 +213,20 @@ class Segment(Mesh1D):
         ----------
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
         :py:class:`sparkquantum.dtqw.Operator`
+            The created operator using this mesh.
 
         Raises
         ------
         ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         if self._logger:

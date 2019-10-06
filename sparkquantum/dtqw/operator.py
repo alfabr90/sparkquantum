@@ -24,7 +24,7 @@ class Operator(Matrix):
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         """
         super().__init__(rdd, shape, data_type=data_type)
@@ -44,7 +44,7 @@ class Operator(Matrix):
             The other operator.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -124,7 +124,7 @@ class Operator(Matrix):
             An operator if multiplying another operator, State otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`. Not applicable when multiplying a State.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a State.
 
         Returns
         -------

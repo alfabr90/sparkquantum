@@ -10,11 +10,11 @@ class PermanentBrokenLinks(BrokenLinks):
     """Class for permanent broken links of a mesh."""
 
     def __init__(self, edges):
-        """Build a permanent `BrokenLinks` object.
+        """Build a permanent broken links object.
 
         Parameters
         ----------
-        edges : collection
+        edges : list, tuple or generator
             Collection of the edges that are broken.
 
         """
@@ -38,7 +38,8 @@ class PermanentBrokenLinks(BrokenLinks):
 
         Returns
         -------
-        Bool
+        bool
+            True if this is a permanent broken links generator, False otherwise.
 
         """
         return True
@@ -46,14 +47,22 @@ class PermanentBrokenLinks(BrokenLinks):
     def generate(self, num_edges):
         """Generate broken links for the mesh based on the informed broken edges.
 
+        Parameters
+        ----------
+        num_edges : int
+            Number of edges of a mesh.
+
         Returns
         -------
         :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
-            The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken.
+            The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken,
+            depending on the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration.
 
         Raises
         ------
         ValueError
+            If `num_edges` is out of the bounds of the number of edges of the mesh or
+            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         if isinstance(self._edges, range):

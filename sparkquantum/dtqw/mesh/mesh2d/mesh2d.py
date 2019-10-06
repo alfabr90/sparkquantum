@@ -13,14 +13,14 @@ class Mesh2D(Mesh):
 
     def __init__(self, size, broken_links=None):
         """
-        Build a top-level two-dimensional :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        Build a top-level two-dimensional mesh object.
 
         Parameters
         ----------
         size : tuple
             Size of the mesh.
-        broken_links : `BrokenLinks`, optional
-            A `BrokenLinks` object.
+        broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
+            A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
 
         """
         super().__init__(size, broken_links=broken_links)
@@ -49,6 +49,14 @@ class Mesh2D(Mesh):
         raise NotImplementedError
 
     def filename(self):
+        """Build a string representing this mesh to be used in filenames.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
         if self._broken_links and self._broken_links.is_random():
             broken_links = self._broken_links.probability
         else:
@@ -59,6 +67,14 @@ class Mesh2D(Mesh):
         )
 
     def axis(self):
+        """Build a meshgrid with the sizes of this mesh.
+
+        Returns
+        -------
+        :py:func:`numpy.ndarray`
+            The meshgrid with the sizes of this mesh.
+
+        """
         return np.meshgrid(
             range(self._size[0]),
             range(self._size[1]),
@@ -71,6 +87,7 @@ class Mesh2D(Mesh):
         Returns
         -------
         bool
+            True if this mesh is two-dimensional, False otherwise.
 
         """
         return True
@@ -81,10 +98,12 @@ class Mesh2D(Mesh):
         Parameters
         ----------
         steps : int
+            Number of steps of the walk.
 
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -96,13 +115,14 @@ class Mesh2D(Mesh):
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`Utils.MatrixCoordinateDefault`.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
+            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
