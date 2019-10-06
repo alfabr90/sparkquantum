@@ -10,7 +10,7 @@ The *pyspark* package is also required, but instead of installing it in the user
 
 ## Discrete Time Quantum Walk
 
-The `dtqw` module of the simulator allows the user to simulate one and two-dimensional discrete time quantum walks composed by *n* particles. The supported coins and meshes in those cases are:
+The `dtqw` module of the simulator allows the user to simulate one and two-dimensional discrete time quantum walks composed by *n* particles, with or without mesh percolations (broken links). The supported coins and meshes in those cases are:
 
 * For one-dimensional walks:
     * Coin:
@@ -28,6 +28,10 @@ The `dtqw` module of the simulator allows the user to simulate one and two-dimen
         * Lattice: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a correct result. It's the Line's two-dimension counterpart;
         * Box: a lattice-based mesh with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Segment's two-dimension counterpart;
         * Torus: a lattice-based mesh with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Cycle's two-dimension counterpart
+
+### Mesh Percolations
+
+The user can simulate discrete time quantum walks with some mesh percolations. The supported variations are Permanent and Random. For the first variation, the user must instantiate its corresponding class (`PermanentBrokenLinks`) passing in a list with the number of the edges that are broken. The second one is represented by the `RandomBrokenLinks` class, which needs to know the probability value that will be used to generate the broken edges of the mesh.
 
 ### Example
 
@@ -94,7 +98,7 @@ sparkContext.stop()
 
 ```
 
-For more detailed examples, the user may refer to the files in the `examples` directory.
+For more detailed examples (e.g., of how to use profiling and mesh percolations), the user may refer to the files in the `examples` directory.
 
 ## Configuration Parameters
 
