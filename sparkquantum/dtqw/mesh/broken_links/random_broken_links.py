@@ -30,8 +30,23 @@ class RandomBrokenLinks(BrokenLinks):
     def probability(self):
         return self._probability
 
+    def is_random(self):
+        """Check if this is a random broken links generator.
+
+        Returns
+        -------
+        Bool
+
+        """
+        return True
+
     def generate(self, num_edges):
         """Generate broken links for the mesh based on its probability to have a broken link/edge.
+
+        Parameters
+        ----------
+        num_edges : int
+            Number of edges of the mesh.
 
         Returns
         -------
@@ -44,16 +59,11 @@ class RandomBrokenLinks(BrokenLinks):
 
         """
         probability = self._probability
-        seed = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.randomBrokenLinks.seed')
-
-        def __map(e):
-            random.seed(seed)
-            return e, random.random() < probability
 
         rdd = self._spark_context.range(
             num_edges
         ).map(
-            __map
+            lambda m: (m, random.random() < probability)
         ).filter(
             lambda m: m[1] is True
         )

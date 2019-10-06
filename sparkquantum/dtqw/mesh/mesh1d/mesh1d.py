@@ -53,13 +53,13 @@ class Mesh1D(Mesh):
         return self._define_size(size)
 
     def filename(self):
-        if self._broken_links:
-            probability = self._broken_links.probability
+        if self._broken_links and self._broken_links.is_random():
+            broken_links = self._broken_links.probability
         else:
-            probability = 0.0
+            broken_links = '-'
 
         return "{}_{}_{}".format(
-            self.to_string(), self._size, probability
+            self.to_string(), self._size, broken_links
         )
 
     def axis(self):

@@ -49,13 +49,13 @@ class Mesh2D(Mesh):
         raise NotImplementedError
 
     def filename(self):
-        if self._broken_links:
-            probability = self._broken_links.probability
+        if self._broken_links and self._broken_links.is_random():
+            broken_links = self._broken_links.probability
         else:
-            probability = 0.0
+            broken_links = '-'
 
         return "{}_{}-{}_{}".format(
-            self.to_string(), self._size[0], self._size[1], probability
+            self.to_string(), self._size[0], self._size[1], broken_links
         )
 
     def axis(self):

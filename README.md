@@ -54,8 +54,8 @@ sparkContext = SparkContext(conf=sparkConf)
 size = steps = 30
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D(sparkContext)
-mesh = Line(sparkContext, size)
+coin = Hadamard1D()
+mesh = Line(size)
 
 coin_size = coin.size
 mesh_size = mesh.size
@@ -75,7 +75,7 @@ shape = (coin_size * mesh_size, 1)
 initial_state = State(rdd, shape, mesh, num_particles)
 
 # Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(sparkContext, coin, mesh, num_particles)
+dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
 
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
@@ -111,7 +111,6 @@ Below, there is a list of the current configuration parameters that the user can
 | quantum.cluster.totalCores | 1 | Total number of cores used by the application. |
 | quantum.cluster.maxPartitionSize | 64MB | Maximum partition size of each RDD produced by the application. Only integers are accepted. |
 | quantum.dtqw.mesh.brokenLinks.generationMode | `Utils.BrokenLinksGenerationModeBroadcast` | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken. |
-| quantum.dtqw.mesh.randomBrokenLinks.seed | `time.time()` | Seed for randomization of the broken links throughout the mesh. |
 | quantum.dtqw.interactionOperator.checkpoint | False | Whether to checkpoint the interaction operator. Considered only on interacting multiparticle walks. |
 | quantum.dtqw.walkOperator.checkpoint | False | Whether to checkpoint the walk operator(s). |
 | quantum.dtqw.walkOperator.kroneckerMode | `Utils.KroneckerModeBroadcast` | The kronecker product mode to build the walk operator(s). For now, can be as a broadcast variable or a RDD. |

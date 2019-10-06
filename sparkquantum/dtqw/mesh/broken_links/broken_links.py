@@ -16,6 +16,26 @@ class BrokenLinks():
     def spark_context(self):
         return self._spark_context
 
+    def is_random(self):
+        """Check if this is a random broken links generator.
+
+        Returns
+        -------
+        Bool
+
+        """
+        return False
+
+    def is_permanent(self):
+        """Check if this is a permanent broken links generator.
+
+        Returns
+        -------
+        Bool
+
+        """
+        return False
+
     def generate(self, num_edges):
         """
         Generate broken links for the mesh.

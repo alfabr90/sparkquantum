@@ -925,7 +925,7 @@ class DiscreteTimeQuantumWalk:
                     dumping_path += '/'
 
             for i in range(1, steps + 1, 1):
-                if self._mesh.broken_links:
+                if self._mesh.broken_links and self._mesh.broken_links.is_random():
                     self.destroy_shift_operator()
                     self.destroy_walk_operator()
                     self.create_walk_operator(coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)

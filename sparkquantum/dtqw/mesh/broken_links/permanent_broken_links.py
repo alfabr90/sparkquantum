@@ -33,6 +33,16 @@ class PermanentBrokenLinks(BrokenLinks):
     def edges(self):
         return self._edges
 
+    def is_permanent(self):
+        """Check if this is a permanent broken links generator.
+
+        Returns
+        -------
+        Bool
+
+        """
+        return True
+
     def generate(self, num_edges):
         """Generate broken links for the mesh based on the informed broken edges.
 
