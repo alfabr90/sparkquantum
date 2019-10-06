@@ -6,10 +6,10 @@ __all__ = ['Fourier2D']
 
 
 class Fourier2D(Coin2D):
-    """Class that represents the 2-dimensional Fourier coin."""
+    """Class that represents the two-dimensional Fourier coin."""
 
     def __init__(self):
-        """Build a 2-dimensional Fourier `Coin` object."""
+        """Build a two-dimensional Fourier coin object."""
         super().__init__()
 
         self._data = np.array(

@@ -13,7 +13,7 @@ class Coin:
     """Top-level class for coins."""
 
     def __init__(self):
-        """Build a top-level `Coin` object."""
+        """Build a top-level coin object."""
         self._spark_context = SparkContext.getOrCreate()
         self._size = None
         self._data = None
@@ -47,7 +47,7 @@ class Coin:
 
     @property
     def profiler(self):
-        """`Profiler`.
+        """:py:class:`sparkquantum.utils.Profiler`.
 
         To disable profiling, set it to None.
 
@@ -94,21 +94,23 @@ class Coin:
         return self.__str__()
 
     def is_1d(self):
-        """Check if this is a coin for 1-dimensional meshes.
+        """Check if this is a coin for one-dimensional meshes.
 
         Returns
         -------
         Bool
+            True if the coin is for one-dimensional meshes, False otherwise.
 
         """
         return False
 
     def is_2d(self):
-        """Check if this is a Coin for 2-dimensional meshes.
+        """Check if this is a Coin for two-dimensional meshes.
 
         Returns
         -------
         Bool
+            True if the coin is for two-dimensional meshes, False otherwise.
 
         """
         return False

@@ -25,8 +25,8 @@ class State(Vector):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this state object. Must be a 2-dimensional tuple.
-        mesh : `Mesh`
+            The shape of this state object. Must be a two-dimensional tuple.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
             The mesh where the particles are walking on.
         num_particles : int
             The number of particles present in the walk.
@@ -43,7 +43,7 @@ class State(Vector):
 
     @property
     def mesh(self):
-        """`Mesh`"""
+        """:py:class:`sparkquantum.dtqw.mesh.Mesh`"""
         return self._mesh
 
     @property
@@ -263,7 +263,7 @@ class State(Vector):
 
         Parameters
         ----------
-        storage_level : `StorageLevel`
+        storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
@@ -442,7 +442,7 @@ class State(Vector):
         ----------
         full_measurement : `PDF`
             The measurement of the entire system.
-        storage_level : `StorageLevel`
+        storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
@@ -547,7 +547,7 @@ class State(Vector):
         ----------
         particle : int
             The desired particle to be measured. The particle number starts by 0.
-        storage_level : `StorageLevel`
+        storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
@@ -693,7 +693,7 @@ class State(Vector):
 
         Parameters
         ----------
-        storage_level : `StorageLevel`
+        storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
@@ -714,7 +714,7 @@ class State(Vector):
 
         Parameters
         ----------
-        storage_level : `StorageLevel`
+        storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns

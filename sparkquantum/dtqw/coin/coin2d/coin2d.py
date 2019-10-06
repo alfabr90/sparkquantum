@@ -11,21 +11,22 @@ __all__ = ['Coin2D']
 
 
 class Coin2D(Coin):
-    """Top-level class for 2-dimensional coins."""
+    """Top-level class for two-dimensional coins."""
 
     def __init__(self):
-        """Build a top-level 2-dimensional `Coin` object."""
+        """Build a top-level two-dimensional :py:class:`sparkquantum.dtqw.coin.Coin` object."""
         super().__init__()
 
         self._size = 4
 
     def is_2d(self):
         """
-        Check if this is a `Coin` for 2-dimensional meshes.
+        Check if this is a coin for two-dimensional meshes.
 
         Returns
         -------
         bool
+            True if the coin is for two-dimensional meshes, False otherwise.
 
         """
         return True
@@ -84,17 +85,26 @@ class Coin2D(Coin):
 
         Parameters
         ----------
-        mesh : `Mesh`
-            A `Mesh` instance.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+            A :py:class:`sparkquantum.dtqw.mesh.Mesh` instance.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        `Operator`
+        :py:class:`sparkquantum.dtqw.Operator`
+            The created operator using this coin.
+
+        Raises
+        ------
+        TypeError
+            If `mesh` is not valid.
+
+        ValueError
+            If `mesh` is not two-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if self._logger:

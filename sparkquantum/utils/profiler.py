@@ -791,7 +791,7 @@ class Profiler:
 
 
 def is_profiler(obj):
-    """Check whether argument is a `Profiler` object.
+    """Check whether argument is a :py:class:`sparkquantum.utils.Profiler` object.
 
     Parameters
     ----------
@@ -801,7 +801,7 @@ def is_profiler(obj):
     Returns
     -------
     bool
-        True if argument is a `Profiler` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.utils.Profiler` object, False otherwise.
 
     """
     return isinstance(obj, Profiler)

@@ -7,10 +7,10 @@ __all__ = ['Mesh1D']
 
 
 class Mesh1D(Mesh):
-    """Top-level class for 1-dimensional meshes."""
+    """Top-level class for one-dimensional meshes."""
 
     def __init__(self, size, broken_links=None):
-        """Build a top-level 1-dimensional `Mesh` object.
+        """Build a top-level one-dimensional :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -67,7 +67,7 @@ class Mesh1D(Mesh):
 
     def is_1d(self):
         """
-        Check if this is a 1-dimensional mesh.
+        Check if this is a one-dimensional mesh.
 
         Returns
         -------
@@ -98,7 +98,7 @@ class Mesh1D(Mesh):
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises

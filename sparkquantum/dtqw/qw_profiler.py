@@ -10,7 +10,7 @@ class QuantumWalkProfiler(Profiler):
     """Profile and export the resources consumed by Spark for quantum walks."""
 
     def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """Build a quantum qalk `Profiler` object.
+        """Build a quantum qalk :py:class:`sparkquantum.utils.Profiler` object.
 
         Parameters
         ----------
@@ -51,8 +51,8 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the operator.
-        operator : `Operator`
-            The `Operator` object.
+        operator : :py:class:`sparkquantum.dtqw.Operator`
+            The :py:class:`sparkquantum.dtqw.Operator` object.
         time : float
             The measured building time of the operator.
 

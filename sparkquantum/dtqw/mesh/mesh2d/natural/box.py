@@ -13,7 +13,7 @@ class BoxNatural(Natural):
     """Class for Natural Box mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Natural Box `Mesh` object.
+        """Build a Natural Box :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -306,12 +306,12 @@ class BoxNatural(Natural):
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        `Operator`
+        :py:class:`sparkquantum.dtqw.Operator`
 
         Raises
         ------

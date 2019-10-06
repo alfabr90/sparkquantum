@@ -25,8 +25,8 @@ class DiscreteTimeQuantumWalk:
         ----------
         coin : `Coin`
             A Coin object.
-        mesh : `Mesh`
-            A `Mesh` object.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+            A :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
         num_particles : int
             The number of particles present in the walk.
         phase: float, optional
@@ -66,7 +66,7 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def mesh(self):
-        """`Mesh`"""
+        """:py:class:`sparkquantum.dtqw.mesh.Mesh`"""
         return self._mesh
 
     @property
@@ -76,22 +76,22 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def coin_operator(self):
-        """`Operator`"""
+        """:py:class:`sparkquantum.dtqw.Operator`"""
         return self._coin_operator
 
     @property
     def shift_operator(self):
-        """`Operator`"""
+        """:py:class:`sparkquantum.dtqw.Operator`"""
         return self._shift_operator
 
     @property
     def interaction_operator(self):
-        """`Operator`"""
+        """:py:class:`sparkquantum.dtqw.Operator`"""
         return self._interaction_operator
 
     @property
     def walk_operator(self):
-        """`Operator` or list of `Operator`"""
+        """:py:class:`sparkquantum.dtqw.Operator` or list of :py:class:`sparkquantum.dtqw.Operator`"""
         return self._walk_operator
 
     @property
@@ -105,7 +105,7 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def profiler(self):
-        """`Profiler`.
+        """:py:class:`sparkquantum.utils.Profiler`.
 
         To disable profiling, set it to None.
 
@@ -193,7 +193,7 @@ class DiscreteTimeQuantumWalk:
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
 
@@ -388,7 +388,7 @@ class DiscreteTimeQuantumWalk:
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
 
@@ -742,25 +742,25 @@ class DiscreteTimeQuantumWalk:
                 raise ValueError("invalid kronecker mode")
 
     def destroy_coin_operator(self):
-        """Call the `Operator`'s method destroy."""
+        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
     def destroy_shift_operator(self):
-        """Call the `Operator`'s method destroy."""
+        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
     def destroy_interaction_operator(self):
-        """Call the `Operator`'s method destroy."""
+        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
     def destroy_walk_operator(self):
-        """Call the `Operator`'s method destroy."""
+        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                     self._walk_operator.destroy()
@@ -790,7 +790,7 @@ class DiscreteTimeQuantumWalk:
         steps : int
         initial_state : `State`
             The initial state of the system.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is `StorageLevel.MEMORY_AND_DISK`.
 

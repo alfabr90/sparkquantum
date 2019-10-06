@@ -14,7 +14,7 @@ class Mesh:
     """Top-level class for meshes."""
 
     def __init__(self, size, broken_links=None):
-        """Build a top-level `Mesh` object.
+        """Build a top-level :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -81,7 +81,7 @@ class Mesh:
 
     @property
     def profiler(self):
-        """`Profiler`.
+        """:py:class:`sparkquantum.utils.Profiler`.
 
         To disable profiling, set it to None.
 
@@ -146,7 +146,7 @@ class Mesh:
         raise NotImplementedError
 
     def is_1d(self):
-        """Check if this is a 1-dimensional mesh.
+        """Check if this is a one-dimensional mesh.
 
         Returns
         -------
@@ -156,7 +156,7 @@ class Mesh:
         return False
 
     def is_2d(self):
-        """Check if this is a 2-dimensional mesh.
+        """Check if this is a two-dimensional mesh.
 
         Returns
         -------
@@ -187,7 +187,7 @@ class Mesh:
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises
@@ -199,7 +199,7 @@ class Mesh:
 
 
 def is_mesh(obj):
-    """Check whether argument is a `Mesh` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
     Parameters
     ----------
@@ -209,7 +209,7 @@ def is_mesh(obj):
     Returns
     -------
     bool
-        True if argument is a `Mesh` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.mesh.Mesh` object, False otherwise.
 
     """
     return isinstance(obj, Mesh)

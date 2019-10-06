@@ -20,7 +20,7 @@ class Vector(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this vector object. Must be a 2-dimensional tuple.
+            The shape of this vector object. Must be a two-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
 

@@ -12,14 +12,14 @@ class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
-        """Build an `Operator` object.
+        """Build an :py:class:`sparkquantum.dtqw.Operator` object.
 
         Parameters
         ----------
         rdd : RDD
             The base RDD of this object.
         shape : tuple
-            The shape of this operator object. Must be a 2-dimensional tuple.
+            The shape of this operator object. Must be a two-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
@@ -40,7 +40,7 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other : `Operator`
+        other : :py:class:`sparkquantum.dtqw.Operator`
             The other operator.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
@@ -48,7 +48,7 @@ class Operator(Matrix):
 
         Returns
         -------
-        `Operator`
+        :py:class:`sparkquantum.dtqw.Operator`
             The resulting operator.
 
         """
@@ -120,7 +120,7 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other `Operator` or `State`
+        other :py:class:`sparkquantum.dtqw.Operator` or `State`
             An operator if multiplying another operator, State otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
@@ -128,8 +128,8 @@ class Operator(Matrix):
 
         Returns
         -------
-        `Operator` or `State`
-            `Operator` if multiplying another operator, `State` otherwise.
+        :py:class:`sparkquantum.dtqw.Operator` or `State`
+            :py:class:`sparkquantum.dtqw.Operator` if multiplying another operator, `State` otherwise.
 
         Raises
         ------

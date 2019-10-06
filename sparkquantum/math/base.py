@@ -19,7 +19,7 @@ class Base:
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this matrix object. Must be a 2-dimensional tuple.
+            The shape of this matrix object. Must be a two-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
 
@@ -80,7 +80,7 @@ class Base:
 
     @property
     def profiler(self):
-        """`Profiler`.
+        """:py:class:`sparkquantum.utils.Profiler`.
 
         To disable profiling, set it to None.
 
@@ -164,7 +164,7 @@ class Base:
 
         Parameters
         ----------
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
@@ -229,7 +229,7 @@ class Base:
 
         Parameters
         ----------
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns

@@ -13,7 +13,7 @@ class Segment(Mesh1D):
     """Class for Segment mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Segment `Mesh` object.
+        """Build a Segment :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -212,12 +212,12 @@ class Segment(Mesh1D):
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        `Operator`
+        :py:class:`sparkquantum.dtqw.Operator`
 
         Raises
         ------

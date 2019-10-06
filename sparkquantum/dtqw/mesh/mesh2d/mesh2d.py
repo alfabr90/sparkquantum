@@ -9,11 +9,11 @@ __all__ = ['Mesh2D']
 
 
 class Mesh2D(Mesh):
-    """Top-level class for 2-dimensional meshes."""
+    """Top-level class for two-dimensional meshes."""
 
     def __init__(self, size, broken_links=None):
         """
-        Build a top-level 2-dimensional `Mesh` object.
+        Build a top-level two-dimensional :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -66,7 +66,7 @@ class Mesh2D(Mesh):
         )
 
     def is_2d(self):
-        """Check if this is a 2-dimensional mesh.
+        """Check if this is a two-dimensional mesh.
 
         Returns
         -------
@@ -97,7 +97,7 @@ class Mesh2D(Mesh):
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises

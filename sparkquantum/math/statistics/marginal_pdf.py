@@ -16,8 +16,8 @@ class MarginalPDF(PDF):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this matrix object. Must be a 2-dimensional tuple.
-        mesh : `Mesh`
+            The shape of this matrix object. Must be a two-dimensional tuple.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
             The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.

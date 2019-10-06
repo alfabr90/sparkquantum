@@ -13,7 +13,7 @@ class Cycle(Mesh1D):
     """Class for Cycle mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Cycle `Mesh` object.
+        """Build a Cycle :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -180,12 +180,12 @@ class Cycle(Mesh1D):
         coord_format : bool, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
-        `Operator`
+        :py:class:`sparkquantum.dtqw.Operator`
 
         Raises
         ------

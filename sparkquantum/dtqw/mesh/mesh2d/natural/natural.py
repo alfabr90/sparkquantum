@@ -10,7 +10,7 @@ class Natural(Mesh2D):
     """Top-level class for Natural meshes."""
 
     def __init__(self, size, broken_links=None):
-        """Build a top-level Natural `Mesh` object.
+        """Build a top-level Natural :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -66,7 +66,7 @@ class Natural(Mesh2D):
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`Utils.MatrixCoordinateDefault`.
-        storage_level : `StorageLevel`, optional
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD. Default value is `StorageLevel.MEMORY_AND_DISK`.
 
         Raises

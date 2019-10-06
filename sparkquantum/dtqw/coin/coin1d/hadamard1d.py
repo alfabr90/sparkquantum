@@ -7,10 +7,10 @@ __all__ = ['Hadamard1D']
 
 
 class Hadamard1D(Coin1D):
-    """Class that represents the 1-dimensional Hadamard coin."""
+    """Class that represents the one-dimensional Hadamard coin."""
 
     def __init__(self):
-        """Build a 1-dimensional Hadamard `Coin` object."""
+        """Build a one-dimensional Hadamard coin object."""
         super().__init__()
 
         self._data = np.array(

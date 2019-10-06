@@ -6,10 +6,10 @@ __all__ = ['Grover2D']
 
 
 class Grover2D(Coin2D):
-    """Class that represents the 2-dimensional Grover coin."""
+    """Class that represents the two-dimensional Grover coin."""
 
     def __init__(self):
-        """Build a 2-dimensional Grover `Coin` object."""
+        """Build a two-dimensional Grover coin object."""
         super().__init__()
 
         self._data = np.array(
