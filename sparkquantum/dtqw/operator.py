@@ -126,7 +126,7 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
+        other : :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
             An operator if multiplying another operator, state otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.

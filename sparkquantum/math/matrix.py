@@ -279,7 +279,7 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
+        other : :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
             A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
         coord_format : int, optional
             Indicate if the matrix must be returned in an apropriate format for multiplications.
