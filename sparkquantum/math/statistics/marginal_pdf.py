@@ -36,6 +36,7 @@ class MarginalPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -68,6 +69,7 @@ class MarginalPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -97,11 +99,12 @@ class MarginalPDF(PDF):
         Returns
         -------
         float
-            The expected value.
+            The expected value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -144,11 +147,12 @@ class MarginalPDF(PDF):
         Returns
         -------
         float
-            The variance.
+            The variance of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():

@@ -18,7 +18,7 @@ class State(Vector):
     """Class for the system state."""
 
     def __init__(self, rdd, shape, mesh, num_particles):
-        """Build a `State` object.
+        """Build a state object.
 
         Parameters
         ----------
@@ -58,7 +58,7 @@ class State(Vector):
         -----
         This method checks the dumping format by using the 'quantum.dtqw.state.dumpingFormat' configuration value.
         In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
-        Depending on the chosen dumping mode, this method calls the RDD's `collect` method.
+        Depending on the chosen dumping mode, this method calls the :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
 
         Parameters
@@ -77,6 +77,14 @@ class State(Vector):
         dumping_format : int, optional
             Printing format used to dump this state.
             Default value is None. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
+
+        Raises
+        ------
+        NotImplementedError
+            If the dimension of the mesh, `glue`, `dumping_format` or dumping mode is not valid.
+
+        ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if glue is None:
@@ -240,19 +248,24 @@ class State(Vector):
 
         Parameters
         ----------
-        other : `State`
+        other : :py:class:`sparkquantum.dtqw.State`
             The other system state.
 
         Returns
         -------
-        `State`
+        :py:class:`sparkquantum.dtqw.State`
             The resulting state.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.dtqw.State`.
 
         """
         if not is_state(other):
             if self._logger:
-                self._logger.error("`State` instance expected, not '{}'".format(type(other)))
-            raise TypeError("`State` instance expected, not '{}'".format(type(other)))
+                self._logger.error("'State' instance expected, not '{}'".format(type(other)))
+            raise TypeError("'State' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -268,13 +281,16 @@ class State(Vector):
 
         Returns
         -------
-        `JointPDF`
+        :py:class:`sparkquantum.math.statistics.JointPDF`
             The PDF of the entire system.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
+
         ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or if the sum of the calculated PDF is not equal to one.
 
         """
         if self._logger:
@@ -440,19 +456,23 @@ class State(Vector):
 
         Parameters
         ----------
-        full_measurement : `PDF`
+        full_measurement : :py:class:`sparkquantum.math.statistics.PDF`
             The measurement of the entire system.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        `CollisionPDF`
+        :py:class:`sparkquantum.math.statistics.CollisionPDF`
             The PDF of the system when all particles are located at the same site.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid or if the system is composed by only one particle.
+
+        TypeError
+            If `full_measurement` is not valid.
 
         """
         if self._num_particles <= 1:
@@ -552,16 +572,21 @@ class State(Vector):
 
         Returns
         -------
-        `MarginalPDF`
+        :py:class:`sparkquantum.math.statistics.MarginalPDF`
             The PDF of each particle.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
+
         ValueError
+            If `particle` is not valid, i.e., particle number does not belong to the walk,
+            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the sum of the calculated PDF is not equal to one.
 
         """
-        if particle >= self._num_particles:
+        if particle < 0 or particle >= self._num_particles:
             if self._logger:
                 self._logger.error("invalid particle number")
             raise ValueError("invalid particle number")
@@ -701,6 +726,16 @@ class State(Vector):
         tuple
             A tuple containing the PDF of each particle.
 
+        Raises
+        ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
+
+        ValueError
+            If `particle` is not valid, i.e., particle number does not belong to the walk,
+            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the sum of the calculated PDF is not equal to one.
+
         """
         return [self.measure_particle(p, storage_level) for p in range(self._num_particles)]
 
@@ -719,8 +754,17 @@ class State(Vector):
 
         Returns
         -------
-        `PDF` or tuple
-            `PDF` if the system is composed by only one particle, tuple otherwise.
+        :py:class:`sparkquantum.math.statistics.PDF` or tuple
+            :py:class:`sparkquantum.math.statistics.PDF` if the system is composed by only one particle, tuple otherwise.
+
+        Raises
+        ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
+
+        ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the sum of the calculated PDF is not equal to one.
 
         """
         if self._num_particles == 1:
@@ -734,7 +778,7 @@ class State(Vector):
 
 
 def is_state(obj):
-    """Check whether argument is a `State` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.State` object.
 
     Parameters
     ----------
@@ -744,7 +788,7 @@ def is_state(obj):
     Returns
     -------
     bool
-        True if argument is a `State` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.State` object, False otherwise.
 
     """
     return isinstance(obj, State)

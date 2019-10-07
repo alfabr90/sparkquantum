@@ -12,7 +12,7 @@ class Matrix(Base):
     """Class for matrices."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
-        """Build a :py:class:`sparkquantum.math.Matrix` object.
+        """Build a matrix object.
 
         Parameters
         ----------
@@ -33,6 +33,7 @@ class Matrix(Base):
 
     @property
     def coordinate_format(self):
+        """int"""
         return self._coordinate_format
 
     def dump(self, path, glue=None, codec=None):
@@ -40,7 +41,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This method exports the data in the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        This method exports the data in the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault` format.
 
         Parameters
         ----------
@@ -78,10 +79,15 @@ class Matrix(Base):
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
 
+        Notes
+        -----
+        This method calls the :py:func:`pyspark.RDD.collect` method. This is not suitable for large working sets,
+        as all data may not fit into main memory.
+
         Returns
         -------
-        ndarray
-            The numpy array
+        :py:class:`numpy.ndarray`
+            The numpy array.
 
         """
         data = self.data.collect()
@@ -154,6 +160,11 @@ class Matrix(Base):
         :py:class:`sparkquantum.math.Matrix`
             The resulting matrix.
 
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
+
         """
         if not is_matrix(other):
             if self._logger:
@@ -195,10 +206,14 @@ class Matrix(Base):
     def is_unitary(self):
         """Check if this matrix is unitary by calculating its norm.
 
+        Notes
+        -----
+        This method uses the 'quantum.math.roundPrecision' configuration to round the calculated norm.
+
         Returns
         -------
         bool
-            True if this norm of this matrix is 1.0, False otherwise.
+            True if the norm of this matrix is 1.0, False otherwise.
 
         """
         round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
@@ -278,6 +293,10 @@ class Matrix(Base):
         Raises
         ------
         TypeError
+            If `other` is not a :py:class:`sparkquantum.math.Matrix` nor :py:class:`sparkquantum.math.Vector`.
+
+        ValueError
+            If this matrix's and `other`'s shapes are incompatible for multiplication.
 
         """
         if is_matrix(other):

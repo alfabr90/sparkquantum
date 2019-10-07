@@ -23,7 +23,7 @@ class DiscreteTimeQuantumWalk:
 
         Parameters
         ----------
-        coin : `Coin`
+        coin : :py:class:`sparkquantum.dtqw.coin.Coin`
             A Coin object.
         mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
             A :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
@@ -61,7 +61,7 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def coin(self):
-        """`Coin`"""
+        """:py:class:`sparkquantum.dtqw.coin.Coin`"""
         return self._coin
 
     @property
@@ -180,9 +180,25 @@ class DiscreteTimeQuantumWalk:
         return self.__class__.__name__
 
     def to_string(self):
+        """Build a string representing this walk.
+
+        Returns
+        -------
+        str
+            The string representation of this walk.
+
+        """
         return self.__str__()
 
     def title(self):
+        """Build a human-readable string with some characteristics of this walk.
+
+        Returns
+        -------
+        str
+            The string with some characteristics of this walk.
+
+        """
         return "Quantum Walk with {} Particle(s) on a {}".format(self._num_particles, self._mesh.title())
 
     def create_interaction_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -199,7 +215,11 @@ class DiscreteTimeQuantumWalk:
 
         Raises
         ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
+
         ValueError
+            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if not self._phase:
@@ -374,13 +394,13 @@ class DiscreteTimeQuantumWalk:
 
         When performing a multiparticle walk, this method builds a list with n operators,
         where n is the number of particles of the system. In this case, each operator is built by
-        applying a tensor product between the evolution operator and n-1 identity matrices as follows:
+        applying a tensor product between the evolution operator and ``n-1`` identity matrices as follows:
 
-            W1 = W1 (X) I2 (X) ... (X) In
+            ``W1 = W1 (X) I2 (X) ... (X) In
             Wi = I1 (X) ... (X) Ii-1 (X) Wi (X) Ii+1 (X) ... In
-            Wn = I1 (X) ... (X) In-1 (X) Wn
+            Wn = I1 (X) ... (X) In-1 (X) Wn``
 
-        Regardless the number of particles, the walk operators have their (i,j,value) coordinates converted to
+        Regardless the number of particles, the walk operators have their ``(i,j,value)`` coordinates converted to
         appropriate coordinates for multiplication, in this case, the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplier`.
 
         Parameters
@@ -391,6 +411,11 @@ class DiscreteTimeQuantumWalk:
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
             Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
+
+        Raises
+        ------
+        ValueError
+            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' configuration is not valid.
 
         """
         app_id = self._spark_context.applicationId
@@ -742,25 +767,25 @@ class DiscreteTimeQuantumWalk:
                 raise ValueError("invalid kronecker mode")
 
     def destroy_coin_operator(self):
-        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
+        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
     def destroy_shift_operator(self):
-        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
+        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
     def destroy_interaction_operator(self):
-        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
+        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
     def destroy_walk_operator(self):
-        """Call the :py:class:`sparkquantum.dtqw.Operator`'s method destroy."""
+        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                     self._walk_operator.destroy()
@@ -788,7 +813,8 @@ class DiscreteTimeQuantumWalk:
         Parameters
         ----------
         steps : int
-        initial_state : `State`
+            The number of steps of the walk.
+        initial_state : :py:class:`sparkquantum.dtqw.State`
             The initial state of the system.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
@@ -796,12 +822,21 @@ class DiscreteTimeQuantumWalk:
 
         Returns
         -------
-        `State`
+        :py:class:`sparkquantum.dtqw.State`
             The final state of the system after performing the walk.
 
         Raises
         ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
+
         ValueError
+            If `steps` is not valid or if the collision phase is not valid.
+            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' or 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If operators' shapes are incompatible for multiplication.
+            If the final state of the system is not unitary. This exception is also raised in cases
+            where the 'quantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
+            the 'quantum.dtqw.walk.dumpStatesPDF' configuration is set to 'True' and the PDF of some of the intermediary states does not sum one.
 
         """
         if not self._mesh.check_steps(steps):

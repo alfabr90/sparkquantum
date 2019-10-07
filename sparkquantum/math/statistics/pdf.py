@@ -47,6 +47,7 @@ class PDF(Base):
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -57,6 +58,7 @@ class PDF(Base):
         Raises
         ------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -67,6 +69,7 @@ class PDF(Base):
         Raises
         -------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -82,6 +85,7 @@ class PDF(Base):
         Raises
         ------
         NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
         raise NotImplementedError
@@ -92,10 +96,12 @@ class PDF(Base):
         Returns
         ------
         float
+            The maximum value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -120,10 +126,12 @@ class PDF(Base):
         Returns
         ------
         float
+            The minimum value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -153,12 +161,13 @@ class PDF(Base):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        **kwargs
+        \*\*kwargs
             Keyword arguments being passed to `matplotlib`.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._logger:
@@ -251,7 +260,7 @@ class PDF(Base):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        **kwargs
+        \*\*kwargs
             Keyword arguments being passed to matplotlib.
 
         """
@@ -307,7 +316,7 @@ class PDF(Base):
 
 
 def is_pdf(obj):
-    """Check whether argument is a `PDF` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.statistics.PDF` object.
 
     Parameters
     ----------
@@ -317,7 +326,7 @@ def is_pdf(obj):
     Returns
     -------
     bool
-        True if argument is a `PDF` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.statistics.PDF` object, False otherwise.
 
     """
     return isinstance(obj, PDF)

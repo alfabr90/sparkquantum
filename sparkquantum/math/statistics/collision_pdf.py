@@ -39,6 +39,7 @@ class CollisionPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -71,6 +72,7 @@ class CollisionPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -97,6 +99,10 @@ class CollisionPDF(PDF):
     def normalize(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Normalize this PDF.
 
+        Notes
+        -----
+        The RDD of the normalized PDF is already materialized.
+
         Parameters
         ----------
         storage_level : :py:class:`pyspark.StorageLevel`
@@ -105,7 +111,13 @@ class CollisionPDF(PDF):
 
         Returns
         -------
-        `CollisionPDF`
+        :py:class:`sparkquantum.math.statistics.CollisionPDF`
+            The normalized PDF.
+
+        Raises
+        ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         norm = self.norm()

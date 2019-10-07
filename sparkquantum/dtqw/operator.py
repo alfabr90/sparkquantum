@@ -12,11 +12,11 @@ class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
     def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
-        """Build an :py:class:`sparkquantum.dtqw.Operator` object.
+        """Build an operator object.
 
         Parameters
         ----------
-        rdd : RDD
+        rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
             The shape of this operator object. Must be a two-dimensional tuple.
@@ -33,6 +33,7 @@ class Operator(Matrix):
 
     @property
     def coordinate_format(self):
+        """int"""
         return self._coordinate_format
 
     def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
@@ -50,6 +51,11 @@ class Operator(Matrix):
         -------
         :py:class:`sparkquantum.dtqw.Operator`
             The resulting operator.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.dtqw.Operator`.
 
         """
         if not is_operator(other):
@@ -120,20 +126,24 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other :py:class:`sparkquantum.dtqw.Operator` or `State`
-            An operator if multiplying another operator, State otherwise.
+        other :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
+            An operator if multiplying another operator, state otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a State.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a state.
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator` or `State`
-            :py:class:`sparkquantum.dtqw.Operator` if multiplying another operator, `State` otherwise.
+        :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
+            :py:class:`sparkquantum.dtqw.Operator` if multiplying another operator, :py:class:`sparkquantum.dtqw.State` otherwise.
 
         Raises
         ------
         TypeError
+            If `other` is not a :py:class:`sparkquantum.dtqw.Operator` nor :py:class:`sparkquantum.dtqw.State`.
+
+        ValueError
+            If this matrix's and `other`'s shapes are incompatible for multiplication.
 
         """
         if is_operator(other):

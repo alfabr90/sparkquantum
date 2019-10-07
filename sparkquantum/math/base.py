@@ -12,7 +12,7 @@ class Base:
     """Top-level class for some matrix-based elements."""
 
     def __init__(self, rdd, shape, data_type=complex):
-        """Build a top-level object for some matrix-based elements. It is a container of RDD.
+        """Build a top-level object for some matrix-based elements. It is a container of :py:class:`pyspark.RDD`.
 
         Parameters
         ----------
@@ -66,7 +66,7 @@ class Base:
 
     @property
     def data_type(self):
-        """:py:class:`pyspark.RDD`"""
+        """type"""
         return self._data_type
 
     @property
@@ -119,7 +119,7 @@ class Base:
         return 1.0 - self.num_nonzero_elements / self._num_elements
 
     def repartition(self, num_partitions):
-        """Changes the number of partitions of this object's RDD.
+        """Change the number of partitions of this object's RDD.
 
         Parameters
         ----------
@@ -128,7 +128,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -149,7 +149,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -169,7 +169,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -192,7 +192,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -211,11 +211,11 @@ class Base:
         return self
 
     def destroy(self):
-        """Alias of the method unpersist.
+        """Alias of :py:func:`unpersist`.
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -234,7 +234,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -256,7 +256,7 @@ class Base:
 
         Returns
         -------
-        `self`
+        :py:class`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -281,7 +281,7 @@ class Base:
 
         Notes
         -----
-        Depending on the chosen dumping mode, this method calls the RDD's `collect` method.
+        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
 
         Parameters
@@ -335,12 +335,12 @@ class Base:
 
         Notes
         -----
-        This method calls the `collect` method of RDD. This is not suitable for large working sets,
+        This method calls the :py:func:`pyspark.RDD.collect` method. This is not suitable for large working sets,
         as all data may not fit into main memory.
 
         Returns
         -------
-        ndarray
+        :py:class:`numpy.ndarray`
             The numpy array.
 
         """

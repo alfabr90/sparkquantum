@@ -13,7 +13,7 @@ class Vector(Base):
     """Class for vectors."""
 
     def __init__(self, rdd, shape, data_type=complex):
-        """Build a :py:class:`sparkquantum.math.Vector` object.
+        """Build a vector object.
 
         Parameters
         ----------
@@ -65,6 +65,11 @@ class Vector(Base):
         :py:class:`sparkquantum.math.Vector`
             The resulting vector.
 
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.Vector`.
+
         """
         if not is_vector(other):
             if self._logger:
@@ -99,10 +104,14 @@ class Vector(Base):
     def is_unitary(self):
         """Check if this vector is unitary by calculating its norm.
 
+        Notes
+        -----
+        This method uses the 'quantum.math.roundPrecision' configuration to round the calculated norm.
+
         Returns
         -------
         bool
-            True if this norm of this vector is 1.0, False otherwise.
+            True if the norm of this vector is 1.0, False otherwise.
 
         """
         round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))

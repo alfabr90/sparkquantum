@@ -7,10 +7,15 @@ __all__ = ['QuantumWalkProfiler']
 
 
 class QuantumWalkProfiler(Profiler):
-    """Profile and export the resources consumed by Spark for quantum walks."""
+    """Profile and export the resources consumed by Spark_ for quantum walks.
+
+    .. _Spark:
+        https://spark.apache.org
+
+    """
 
     def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """Build a quantum qalk :py:class:`sparkquantum.utils.Profiler` object.
+        """Build a quantum walk profiler object.
 
         Parameters
         ----------
@@ -64,6 +69,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
+            If `operator` is not a :py:class:`sparkquantum.dtqw.Operator`.
 
         """
         if self._logger:
@@ -101,8 +107,8 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the state.
-        state : `State`
-            The nth step corresponding state.
+        state : :py:class:`sparkquantum.dtqw.State`
+            The ``nth`` step corresponding state.
         time : float
             The measured building time of the state.
 
@@ -114,6 +120,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
+            If `state` is not a :py:class:`sparkquantum.dtqw.State`.
 
         """
         if self._logger:
@@ -121,8 +128,8 @@ class QuantumWalkProfiler(Profiler):
 
         if not is_state(state):
             if self._logger:
-                self._logger.error("`State` instance expected, not '{}'".format(type(state)))
-            raise TypeError("`State` instance expected, not '{}'".format(type(state)))
+                self._logger.error("'State' instance expected, not '{}'".format(type(state)))
+            raise TypeError("'State' instance expected, not '{}'".format(type(state)))
 
         if name not in self._states:
             self._states[name] = []
@@ -151,7 +158,7 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the pdf.
-        pdf : `PDF`
+        pdf : :py:class:`sparkquantum.math.statistics.PDF`
             The pdf object.
         time : float
             The measured building time of the pdf.
@@ -164,6 +171,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
+            If `pdf` is not a :py:class:`sparkquantum.math.statistics.PDF`.
 
         """
         if self._logger:
@@ -195,12 +203,12 @@ class QuantumWalkProfiler(Profiler):
         return self._pdfs[name][-1]
 
     def get_operators(self, name=None):
-        """Get the resources information of all operators or of the named one.
+        """Get the resources information of all operators or of the one with the provided name.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a operator.
+            The name used for a :py:class:`sparkquantum.dtqw.Operator`.
 
         Returns
         -------
@@ -223,12 +231,12 @@ class QuantumWalkProfiler(Profiler):
             return {}
 
     def get_states(self, name=None):
-        """Get the resources information of all states or of the named one.
+        """Get the resources information of all states or of the one with the provided name.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a state.
+            The name used for a :py:class:`sparkquantum.dtqw.State`.
 
         Returns
         -------
@@ -251,12 +259,12 @@ class QuantumWalkProfiler(Profiler):
             return {}
 
     def get_pdfs(self, name=None):
-        """Get the resources information of all PDFs or of the named one.
+        """Get the resources information of all PDFs or of the one with the provided name.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a PDF.
+            The name used for a :py:class:`sparkquantum.math.statistics.PDF`.
 
         Returns
         -------
@@ -292,6 +300,11 @@ class QuantumWalkProfiler(Profiler):
         extension: str, optional
             The extension of the files. Default value is 'csv'.
 
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
+
         """
         if self._logger:
             self._logger.info("exporting operators' resources in {} format...".format(extension))
@@ -325,6 +338,11 @@ class QuantumWalkProfiler(Profiler):
             The location of the files.
         extension: str, optional
             The extension of the files. Default value is 'csv'.
+
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
 
         """
         if self._logger:
@@ -360,6 +378,11 @@ class QuantumWalkProfiler(Profiler):
         extension: str, optional
             The extension of the files. Default value is 'csv'.
 
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
+
         """
         if self._logger:
             self._logger.info("exporting pdfs' resources in {} format...".format(extension))
@@ -393,6 +416,11 @@ class QuantumWalkProfiler(Profiler):
             The location of the files.
         extension: str, optional
             The extension of the files. Default value is 'csv'.
+
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
 
         """
         super().export(path, extension)

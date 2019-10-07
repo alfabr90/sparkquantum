@@ -783,6 +783,11 @@ class Profiler:
         extension: str, optional
             The extension of the files. Default value is 'csv'.
 
+        Raises
+        ------
+        NotImplementedError
+            If `extension` is not valid or not supported.
+
         """
         self.export_times(path, extension)
         self.export_rdd(path, extension)

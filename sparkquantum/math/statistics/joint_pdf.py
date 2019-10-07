@@ -41,6 +41,7 @@ class JointPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -73,6 +74,7 @@ class JointPDF(PDF):
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -102,11 +104,12 @@ class JointPDF(PDF):
         Returns
         -------
         float
-            The expected value.
+            The expected value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -152,11 +155,12 @@ class JointPDF(PDF):
         Returns
         -------
         float
-            The variance.
+            The variance of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -200,10 +204,12 @@ class JointPDF(PDF):
         Returns
         ------
         float
+            The maximum value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -229,10 +235,12 @@ class JointPDF(PDF):
         Returns
         ------
         float
+            The minimum value of this PDF.
 
         Raises
         ------
         NotImplementedError
+            If the dimension of the mesh is not valid.
 
         """
         if self._mesh.is_1d():
@@ -263,7 +271,7 @@ class JointPDF(PDF):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        **kwargs
+        \*\*kwargs
             Keyword arguments being passed to matplotlib.
 
         """
@@ -352,12 +360,8 @@ class JointPDF(PDF):
             The title of the plot.
         labels: tuple or list, optional
             The labels of each axis.
-        **kwargs
+        \*\*kwargs
             Keyword arguments being passed to matplotlib.
-
-        Raises
-        ------
-        NotImplementedError
 
         """
         if self._mesh.is_1d() and self._num_particles != 2:
