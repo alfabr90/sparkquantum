@@ -162,7 +162,7 @@ class PDF(Base):
         labels: tuple or list, optional
             The labels of each axis.
         \*\*kwargs
-            Keyword arguments being passed to `matplotlib`.
+            Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         Raises
         ------
@@ -261,7 +261,7 @@ class PDF(Base):
         labels: tuple or list, optional
             The labels of each axis.
         \*\*kwargs
-            Keyword arguments being passed to matplotlib.
+            Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
         if not self._mesh.is_2d():

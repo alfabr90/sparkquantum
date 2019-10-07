@@ -272,7 +272,7 @@ class JointPDF(PDF):
         labels: tuple or list, optional
             The labels of each axis.
         \*\*kwargs
-            Keyword arguments being passed to matplotlib.
+            Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
         if self._mesh.is_1d() and self._num_particles > 2:
@@ -361,7 +361,7 @@ class JointPDF(PDF):
         labels: tuple or list, optional
             The labels of each axis.
         \*\*kwargs
-            Keyword arguments being passed to matplotlib.
+            Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
         if self._mesh.is_1d() and self._num_particles != 2:
