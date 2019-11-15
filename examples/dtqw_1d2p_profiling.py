@@ -119,8 +119,16 @@ if not entangled:
 
     shape = (coin_size * mesh_size, 1)
 
-    base_state1 = State(sparkContext.parallelize(state1), shape, mesh, num_particles)
-    base_state2 = State(sparkContext.parallelize(state2), shape, mesh, num_particles)
+    base_state1 = State(
+        sparkContext.parallelize(state1),
+        shape,
+        mesh,
+        num_particles)
+    base_state2 = State(
+        sparkContext.parallelize(state2),
+        shape,
+        mesh,
+        num_particles)
 
     initial_state = base_state1.kron(base_state2)
 
@@ -130,14 +138,18 @@ else:
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|0>|0>|0> - |0>|0>|1>|0>) / sqrt(2)
         state = (
-            ((1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1.0 / math.sqrt(2)),
-            ((0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, -1.0 / math.sqrt(2)),
+            ((1 * mesh_size + position) * coin_size * mesh_size +
+             0 * mesh_size + position, 1.0 / math.sqrt(2)),
+            ((0 * mesh_size + position) * coin_size * mesh_size +
+             1 * mesh_size + position, -1.0 / math.sqrt(2)),
         )
     elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|0>|1>|0>|0> - |0>|0>|0>|1>) / sqrt(2)
         state = (
-            ((position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1.0 / math.sqrt(2)),
-            ((position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, -1.0 / math.sqrt(2)),
+            ((position * coin_size + 1) * mesh_size * coin_size +
+             position * coin_size + 0, 1.0 / math.sqrt(2)),
+            ((position * coin_size + 0) * mesh_size * coin_size +
+             position * coin_size + 1, -1.0 / math.sqrt(2)),
         )
 
     rdd = sparkContext.parallelize(state)

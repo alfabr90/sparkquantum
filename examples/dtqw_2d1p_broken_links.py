@@ -56,7 +56,8 @@ coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
 
 # Center of the mesh
-position = int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2)
+position = int((mesh.size[0] - 1) / 2) * \
+    mesh.size[1] + int((mesh.size[1] - 1) / 2)
 
 # Options of initial states
 if representationFormat == Utils.StateRepresentationFormatCoinPosition:
@@ -119,9 +120,6 @@ final_state = dtqw.walk(steps, initial_state)
 joint = final_state.measure()
 joint.plot(sim_path + 'joint_2d1p', dpi=300)
 joint.plot_contour(sim_path + 'joint_2d1p_contour', dpi=300)
-
-# Exporting the profiling data
-profiler.export(sim_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()
