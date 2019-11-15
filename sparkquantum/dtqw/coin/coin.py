@@ -59,14 +59,18 @@ class Coin:
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
+            raise TypeError(
+                "'Logger' instance expected, not '{}'".format(
+                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
+            raise TypeError(
+                "'Profiler' instance expected, not '{}'".format(
+                    type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -79,11 +83,14 @@ class Coin:
             self._profiler.profile_executors(app_id)
 
             info = self._profiler.profile_operator(
-                'coinOperator', operator, (datetime.now() - initial_time).total_seconds()
+                'coinOperator', operator, (datetime.now(
+                ) - initial_time).total_seconds()
             )
 
             if self._logger:
-                self._logger.info("coin operator was built in {}s".format(info['buildingTime']))
+                self._logger.info(
+                    "coin operator was built in {}s".format(
+                        info['buildingTime']))
                 self._logger.info(
                     "coin operator is consuming {} bytes in memory and {} bytes in disk".format(
                         info['memoryUsed'], info['diskUsed']
@@ -123,7 +130,8 @@ class Coin:
         """
         return False
 
-    def create_operator(self, mesh, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, mesh, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the coin operator.
 
         Raises

@@ -26,7 +26,7 @@ class Mesh1D(Mesh):
         self._dimension = 1
 
     def _validate(self, size):
-        if type(size) != int:
+        if not isinstance(size, int):
             return False
         elif size <= 0:
             return False
@@ -109,7 +109,8 @@ class Mesh1D(Mesh):
         """
         raise NotImplementedError
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
         Parameters

@@ -60,7 +60,8 @@ class Natural(Mesh2D):
         """
         raise NotImplementedError
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
         Parameters

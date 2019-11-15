@@ -26,7 +26,9 @@ class Base:
         """
         if not isinstance(rdd, RDD):
             # self._logger.error("invalid argument to instantiate an RDD-based object")
-            raise TypeError("'RDD' instance expected, not '{}'".format(type(rdd)))
+            raise TypeError(
+                "'RDD' instance expected, not '{}'".format(
+                    type(rdd)))
 
         if shape is not None:
             if not Utils.is_shape(shape):
@@ -92,14 +94,18 @@ class Base:
         if is_logger(logger) or logger is None:
             self._logger = logger
         else:
-            raise TypeError("'Logger' instance expected, not '{}'".format(type(logger)))
+            raise TypeError(
+                "'Logger' instance expected, not '{}'".format(
+                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
         if is_profiler(profiler) or profiler is None:
             self._profiler = profiler
         else:
-            raise TypeError("'Profiler' instance expected, not '{}'".format(type(profiler)))
+            raise TypeError(
+                "'Profiler' instance expected, not '{}'".format(
+                    type(profiler)))
 
     def __str__(self):
         return self.__class__.__name__
@@ -177,10 +183,14 @@ class Base:
             if not self.data.is_cached:
                 self.data.persist(storage_level)
                 if self._logger:
-                    self._logger.info("RDD {} was persisted".format(self.data.id()))
+                    self._logger.info(
+                        "RDD {} was persisted".format(
+                            self.data.id()))
             else:
                 if self._logger:
-                    self._logger.info("RDD {} has already been persisted".format(self.data.id()))
+                    self._logger.info(
+                        "RDD {} has already been persisted".format(
+                            self.data.id()))
         else:
             if self._logger:
                 self._logger.warning("there is no data to be persisted")
@@ -200,10 +210,14 @@ class Base:
             if self.data.is_cached:
                 self.data.unpersist()
                 if self._logger:
-                    self._logger.info("RDD {} was unpersisted".format(self.data.id()))
+                    self._logger.info(
+                        "RDD {} was unpersisted".format(
+                            self.data.id()))
             else:
                 if self._logger:
-                    self._logger.info("RDD {} has already been unpersisted".format(self.data.id()))
+                    self._logger.info(
+                        "RDD {} has already been unpersisted".format(
+                            self.data.id()))
         else:
             if self._logger:
                 self._logger.warning("there is no data to be unpersisted")
@@ -267,12 +281,16 @@ class Base:
 
         if not self.data.is_cached:
             if self._logger:
-                self._logger.warning("it is recommended to cache the RDD before checkpointing it")
+                self._logger.warning(
+                    "it is recommended to cache the RDD before checkpointing it")
 
         self.data.checkpoint()
 
         if self._logger:
-            self._logger.info("RDD {} was checkpointed in {}".format(self.data.id(), self.data.getCheckpointFile()))
+            self._logger.info(
+                "RDD {} was checkpointed in {}".format(
+                    self.data.id(),
+                    self.data.getCheckpointFile()))
 
         return self
 
@@ -303,9 +321,14 @@ class Base:
             glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(
+                self._spark_context,
+                'quantum.dumpingCompressionCodec')
 
-        dumping_mode = int(Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode'))
+        dumping_mode = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.math.dumpingMode'))
 
         if dumping_mode == Utils.DumpingModeUniqueFile:
             data = self.data.collect()

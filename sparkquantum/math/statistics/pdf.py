@@ -30,7 +30,9 @@ class PDF(Base):
         """
         if not is_mesh(mesh):
             # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
-            raise TypeError("'Mesh' instance expected, not '{}'".format(type(mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(
+                    type(mesh)))
 
         super().__init__(rdd, shape, data_type=float)
 
@@ -247,7 +249,9 @@ class PDF(Base):
         plt.clf()
 
         if self._logger:
-            self._logger.info("plot in {}s".format((datetime.now() - t1).total_seconds()))
+            self._logger.info(
+                "plot in {}s".format(
+                    (datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
         """Plot the contour function of the probabilities over the mesh.
@@ -266,7 +270,8 @@ class PDF(Base):
         """
         if not self._mesh.is_2d():
             if self._logger:
-                self._logger.warning("it is only possible to plot the contour function of two-dimensional meshes")
+                self._logger.warning(
+                    "it is only possible to plot the contour function of two-dimensional meshes")
             return None
 
         if self._logger:
@@ -312,7 +317,9 @@ class PDF(Base):
         plt.clf()
 
         if self._logger:
-            self._logger.info("contour plot in {}s".format((datetime.now() - t1).total_seconds()))
+            self._logger.info(
+                "contour plot in {}s".format(
+                    (datetime.now() - t1).total_seconds()))
 
 
 def is_pdf(obj):

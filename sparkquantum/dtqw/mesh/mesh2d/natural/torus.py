@@ -61,12 +61,17 @@ class TorusNatural(Natural):
         shape = (coin_size * size_xy, coin_size * size_xy)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+            generation_mode = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == Utils.BrokenLinksGenerationModeRDD:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -75,11 +80,14 @@ class TorusNatural(Natural):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            # Finding the correspondent x,y coordinates of the
+                            # vertex from the edge number
                             if e[1][0] >= size[0] * size[1]:
                                 j = i
-                                x = int((e[1][0] - size[0] * size[1]) / size[0])
-                                y = ((e[1][0] - size[0] * size[1]) % size[1] - i - l) % size[1]
+                                x = int(
+                                    (e[1][0] - size[0] * size[1]) / size[0])
+                                y = ((e[1][0] - size[0] * size[1]) %
+                                     size[1] - i - l) % size[1]
                             else:
                                 j = int(not i)
                                 x = (e[1][0] % size[0] - i - l) % size[0]
@@ -91,8 +99,10 @@ class TorusNatural(Natural):
                                 l = 0
 
                             m = ((i + l) * size_per_coin + (abs(j + l) % size_per_coin)) * size_xy + \
-                                ((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]
-                            n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                ((x + l * (1 - delta)) %
+                                 size[0]) * size[1] + (y + l * delta) % size[1]
+                            n = ((1 - i) * size_per_coin + (1 - j)) * \
+                                size_xy + x * size[1] + y
 
                             yield m, n, 1
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -101,11 +111,14 @@ class TorusNatural(Natural):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            # Finding the correspondent x,y coordinates of the
+                            # vertex from the edge number
                             if e[1][0] >= size[0] * size[1]:
                                 j = i
-                                x = int((e[1][0] - size[0] * size[1]) / size[0])
-                                y = ((e[1][0] - size[0] * size[1]) % size[1] - i - l) % size[1]
+                                x = int(
+                                    (e[1][0] - size[0] * size[1]) / size[0])
+                                y = ((e[1][0] - size[0] * size[1]) %
+                                     size[1] - i - l) % size[1]
                             else:
                                 j = int(not i)
                                 x = (e[1][0] % size[0] - i - l) % size[0]
@@ -117,8 +130,10 @@ class TorusNatural(Natural):
                                 l = 0
 
                             m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * coin_size + \
-                                (i + l) * size_per_coin + (abs(j + l) % size_per_coin)
-                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+                                (i + l) * size_per_coin + \
+                                (abs(j + l) % size_per_coin)
+                            n = (x * size[1] + y) * coin_size + \
+                                (1 - i) * size_per_coin + (1 - j)
 
                             yield m, n, 1
                 else:
@@ -142,12 +157,14 @@ class TorusNatural(Natural):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            # Finding the correspondent x,y coordinates of the
+                            # vertex from the edge number
                             if e >= size[0] * size[1]:
                                 j = i
                                 delta = int(not (i ^ j))
                                 x = int((e - size[0] * size[1]) / size[0])
-                                y = ((e - size[0] * size[1]) % size[1] - i - l) % size[1]
+                                y = ((e - size[0] * size[1]) %
+                                     size[1] - i - l) % size[1]
                             else:
                                 j = int(not i)
                                 delta = int(not (i ^ j))
@@ -160,8 +177,10 @@ class TorusNatural(Natural):
                                 bl = l
 
                             m = ((i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)) * size_xy + \
-                                ((x + bl * (1 - delta)) % size[0]) * size[1] + (y + bl * delta) % size[1]
-                            n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                ((x + bl * (1 - delta)) %
+                                 size[0]) * size[1] + (y + bl * delta) % size[1]
+                            n = ((1 - i) * size_per_coin + (1 - j)) * \
+                                size_xy + x * size[1] + y
 
                             yield m, n, 1
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -170,12 +189,14 @@ class TorusNatural(Natural):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x,y coordinates of the vertex from the edge number
+                            # Finding the correspondent x,y coordinates of the
+                            # vertex from the edge number
                             if e >= size[0] * size[1]:
                                 j = i
                                 delta = int(not (i ^ j))
                                 x = int((e - size[0] * size[1]) / size[0])
-                                y = ((e - size[0] * size[1]) % size[1] - i - l) % size[1]
+                                y = ((e - size[0] * size[1]) %
+                                     size[1] - i - l) % size[1]
                             else:
                                 j = int(not i)
                                 delta = int(not (i ^ j))
@@ -188,8 +209,10 @@ class TorusNatural(Natural):
                                 bl = l
 
                             m = (((x + bl * (1 - delta)) % size[0]) * size[1] + (y + bl * delta) % size[1]) * coin_size + \
-                                (i + bl) * size_per_coin + (abs(j + bl) % size_per_coin)
-                            n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+                                (i + bl) * size_per_coin + \
+                                (abs(j + bl) % size_per_coin)
+                            n = (x * size[1] + y) * coin_size + \
+                                (1 - i) * size_per_coin + (1 - j)
 
                             yield m, n, 1
                 else:
@@ -218,8 +241,10 @@ class TorusNatural(Natural):
                             delta = int(not (i ^ j))
 
                             m = (i * size_per_coin + j) * size_xy + \
-                                ((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]
-                            n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+                                ((x + l * (1 - delta)) %
+                                 size[0]) * size[1] + (y + l * delta) % size[1]
+                            n = (i * size_per_coin + j) * \
+                                size_xy + x * size[1] + y
 
                             yield m, n, 1
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -234,7 +259,8 @@ class TorusNatural(Natural):
 
                             m = (((x + l * (1 - delta)) % size[0]) * size[1] + (y + l * delta) % size[1]) * \
                                 coin_size + i * size_per_coin + j
-                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
+                            n = (x * size[1] + y) * coin_size + \
+                                i * size_per_coin + j
 
                             yield m, n, 1
             else:
@@ -255,7 +281,8 @@ class TorusNatural(Natural):
 
             expected_elems = coin_size * size_xy
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(
@@ -264,7 +291,8 @@ class TorusNatural(Natural):
 
         return (rdd, shape, broken_links)
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the shift operator for the walk.
 
         Parameters
@@ -292,9 +320,14 @@ class TorusNatural(Natural):
 
         initial_time = datetime.now()
 
-        rdd, shape, broken_links = self._create_rdd(coord_format, storage_level)
+        rdd, shape, broken_links = self._create_rdd(
+            coord_format, storage_level)
 
-        operator = Operator(rdd, shape, data_type=int, coord_format=coord_format).materialize(storage_level)
+        operator = Operator(
+            rdd,
+            shape,
+            data_type=int,
+            coord_format=coord_format).materialize(storage_level)
 
         if broken_links:
             broken_links.unpersist()

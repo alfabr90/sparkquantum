@@ -112,7 +112,8 @@ class MarginalPDF(PDF):
             mesh_size = (int(self._mesh.size / 2), 1)
         elif self._mesh.is_2d():
             ind = 2
-            mesh_size = (int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (
+                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
             if self._logger:
                 self._logger.error("mesh dimension not implemented")
@@ -160,7 +161,8 @@ class MarginalPDF(PDF):
             mesh_size = (int(self._mesh.size / 2), 1)
         elif self._mesh.is_2d():
             ind = 2
-            mesh_size = (int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (
+                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
             if self._logger:
                 self._logger.error("mesh dimension not implemented")

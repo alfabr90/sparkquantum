@@ -55,8 +55,10 @@ class LatticeDiagonal(Diagonal):
 
         """
         return np.meshgrid(
-            range(- int((self._size[0] - 1) / 2), int((self._size[0] - 1) / 2) + 1),
-            range(- int((self._size[1] - 1) / 2), int((self._size[1] - 1) / 2) + 1),
+            range(- int((self._size[0] - 1) / 2),
+                  int((self._size[0] - 1) / 2) + 1),
+            range(- int((self._size[1] - 1) / 2),
+                  int((self._size[1] - 1) / 2) + 1),
             indexing='ij'
         )
 
@@ -74,7 +76,8 @@ class LatticeDiagonal(Diagonal):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return steps <= int((self._size[0] - 1) / 2) and steps <= int((self._size[1] - 1) / 2)
+        return steps <= int(
+            (self._size[0] - 1) / 2) and steps <= int((self._size[1] - 1) / 2)
 
     def _create_rdd(self, coord_format, storage_level):
         coin_size = self._coin_size
@@ -85,12 +88,17 @@ class LatticeDiagonal(Diagonal):
         shape = (coin_size * size_xy, coin_size * size_xy)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+            generation_mode = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == Utils.BrokenLinksGenerationModeRDD:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -101,7 +109,8 @@ class LatticeDiagonal(Diagonal):
                             for j in range(size_per_coin):
                                 l2 = (-1) ** j
 
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                # Finding the correspondent x,y coordinates of
+                                # the vertex from the edge number
                                 x = (e[1][0] % size[0] - i - l1) % size[0]
                                 y = (int(e[1][0] / size[0]) - j - l2) % size[1]
 
@@ -111,8 +120,11 @@ class LatticeDiagonal(Diagonal):
                                     bl1, bl2 = l1, l2
 
                                 m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + \
-                                    ((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])
-                                n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                    ((x + bl1) %
+                                     size[0]) * size[1] + ((y + bl2) %
+                                                           size[1])
+                                n = ((1 - i) * size_per_coin + (1 - j)) * \
+                                    size_xy + x * size[1] + y
 
                                 yield m, n, 1
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -123,7 +135,8 @@ class LatticeDiagonal(Diagonal):
                             for j in range(size_per_coin):
                                 l2 = (-1) ** j
 
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                # Finding the correspondent x,y coordinates of
+                                # the vertex from the edge number
                                 x = (e[1][0] % size[0] - i - l1) % size[0]
                                 y = (int(e[1][0] / size[0]) - j - l2) % size[1]
 
@@ -134,7 +147,8 @@ class LatticeDiagonal(Diagonal):
 
                                 m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
                                     (i + bl1) * size_per_coin + (j + bl2)
-                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+                                n = (x * size[1] + y) * coin_size + \
+                                    (1 - i) * size_per_coin + (1 - j)
 
                                 yield m, n, 1
                 else:
@@ -160,7 +174,8 @@ class LatticeDiagonal(Diagonal):
                             for j in range(size_per_coin):
                                 l2 = (-1) ** j
 
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                # Finding the correspondent x,y coordinates of
+                                # the vertex from the edge number
                                 x = (e % size[0] - i - l1) % size[0]
                                 y = (int(e / size[0]) - j - l2) % size[1]
 
@@ -170,8 +185,11 @@ class LatticeDiagonal(Diagonal):
                                     bl1, bl2 = l1, l2
 
                                 m = ((i + bl1) * size_per_coin + (j + bl2)) * size_xy + \
-                                    ((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])
-                                n = ((1 - i) * size_per_coin + (1 - j)) * size_xy + x * size[1] + y
+                                    ((x + bl1) %
+                                     size[0]) * size[1] + ((y + bl2) %
+                                                           size[1])
+                                n = ((1 - i) * size_per_coin + (1 - j)) * \
+                                    size_xy + x * size[1] + y
 
                                 yield m, n, 1
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -182,7 +200,8 @@ class LatticeDiagonal(Diagonal):
                             for j in range(size_per_coin):
                                 l2 = (-1) ** j
 
-                                # Finding the correspondent x,y coordinates of the vertex from the edge number
+                                # Finding the correspondent x,y coordinates of
+                                # the vertex from the edge number
                                 x = (e % size[0] - i - l1) % size[0]
                                 y = (int(e / size[0]) - j - l2) % size[1]
 
@@ -193,7 +212,8 @@ class LatticeDiagonal(Diagonal):
 
                                 m = (((x + bl1) % size[0]) * size[1] + ((y + bl2) % size[1])) * coin_size + \
                                     (i + bl1) * size_per_coin + (j + bl2)
-                                n = (x * size[1] + y) * coin_size + (1 - i) * size_per_coin + (1 - j)
+                                n = (x * size[1] + y) * coin_size + \
+                                    (1 - i) * size_per_coin + (1 - j)
 
                                 yield m, n, 1
                 else:
@@ -221,8 +241,10 @@ class LatticeDiagonal(Diagonal):
                         for j in range(size_per_coin):
                             l2 = (-1) ** j
 
-                            m = (i * size_per_coin + j) * size_xy + ((x + l1) % size[0]) * size[1] + ((y + l2) % size[1])
-                            n = (i * size_per_coin + j) * size_xy + x * size[1] + y
+                            m = (i * size_per_coin + j) * size_xy + ((x + l1) %
+                                                                     size[0]) * size[1] + ((y + l2) % size[1])
+                            n = (i * size_per_coin + j) * \
+                                size_xy + x * size[1] + y
 
                             yield m, n, 1
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -235,8 +257,11 @@ class LatticeDiagonal(Diagonal):
                         for j in range(size_per_coin):
                             l2 = (-1) ** j
 
-                            m = (((x + l1) % size[0]) * size[1] + ((y + l2) % size[1])) * coin_size + i * size_per_coin + j
-                            n = (x * size[1] + y) * coin_size + i * size_per_coin + j
+                            m = (((x + l1) %
+                                  size[0]) * size[1] + ((y + l2) %
+                                                        size[1])) * coin_size + i * size_per_coin + j
+                            n = (x * size[1] + y) * coin_size + \
+                                i * size_per_coin + j
 
                             yield m, n, 1
             else:
@@ -257,7 +282,8 @@ class LatticeDiagonal(Diagonal):
 
             expected_elems = coin_size * size_xy
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(
@@ -266,7 +292,8 @@ class LatticeDiagonal(Diagonal):
 
         return (rdd, shape, broken_links)
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the shift operator for the walk.
 
         Parameters
@@ -294,9 +321,14 @@ class LatticeDiagonal(Diagonal):
 
         initial_time = datetime.now()
 
-        rdd, shape, broken_links = self._create_rdd(coord_format, storage_level)
+        rdd, shape, broken_links = self._create_rdd(
+            coord_format, storage_level)
 
-        operator = Operator(rdd, shape, data_type=int, coord_format=coord_format).materialize(storage_level)
+        operator = Operator(
+            rdd,
+            shape,
+            data_type=int,
+            coord_format=coord_format).materialize(storage_level)
 
         if broken_links:
             broken_links.unpersist()

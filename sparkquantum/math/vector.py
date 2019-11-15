@@ -33,7 +33,8 @@ class Vector(Base):
 
         expected_elems = new_shape[0]
         expected_size = Utils.get_size_of_type(self.data_type) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        num_partitions = Utils.get_num_partitions(
+            self.data.context, expected_size)
 
         rdd = self.data.map(
             lambda m: (0, m)
@@ -73,8 +74,12 @@ class Vector(Base):
         """
         if not is_vector(other):
             if self._logger:
-                self._logger.error("'Vector' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'Vector' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'Vector' instance expected, not '{}'".format(
+                        type(other)))
+            raise TypeError(
+                "'Vector' instance expected, not '{}'".format(
+                    type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -114,7 +119,10 @@ class Vector(Base):
             True if the norm of this vector is 1.0, False otherwise.
 
         """
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 

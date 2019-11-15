@@ -71,7 +71,9 @@ class RandomBrokenLinks(BrokenLinks):
             lambda m: m[1] is True
         )
 
-        generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+        generation_mode = Utils.get_conf(
+            self._spark_context,
+            'quantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == Utils.BrokenLinksGenerationModeRDD:
             return rdd

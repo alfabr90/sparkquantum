@@ -307,18 +307,24 @@ class Utils():
             If the number of cores is not informed.
 
         """
-        safety_factor = float(Utils.get_conf(spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
+        safety_factor = float(Utils.get_conf(
+            spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
         num_partitions = None
 
-        if Utils.get_conf(spark_context, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
-            num_cores = Utils.get_conf(spark_context, 'quantum.cluster.totalCores')
+        if Utils.get_conf(
+                spark_context, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
+            num_cores = Utils.get_conf(
+                spark_context, 'quantum.cluster.totalCores')
 
             if not num_cores:
-                raise ValueError("invalid number of total cores in the cluster: {}".format(num_cores))
+                raise ValueError(
+                    "invalid number of total cores in the cluster: {}".format(num_cores))
 
             num_cores = int(num_cores)
-            max_partition_size = int(Utils.get_conf(spark_context, 'quantum.cluster.maxPartitionSize'))
-            num_partitions = math.ceil(safety_factor * expected_size / max_partition_size / num_cores) * num_cores
+            max_partition_size = int(Utils.get_conf(
+                spark_context, 'quantum.cluster.maxPartitionSize'))
+            num_partitions = math.ceil(
+                safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 
         return num_partitions
 

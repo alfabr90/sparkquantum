@@ -34,7 +34,8 @@ class State(Vector):
         """
         if not is_mesh(mesh):
             # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
-            raise TypeError("'Mesh' instance expected, not '{}'".format(type(mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(type(mesh)))
 
         super().__init__(rdd, shape, data_type=complex)
 
@@ -51,7 +52,8 @@ class State(Vector):
         """int"""
         return self._num_particles
 
-    def dump(self, path, glue=None, codec=None, filename='', dumping_format=None):
+    def dump(self, path, glue=None, codec=None,
+             filename='', dumping_format=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
@@ -91,12 +93,15 @@ class State(Vector):
             glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(self._spark_context,
+                                   'quantum.dumpingCompressionCodec')
 
         if dumping_format is None:
-            dumping_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
+            dumping_format = int(Utils.get_conf(
+                self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
 
-        dumping_mode = int(Utils.get_conf(self._spark_context, 'quantum.math.dumpingMode'))
+        dumping_mode = int(Utils.get_conf(
+            self._spark_context, 'quantum.math.dumpingMode'))
 
         if dumping_format == Utils.StateDumpingFormatIndex:
             if dumping_mode == Utils.DumpingModeUniqueFile:
@@ -122,7 +127,8 @@ class State(Vector):
                     self._logger.error("invalid dumping mode")
                 raise NotImplementedError("invalid dumping mode")
         elif dumping_format == Utils.StateDumpingFormatCoordinate:
-            repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+            repr_format = int(Utils.get_conf(
+                self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
             if self._mesh.is_1d():
                 ndim = self._mesh.dimension
@@ -140,9 +146,11 @@ class State(Vector):
 
                         for p in range(num_particles):
                             # Coin
-                            ix.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p) * size)) % size_per_coin))
+                            ix.append(
+                                str(int(m[0] / (cs_size ** (num_particles - 1 - p) * size)) % size_per_coin))
                             # Position
-                            ix.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size + mesh_offset))
+                            ix.append(
+                                str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size + mesh_offset))
 
                         ix.append(str(m[1]))
 
@@ -153,9 +161,11 @@ class State(Vector):
 
                         for p in range(num_particles):
                             # Position
-                            xi.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size + mesh_offset))
+                            xi.append(str(int(
+                                m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size + mesh_offset))
                             # Coin
-                            xi.append(str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size_per_coin))
+                            xi.append(
+                                str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size_per_coin))
 
                         xi.append(str(m[1]))
 
@@ -183,11 +193,15 @@ class State(Vector):
 
                         for p in range(num_particles):
                             # Coin
-                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * cs_size_x * size_y)) % size_per_coin))
-                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_x * size_y)) % size_per_coin))
+                            ijxy.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * cs_size_x * size_y)) % size_per_coin))
+                            ijxy.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_x * size_y)) % size_per_coin))
                             # Position
-                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x + mesh_offset_x))
-                            ijxy.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y + mesh_offset_y))
+                            ijxy.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x + mesh_offset_x))
+                            ijxy.append(
+                                str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y + mesh_offset_y))
 
                         ijxy.append(str(m[1]))
 
@@ -198,11 +212,15 @@ class State(Vector):
 
                         for p in range(num_particles):
                             # Position
-                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x + mesh_offset_x))
-                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y + mesh_offset_y))
+                            xyij.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x + mesh_offset_x))
+                            xyij.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y + mesh_offset_y))
                             # Coin
-                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_per_coin)) % size_per_coin))
-                            xyij.append(str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_per_coin))
+                            xyij.append(str(int(
+                                m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_per_coin)) % size_per_coin))
+                            xyij.append(
+                                str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_per_coin))
 
                         xyij.append(str(m[1]))
 
@@ -264,8 +282,10 @@ class State(Vector):
         """
         if not is_state(other):
             if self._logger:
-                self._logger.error("'State' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'State' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'State' instance expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'State' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -298,7 +318,8 @@ class State(Vector):
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context,
+                                         'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -321,7 +342,8 @@ class State(Vector):
                     x = []
 
                     for p in range(num_particles):
-                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
+                        x.append(
+                            int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
 
                     return tuple(x), (abs(m[1]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -329,7 +351,8 @@ class State(Vector):
                     x = []
 
                     for p in range(num_particles):
-                        x.append(int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size)
+                        x.append(
+                            int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size)
 
                     return tuple(x), (abs(m[1]) ** 2).real
             else:
@@ -370,8 +393,10 @@ class State(Vector):
                     xy = []
 
                     for p in range(num_particles):
-                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x)
-                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
+                        xy.append(
+                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x)
+                        xy.append(
+                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
 
                     return tuple(xy), (abs(m[1]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -379,8 +404,10 @@ class State(Vector):
                     xy = []
 
                     for p in range(num_particles):
-                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x)
-                        xy.append(int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y)
+                        xy.append(
+                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x)
+                        xy.append(
+                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y)
 
                     return tuple(xy), (abs(m[1]) ** 2).real
             else:
@@ -404,7 +431,8 @@ class State(Vector):
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        num_partitions = Utils.get_num_partitions(
+            self.data.context, expected_size)
 
         data_type = self._data_type()
 
@@ -418,12 +446,14 @@ class State(Vector):
             __unmap
         )
 
-        pdf = JointPDF(rdd, shape, self._mesh, self._num_particles).materialize(storage_level)
+        pdf = JointPDF(rdd, shape, self._mesh,
+                       self._num_particles).materialize(storage_level)
 
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(
+            self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:
@@ -436,10 +466,12 @@ class State(Vector):
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
 
-            info = self._profiler.profile_pdf('fullMeasurement', pdf, (datetime.now() - t1).total_seconds())
+            info = self._profiler.profile_pdf(
+                'fullMeasurement', pdf, (datetime.now() - t1).total_seconds())
 
             if self._logger:
-                self._logger.info("full measurement was done in {}s".format(info['buildingTime']))
+                self._logger.info(
+                    "full measurement was done in {}s".format(info['buildingTime']))
                 self._logger.info(
                     "PDF with full measurement is consuming {} bytes in memory and {} bytes in disk".format(
                         info['memoryUsed'], info['diskUsed']
@@ -450,7 +482,8 @@ class State(Vector):
 
         return pdf
 
-    def measure_collision(self, full_measurement, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def measure_collision(self, full_measurement,
+                          storage_level=StorageLevel.MEMORY_AND_DISK):
         """Filter the measurement of the entire system by checking when
         all particles are located at the same site of the mesh.
 
@@ -477,18 +510,23 @@ class State(Vector):
         """
         if self._num_particles <= 1:
             if self._logger:
-                self._logger.error("the measurement of collision cannot be performed for quantum walks with only one particle")
-            raise NotImplementedError("the measurement of collision cannot be performed for quantum walks with only one particle")
+                self._logger.error(
+                    "the measurement of collision cannot be performed for quantum walks with only one particle")
+            raise NotImplementedError(
+                "the measurement of collision cannot be performed for quantum walks with only one particle")
 
         if self._logger:
-            self._logger.info("measuring the state of the system considering that the particles are at the same positions...")
+            self._logger.info(
+                "measuring the state of the system considering that the particles are at the same positions...")
 
         t1 = datetime.now()
 
         if not is_pdf(full_measurement):
             if self._logger:
-                self._logger.error("'PDF' instance expected, not '{}'".format(type(full_measurement)))
-            raise TypeError("'PDF' instance expected, not '{}'".format(type(full_measurement)))
+                self._logger.error(
+                    "'PDF' instance expected, not '{}'".format(type(full_measurement)))
+            raise TypeError("'PDF' instance expected, not '{}'".format(
+                type(full_measurement)))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -528,7 +566,8 @@ class State(Vector):
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        num_partitions = Utils.get_num_partitions(
+            self.data.context, expected_size)
 
         rdd = full_measurement.data.filter(
             __filter
@@ -538,7 +577,8 @@ class State(Vector):
             num_partitions
         )
 
-        pdf = CollisionPDF(rdd, shape, self._mesh, self._num_particles).materialize(storage_level)
+        pdf = CollisionPDF(rdd, shape, self._mesh,
+                           self._num_particles).materialize(storage_level)
 
         app_id = self._spark_context.applicationId
 
@@ -546,10 +586,12 @@ class State(Vector):
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
 
-            info = self._profiler.profile_pdf('collisionMeasurement', pdf, (datetime.now() - t1).total_seconds())
+            info = self._profiler.profile_pdf(
+                'collisionMeasurement', pdf, (datetime.now() - t1).total_seconds())
 
             if self._logger:
-                self._logger.info("collision measurement was done in {}s".format(info['buildingTime']))
+                self._logger.info(
+                    "collision measurement was done in {}s".format(info['buildingTime']))
                 self._logger.info(
                     "PDF with collision measurement is consuming {} bytes in memory and {} bytes in disk".format(
                         info['memoryUsed'], info['diskUsed']
@@ -560,7 +602,8 @@ class State(Vector):
 
         return pdf
 
-    def measure_particle(self, particle, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def measure_particle(self, particle,
+                         storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform the partial measurement of a particle of the system state.
 
         Parameters
@@ -592,11 +635,13 @@ class State(Vector):
             raise ValueError("invalid particle number")
 
         if self._logger:
-            self._logger.info("measuring the state of the system for particle {}...".format(particle + 1))
+            self._logger.info(
+                "measuring the state of the system for particle {}...".format(particle + 1))
 
         t1 = datetime.now()
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(Utils.get_conf(self._spark_context,
+                                         'quantum.dtqw.state.representationFormat'))
 
         if self._mesh.is_1d():
             ndim = self._mesh.dimension
@@ -610,11 +655,13 @@ class State(Vector):
 
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
-                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle))) % size
+                    x = int(
+                        m[0] / (cs_size ** (num_particles - 1 - particle))) % size
                     return x, (abs(m[1]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
-                    x = int(m[0] / (cs_size ** (num_particles - 1 - particle) * size_per_coin)) % size
+                    x = int(m[0] / (cs_size ** (num_particles -
+                                                1 - particle) * size_per_coin)) % size
                     return x, (abs(m[1]) ** 2).real
             else:
                 if self._logger:
@@ -638,15 +685,19 @@ class State(Vector):
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = (
-                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * size_y)) % size_x,
-                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle))) % size_y
+                        int(m[0] / (cs_size_xy ** (num_particles -
+                                                   1 - particle) * size_y)) % size_x,
+                        int(m[0] / (cs_size_xy **
+                                    (num_particles - 1 - particle))) % size_y
                     )
                     return xy, (abs(m[1]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = (
-                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * coin_size * size_y)) % size_x,
-                        int(m[0] / (cs_size_xy ** (num_particles - 1 - particle) * coin_size)) % size_y
+                        int(m[0] / (cs_size_xy ** (num_particles - 1 -
+                                                   particle) * coin_size * size_y)) % size_x,
+                        int(m[0] / (cs_size_xy ** (num_particles -
+                                                   1 - particle) * coin_size)) % size_y
                     )
                     return xy, (abs(m[1]) ** 2).real
             else:
@@ -662,7 +713,8 @@ class State(Vector):
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        num_partitions = Utils.get_num_partitions(
+            self.data.context, expected_size)
 
         data_type = self._data_type()
 
@@ -676,12 +728,14 @@ class State(Vector):
             __unmap
         )
 
-        pdf = MarginalPDF(rdd, shape, self._mesh, self._num_particles).materialize(storage_level)
+        pdf = MarginalPDF(rdd, shape, self._mesh,
+                          self._num_particles).materialize(storage_level)
 
         if self._logger:
             self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(Utils.get_conf(
+            self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
             if self._logger:
@@ -695,12 +749,13 @@ class State(Vector):
             self._profiler.profile_executors(app_id)
 
             info = self._profiler.profile_pdf(
-                'partialMeasurementParticle{}'.format(particle + 1), pdf, (datetime.now() - t1).total_seconds()
+                'partialMeasurementParticle{}'.format(
+                    particle + 1), pdf, (datetime.now() - t1).total_seconds()
             )
 
             if self._logger:
                 self._logger.info("partial measurement for particle {} was done in {}s".format(
-                        particle + 1, info['buildingTime'])
+                    particle + 1, info['buildingTime'])
                 )
                 self._logger.info(
                     "PDF with partial measurements for particle {} "
@@ -737,7 +792,8 @@ class State(Vector):
             if the sum of the calculated PDF is not equal to one.
 
         """
-        return [self.measure_particle(p, storage_level) for p in range(self._num_particles)]
+        return [self.measure_particle(p, storage_level)
+                for p in range(self._num_particles)]
 
     def measure(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform the measurement of the system state.
@@ -771,7 +827,8 @@ class State(Vector):
             return self.measure_system(storage_level)
         else:
             full_measurement = self.measure_system(storage_level)
-            collision_measurement = self.measure_collision(full_measurement, storage_level)
+            collision_measurement = self.measure_collision(
+                full_measurement, storage_level)
             partial_measurements = self.measure_particles(storage_level)
 
             return full_measurement, collision_measurement, partial_measurements

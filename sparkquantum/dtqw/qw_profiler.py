@@ -35,11 +35,13 @@ class QuantumWalkProfiler(Profiler):
 
     @staticmethod
     def _default_state():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0, 'numElements': 0, 'numNonzeroElements': 0}
+        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
+                'numElements': 0, 'numNonzeroElements': 0}
 
     @staticmethod
     def _default_pdf():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0, 'numElements': 0, 'numNonzeroElements': 0}
+        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
+                'numElements': 0, 'numNonzeroElements': 0}
 
     def start(self):
         """Reset the profiler attributes to get info for a new profiling round."""
@@ -73,12 +75,15 @@ class QuantumWalkProfiler(Profiler):
 
         """
         if self._logger:
-            self._logger.info("profiling operator data for '{}'...".format(name))
+            self._logger.info(
+                "profiling operator data for '{}'...".format(name))
 
         if not is_operator(operator):
             if self._logger:
-                self._logger.error("'Operator' instance expected, not '{}'".format(type(operator)))
-            raise TypeError("'Operator' instance expected, not '{}'".format(type(operator)))
+                self._logger.error(
+                    "'Operator' instance expected, not '{}'".format(type(operator)))
+            raise TypeError(
+                "'Operator' instance expected, not '{}'".format(type(operator)))
 
         if name not in self._operators:
             self._operators[name] = []
@@ -124,12 +129,15 @@ class QuantumWalkProfiler(Profiler):
 
         """
         if self._logger:
-            self._logger.info("profiling quantum system state data for '{}'...".format(name))
+            self._logger.info(
+                "profiling quantum system state data for '{}'...".format(name))
 
         if not is_state(state):
             if self._logger:
-                self._logger.error("'State' instance expected, not '{}'".format(type(state)))
-            raise TypeError("'State' instance expected, not '{}'".format(type(state)))
+                self._logger.error(
+                    "'State' instance expected, not '{}'".format(type(state)))
+            raise TypeError(
+                "'State' instance expected, not '{}'".format(type(state)))
 
         if name not in self._states:
             self._states[name] = []
@@ -179,8 +187,10 @@ class QuantumWalkProfiler(Profiler):
 
         if not is_pdf(pdf):
             if self._logger:
-                self._logger.error("'PDF' instance expected, not '{}'".format(type(pdf)))
-            raise TypeError("'PDF' instance expected, not '{}'".format(type(pdf)))
+                self._logger.error(
+                    "'PDF' instance expected, not '{}'".format(type(pdf)))
+            raise TypeError(
+                "'PDF' instance expected, not '{}'".format(type(pdf)))
 
         if name not in self._pdfs:
             self._pdfs[name] = []
@@ -222,12 +232,14 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._operators:
                     if self._logger:
-                        self._logger.warning("no resources information for operator '{}'".format(name))
+                        self._logger.warning(
+                            "no resources information for operator '{}'".format(name))
                     return {}
                 return self._operators[name]
         else:
             if self._logger:
-                self._logger.warning("no resources information for operators have been obtained")
+                self._logger.warning(
+                    "no resources information for operators have been obtained")
             return {}
 
     def get_states(self, name=None):
@@ -250,12 +262,14 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._states:
                     if self._logger:
-                        self._logger.warning("no resources information for state '{}'".format(name))
+                        self._logger.warning(
+                            "no resources information for state '{}'".format(name))
                     return {}
                 return self._states[name]
         else:
             if self._logger:
-                self._logger.warning("no resources information for states have been obtained")
+                self._logger.warning(
+                    "no resources information for states have been obtained")
             return {}
 
     def get_pdfs(self, name=None):
@@ -278,12 +292,14 @@ class QuantumWalkProfiler(Profiler):
             else:
                 if name not in self._pdfs:
                     if self._logger:
-                        self._logger.warning("no resources information for pdf '{}'".format(name))
+                        self._logger.warning(
+                            "no resources information for pdf '{}'".format(name))
                     return {}
                 return self._pdfs[name]
         else:
             if self._logger:
-                self._logger.warning("no resources information for pdfs have been obtained")
+                self._logger.warning(
+                    "no resources information for pdfs have been obtained")
             return {}
 
     def export_operators(self, path, extension='csv'):
@@ -307,7 +323,8 @@ class QuantumWalkProfiler(Profiler):
 
         """
         if self._logger:
-            self._logger.info("exporting operators' resources in {} format...".format(extension))
+            self._logger.info(
+                "exporting operators' resources in {} format...".format(extension))
 
         if len(self._operators):
             operator = []
@@ -317,13 +334,15 @@ class QuantumWalkProfiler(Profiler):
                     operator.append(i.copy())
                     operator[-1]['name'] = k
 
-            self._export_values(operator, operator[-1].keys(), path + 'operators', extension)
+            self._export_values(
+                operator, operator[-1].keys(), path + 'operators', extension)
 
             if self._logger:
                 self._logger.info("operator's resources successfully exported")
         else:
             if self._logger:
-                self._logger.warning("no measurement of operators' resources has been done")
+                self._logger.warning(
+                    "no measurement of operators' resources has been done")
 
     def export_states(self, path, extension='csv'):
         """Export all stored state' resources.
@@ -346,7 +365,8 @@ class QuantumWalkProfiler(Profiler):
 
         """
         if self._logger:
-            self._logger.info("exporting states' resources in {} format...".format(extension))
+            self._logger.info(
+                "exporting states' resources in {} format...".format(extension))
 
         if len(self._states):
             states = []
@@ -356,13 +376,15 @@ class QuantumWalkProfiler(Profiler):
                     states.append(i.copy())
                     states[-1]['name'] = k
 
-            self._export_values(states, states[-1].keys(), path + 'states', extension)
+            self._export_values(
+                states, states[-1].keys(), path + 'states', extension)
 
             if self._logger:
                 self._logger.info("states' resources successfully exported")
         else:
             if self._logger:
-                self._logger.warning("no measurement of states' resources has been done")
+                self._logger.warning(
+                    "no measurement of states' resources has been done")
 
     def export_pdfs(self, path, extension='csv'):
         """Export all stored pdfs' resources.
@@ -385,7 +407,8 @@ class QuantumWalkProfiler(Profiler):
 
         """
         if self._logger:
-            self._logger.info("exporting pdfs' resources in {} format...".format(extension))
+            self._logger.info(
+                "exporting pdfs' resources in {} format...".format(extension))
 
         if len(self._operators):
             pdfs = []
@@ -395,13 +418,15 @@ class QuantumWalkProfiler(Profiler):
                     pdfs.append(i.copy())
                     pdfs[-1]['name'] = k
 
-            self._export_values(pdfs, pdfs[-1].keys(), path + 'pdfs', extension)
+            self._export_values(
+                pdfs, pdfs[-1].keys(), path + 'pdfs', extension)
 
             if self._logger:
                 self._logger.info("pdfs' resources successfully exported")
         else:
             if self._logger:
-                self._logger.warning("no measurement of pdfs' resources has been done")
+                self._logger.warning(
+                    "no measurement of pdfs' resources has been done")
 
     def export(self, path, extension='csv'):
         """Export all stored profiling information of quantum walks.

@@ -11,7 +11,8 @@ __all__ = ['Matrix', 'is_matrix']
 class Matrix(Base):
     """Class for matrices."""
 
-    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
+    def __init__(self, rdd, shape, data_type=complex,
+                 coord_format=Utils.MatrixCoordinateDefault):
         """Build a matrix object.
 
         Parameters
@@ -59,7 +60,9 @@ class Matrix(Base):
             glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context, 'quantum.dumpingCompressionCodec')
+            codec = Utils.get_conf(
+                self._spark_context,
+                'quantum.dumpingCompressionCodec')
 
         if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             rdd = self.data.map(
@@ -107,12 +110,17 @@ class Matrix(Base):
 
     def _kron(self, other):
         other_shape = other.shape
-        new_shape = (self._shape[0] * other_shape[0], self._shape[1] * other_shape[1])
+        new_shape = (
+            self._shape[0] *
+            other_shape[0],
+            self._shape[1] *
+            other_shape[1])
         data_type = Utils.get_precendent_type(self._data_type, other.data_type)
 
         expected_elems = self._num_nonzero_elements * other.num_nonzero_elements
         expected_size = Utils.get_size_of_type(data_type) * expected_elems
-        num_partitions = Utils.get_num_partitions(self.data.context, expected_size)
+        num_partitions = Utils.get_num_partitions(
+            self.data.context, expected_size)
 
         rdd = self.data.map(
             lambda m: (0, m)
@@ -127,19 +135,28 @@ class Matrix(Base):
 
         if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             rdd = rdd.map(
-                lambda m: (m[0][1] * other_shape[1] + m[1][1], (m[0][0] * other_shape[0] + m[1][0], m[0][2] * m[1][2]))
+                lambda m: (
+                    m[0][1] * other_shape[1] + m[1][1],
+                    (m[0][0] * other_shape[0] + m[1][0],
+                     m[0][2] * m[1][2]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
         elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
             rdd = rdd.map(
-                lambda m: (m[0][0] * other_shape[0] + m[1][0], (m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2]))
+                lambda m: (
+                    m[0][0] * other_shape[0] + m[1][0],
+                    (m[0][1] * other_shape[1] + m[1][1],
+                     m[0][2] * m[1][2]))
             ).partitionBy(
                 numPartitions=num_partitions
             )
         else:  # Utils.MatrixCoordinateDefault
             rdd = rdd.map(
-                lambda m: (m[0][0] * other_shape[0] + m[1][0], m[0][1] * other_shape[1] + m[1][1], m[0][2] * m[1][2])
+                lambda m: (
+                    m[0][0] * other_shape[0] + m[1][0],
+                    m[0][1] * other_shape[1] + m[1][1],
+                    m[0][2] * m[1][2])
             )
 
         return rdd, new_shape
@@ -168,8 +185,12 @@ class Matrix(Base):
         """
         if not is_matrix(other):
             if self._logger:
-                self._logger.error("'Matrix' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'Matrix' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'Matrix' instance expected, not '{}'".format(
+                        type(other)))
+            raise TypeError(
+                "'Matrix' instance expected, not '{}'".format(
+                    type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -216,18 +237,27 @@ class Matrix(Base):
             True if the norm of this matrix is 1.0, False otherwise.
 
         """
-        round_precision = int(Utils.get_conf(self._spark_context, 'quantum.math.roundPrecision'))
+        round_precision = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 
     def _multiply_matrix(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
             if self._logger:
-                self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
+                self._logger.error(
+                    "incompatible shapes {} and {}".format(
+                        self._shape, other.shape))
+            raise ValueError(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
 
         shape = (self._shape[0], other.shape[1])
-        num_partitions = max(self.data.getNumPartitions(), other.data.getNumPartitions())
+        num_partitions = max(
+            self.data.getNumPartitions(),
+            other.data.getNumPartitions())
 
         rdd = self.data.join(
             other.data, numPartitions=num_partitions
@@ -259,8 +289,12 @@ class Matrix(Base):
     def _multiply_vector(self, other):
         if self._shape[1] != other.shape[0]:
             if self._logger:
-                self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
+                self._logger.error(
+                    "incompatible shapes {} and {}".format(
+                        self._shape, other.shape))
+            raise ValueError(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
 
         shape = other.shape
 
@@ -305,8 +339,12 @@ class Matrix(Base):
             return self._multiply_vector(other)
         else:
             if self._logger:
-                self._logger.error("'Matrix' or 'Vector' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'Matrix' or 'Vector' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'Matrix' or 'Vector' instance expected, not '{}'".format(
+                        type(other)))
+            raise TypeError(
+                "'Matrix' or 'Vector' instance expected, not '{}'".format(
+                    type(other)))
 
 
 def is_matrix(obj):

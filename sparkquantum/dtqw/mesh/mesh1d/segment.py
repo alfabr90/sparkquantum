@@ -49,12 +49,17 @@ class Segment(Mesh1D):
         shape = (coin_size * size, coin_size * size)
         broken_links = None
 
-        repr_format = int(Utils.get_conf(self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        repr_format = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(self._spark_context, 'quantum.dtqw.mesh.brokenLinks.generationMode')
+            generation_mode = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == Utils.BrokenLinksGenerationModeRDD:
                 if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -63,7 +68,8 @@ class Segment(Mesh1D):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            # Finding the correspondent x coordinate of the
+                            # vertex from the edge number
                             x = (e[1][0] - i - l) % size
 
                             if e[1][1]:
@@ -81,7 +87,8 @@ class Segment(Mesh1D):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            # Finding the correspondent x coordinate of the
+                            # vertex from the edge number
                             x = (e[1][0] - i - l) % size
 
                             if e[1][1]:
@@ -113,7 +120,8 @@ class Segment(Mesh1D):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            # Finding the correspondent x coordinate of the
+                            # vertex from the edge number
                             x = (e - i - l) % size
 
                             if e in broken_links.value:
@@ -130,7 +138,8 @@ class Segment(Mesh1D):
                         for i in range(size_per_coin):
                             l = (-1) ** i
 
-                            # Finding the correspondent x coordinate of the vertex from the edge number
+                            # Finding the correspondent x coordinate of the
+                            # vertex from the edge number
                             x = (e - i - l) % size
 
                             if e in broken_links.value:
@@ -197,7 +206,8 @@ class Segment(Mesh1D):
 
             expected_elems = coin_size * size
             expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(self._spark_context, expected_size)
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context, expected_size)
 
             if num_partitions:
                 rdd = rdd.partitionBy(
@@ -206,7 +216,8 @@ class Segment(Mesh1D):
 
         return (rdd, shape, broken_links)
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the shift operator for the walk.
 
         Parameters
@@ -234,9 +245,14 @@ class Segment(Mesh1D):
 
         initial_time = datetime.now()
 
-        rdd, shape, broken_links = self._create_rdd(coord_format, storage_level)
+        rdd, shape, broken_links = self._create_rdd(
+            coord_format, storage_level)
 
-        operator = Operator(rdd, shape, data_type=int, coord_format=coord_format).materialize(storage_level)
+        operator = Operator(
+            rdd,
+            shape,
+            data_type=int,
+            coord_format=coord_format).materialize(storage_level)
 
         if broken_links:
             broken_links.unpersist()

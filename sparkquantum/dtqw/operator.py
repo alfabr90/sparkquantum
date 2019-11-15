@@ -11,7 +11,8 @@ __all__ = ['Operator', 'is_operator']
 class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
-    def __init__(self, rdd, shape, data_type=complex, coord_format=Utils.MatrixCoordinateDefault):
+    def __init__(self, rdd, shape, data_type=complex,
+                 coord_format=Utils.MatrixCoordinateDefault):
         """Build an operator object.
 
         Parameters
@@ -60,8 +61,10 @@ class Operator(Matrix):
         """
         if not is_operator(other):
             if self._logger:
-                self._logger.error("'Operator' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'Operator' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'Operator' instance expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Operator' instance expected, not '{}'".format(type(other)))
 
         rdd, new_shape = self._kron(other)
 
@@ -70,11 +73,14 @@ class Operator(Matrix):
     def _multiply_operator(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
             if self._logger:
-                self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
+                self._logger.error("incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+            raise ValueError("incompatible shapes {} and {}".format(
+                self._shape, other.shape))
 
         shape = (self._shape[0], other.shape[1])
-        num_partitions = max(self.data.getNumPartitions(), other.data.getNumPartitions())
+        num_partitions = max(self.data.getNumPartitions(),
+                             other.data.getNumPartitions())
 
         rdd = self.data.join(
             other.data, numPartitions=num_partitions
@@ -106,8 +112,10 @@ class Operator(Matrix):
     def _multiply_state(self, other):
         if self._shape[1] != other.shape[0]:
             if self._logger:
-                self._logger.error("incompatible shapes {} and {}".format(self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(self._shape, other.shape))
+                self._logger.error("incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+            raise ValueError("incompatible shapes {} and {}".format(
+                self._shape, other.shape))
 
         shape = other.shape
 
@@ -152,8 +160,10 @@ class Operator(Matrix):
             return self._multiply_state(other)
         else:
             if self._logger:
-                self._logger.error("'State' or 'Operator' instance expected, not '{}'".format(type(other)))
-            raise TypeError("'State' or 'Operator' instance expected, not '{}'".format(type(other)))
+                self._logger.error(
+                    "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 
 
 def is_operator(obj):

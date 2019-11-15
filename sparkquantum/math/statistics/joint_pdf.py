@@ -119,7 +119,8 @@ class JointPDF(PDF):
         elif self._mesh.is_2d():
             ndim = 2
             ind = ndim * self._num_particles
-            mesh_size = (int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (
+                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
             if self._logger:
                 self._logger.error("mesh dimension not implemented")
@@ -170,7 +171,8 @@ class JointPDF(PDF):
         elif self._mesh.is_2d():
             ndim = 2
             ind = ndim * self._num_particles
-            mesh_size = (int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (
+                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
             if self._logger:
                 self._logger.error("mesh dimension not implemented")
@@ -280,7 +282,7 @@ class JointPDF(PDF):
                 self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of one and two particles"
-                )
+                                     )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
@@ -288,7 +290,7 @@ class JointPDF(PDF):
                 self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of just one particle"
-                )
+                                     )
             return None
 
         if not (self._mesh.is_1d() and self._num_particles == 2):
@@ -347,7 +349,9 @@ class JointPDF(PDF):
             plt.clf()
 
             if self._logger:
-                self._logger.info("plot in {}s".format((datetime.now() - t1).total_seconds()))
+                self._logger.info(
+                    "plot in {}s".format(
+                        (datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
         """Plot the contour function of the probabilities over the mesh.
@@ -369,7 +373,7 @@ class JointPDF(PDF):
                 self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of two particles"
-                )
+                                     )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
@@ -377,7 +381,7 @@ class JointPDF(PDF):
                 self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of just one particle"
-                )
+                                     )
             return None
 
         if not (self._mesh.is_1d() and self._num_particles == 2):
@@ -430,4 +434,6 @@ class JointPDF(PDF):
             plt.clf()
 
             if self._logger:
-                self._logger.info("contour plot in {}s".format((datetime.now() - t1).total_seconds()))
+                self._logger.info(
+                    "contour plot in {}s".format(
+                        (datetime.now() - t1).total_seconds()))
