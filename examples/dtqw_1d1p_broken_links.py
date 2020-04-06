@@ -50,38 +50,28 @@ walk_path = "{}/".format(
 sim_path = walk_path
 Utils.create_dir(sim_path)
 
-coin_size = coin.size
 mesh_size = mesh.size
 
 # Center of the mesh
-position = int((mesh_size - 1) / 2)
+positions = (int((mesh_size - 1) / 2), )
 
 # Options of initial states
-if representationFormat == Utils.StateRepresentationFormatCoinPosition:
-    # |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
-    state = (
-        (0 * mesh_size + position, (1.0 + 0.0j) / math.sqrt(2)),
-        (1 * mesh_size + position, (0.0 - 1.0j) / math.sqrt(2))
-    )
-    # |i>|x> --> |0>|0>
-    # state = ((0 * mesh_size + position, (1.0 + 0.0j)), )
-    # |i>|x> --> |1>|0>
-    # state = ((1 * mesh_size + position, (1.0 + 0.0j)), )
-elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
-    # |x>|i> --> (|0>|0> - i|0>|1>) / sqrt(2)
-    state = (
-        (position * coin_size + 0, (1.0 + 0.0j) / math.sqrt(2)),
-        (position * coin_size + 1, (0.0 - 1.0j) / math.sqrt(2))
-    )
-    # |x>|i> --> |0>|0>
-    # state = ((position * coin_size + 0, (1.0 + 0.0j)), )
-    # |x>|i> --> |0>|1>
-    # state = ((position * coin_size + 1, (1.0 + 0.0j)), )
+# |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
+amplitudes = (((1.0 + 0.0j) / math.sqrt(2), (0.0 - 1.0j) / math.sqrt(2)), )
+
+# |i>|x> --> |0>|0>
+# amplitudes = (((1.0 + 0.0j), ), )
+
+# |i>|x> --> |1>|0>
+# amplitudes = ((0, (1.0 + 0.0j)), )
 
 # Building the initial state
-rdd = sparkContext.parallelize(state)
-shape = (coin_size * mesh_size, 1)
-initial_state = State(rdd, shape, mesh, num_particles)
+initial_state = State.create(
+    coin,
+    mesh,
+    positions,
+    amplitudes,
+    representationFormat)
 
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)

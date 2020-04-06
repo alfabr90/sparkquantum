@@ -65,119 +65,61 @@ Utils.create_dir(sim_path)
 coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
 
-# Center of the mesh
-position = int((mesh.size[0] - 1) / 2) * \
-    mesh.size[1] + int((mesh.size[1] - 1) / 2)
-
 # Options of initial states
 if not entangled:
-    if representationFormat == Utils.StateRepresentationFormatCoinPosition:
-        # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-        state1 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (2 * mesh_size + position, (0.0 - 1.0j) / 2),
-            (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-        )
-        # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-        '''state1 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (2 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (3 * mesh_size + position, (-1.0 - 0.0j) / 2)
-        )'''
-        # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-        '''state1 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (-1.0 - 0.0j) / 2),
-            (2 * mesh_size + position, (-1.0 - 0.0j) / 2),
-            (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-        )'''
+    # Center of the mesh
+    positions = (int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2),
+                 int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2))
 
-        # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-        state2 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (2 * mesh_size + position, (0.0 - 1.0j) / 2),
-            (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-        )
-        # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-        '''state2 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (2 * mesh_size + position, (0.0 + 1.0j) / 2),
-            (3 * mesh_size + position, (-1.0 - 0.0j) / 2)
-        )'''
-        # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-        '''state2 = (
-            (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-            (1 * mesh_size + position, (-1.0 - 0.0j) / 2),
-            (2 * mesh_size + position, (-1.0 - 0.0j) / 2),
-            (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-        )'''
-    elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
-        # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> - i|0,0>|1,0> + |0,0>|1,1>) / 2
-        state1 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (0.0 + 1.0j) / 2),
-            (position * coin_size + 2, (0.0 - 1.0j) / 2),
-            (position * coin_size + 3, (1.0 + 0.0j) / 2)
-        )
-        # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> + i|0,0>|1,0> - |0,0>|1,1>) / 2
-        '''state1 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (0.0 + 1.0j) / 2),
-            (position * coin_size + 2, (0.0 + 1.0j) / 2),
-            (position * coin_size + 3, (-1.0 - 0.0j) / 2)
-        )'''
-        # |x,y>|i,j> --> (|0,0>|0,0> - |0,0>|0,1> - |0,0>|1,0> + |0,0>|1,1>) / 2
-        '''state1 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (-1.0 - 0.0j) / 2),
-            (position * coin_size + 2, (-1.0 - 0.0j) / 2),
-            (position * coin_size + 3, (1.0 + 0.0j) / 2)
-        )'''
+    amplitudes = []
 
-        # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> - i|0,0>|1,0> + |0,0>|1,1>) / 2
-        state2 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (0.0 + 1.0j) / 2),
-            (position * coin_size + 2, (0.0 - 1.0j) / 2),
-            (position * coin_size + 3, (1.0 + 0.0j) / 2)
-        )
-        # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> + i|0,0>|1,0> - |0,0>|1,1>) / 2
-        '''state2 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (0.0 + 1.0j) / 2),
-            (position * coin_size + 2, (0.0 + 1.0j) / 2),
-            (position * coin_size + 3, (-1.0 - 0.0j) / 2)
-        )'''
-        # |x,y>|i,j> --> (|0,0>|0,0> - |0,0>|0,1> - |0,0>|1,0> + |0,0>|1,1>) / 2
-        '''state2 = (
-            (position * coin_size + 0, (1.0 + 0.0j) / 2),
-            (position * coin_size + 1, (-1.0 - 0.0j) / 2),
-            (position * coin_size + 2, (-1.0 - 0.0j) / 2),
-            (position * coin_size + 3, (1.0 + 0.0j) / 2)
-        )'''
+    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
+    amplitudes.append((((1.0 + 0.0j) / 2),
+                       ((0.0 + 1.0j) / 2),
+                       ((0.0 - 1.0j) / 2),
+                       ((1.0 + 0.0j) / 2)))
 
-    shape = (coin_size * mesh_size, 1)
+    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
+    # amplitudes.append((((1.0 + 0.0j) / 2),
+    #               ((0.0 + 1.0j) / 2),
+    #               ((0.0 + 1.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2)))
 
-    base_state1 = State(
-        sparkContext.parallelize(state1),
-        shape,
+    # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
+    # amplitudes.append((((1.0 + 0.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2),
+    #               ((1.0 + 0.0j) / 2)))
+
+    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
+    amplitudes.append((((1.0 + 0.0j) / 2),
+                       ((0.0 + 1.0j) / 2),
+                       ((0.0 - 1.0j) / 2),
+                       ((1.0 + 0.0j) / 2)))
+
+    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
+    # amplitudes.append((((1.0 + 0.0j) / 2),
+    #               ((0.0 + 1.0j) / 2),
+    #               ((0.0 + 1.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2)))
+
+    # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
+    # amplitudes.append((((1.0 + 0.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2),
+    #               ((-1.0 - 0.0j) / 2),
+    #               ((1.0 + 0.0j) / 2)))
+
+    initial_state = State.create(
+        coin,
         mesh,
-        num_particles)
-    base_state2 = State(
-        sparkContext.parallelize(state2),
-        shape,
-        mesh,
-        num_particles)
-
-    initial_state = base_state1.kron(base_state2)
-
-    base_state1.destroy()
-    base_state2.destroy()
+        positions,
+        amplitudes,
+        representationFormat)
 else:
+    # Center of the mesh
+    position = int((mesh.size[0] - 1) / 2) * \
+        mesh.size[1] + int((mesh.size[1] - 1) / 2)
+
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|0,0>|0,0>|0,0> - |0,0>|0,0>|1,1>|0,0>) / sqrt(2)
         state = (

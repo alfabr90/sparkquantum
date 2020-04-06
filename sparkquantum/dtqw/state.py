@@ -1,13 +1,14 @@
 import math
 from datetime import datetime
 
-from pyspark import StorageLevel
+from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.math.vector import Vector
 from sparkquantum.math.statistics.pdf import is_pdf
 from sparkquantum.math.statistics.joint_pdf import JointPDF
 from sparkquantum.math.statistics.collision_pdf import CollisionPDF
 from sparkquantum.math.statistics.marginal_pdf import MarginalPDF
+from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.utils.utils import Utils
 
@@ -33,7 +34,8 @@ class State(Vector):
 
         """
         if not is_mesh(mesh):
-            # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
+            # self._logger.error("'Mesh' instance expected, not
+            # '{}'".format(type(mesh)))
             raise TypeError(
                 "'Mesh' instance expected, not '{}'".format(type(mesh)))
 
@@ -832,6 +834,116 @@ class State(Vector):
             partial_measurements = self.measure_particles(storage_level)
 
             return full_measurement, collision_measurement, partial_measurements
+
+    @staticmethod
+    def create(coin, mesh, positions, amplitudes,
+               representationFormat=Utils.StateRepresentationFormatCoinPosition, logger=None):
+        """Create a system state.
+
+        For system states with entangled particles, the state must be created
+        by its class construct method.
+
+        Parameters
+        ----------
+        coin : :py:class:`sparkquantum.dtqw.coin.Coin`
+            A coin object.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+            The mesh where the particle(s) is(are) walking on.
+        positions : tuple or list
+            The position of each particle present in the quantum walk.
+        amplitudes : tuple or list
+            The amplitudes for each qubit of each particle in the quantum walk.
+        representationFormat : int, optional
+            Indicate how the quantum system will be represented.
+            Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
+        logger : py:class:`sparkquantum.utils.logger.Logger`, optional
+            A logger object
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.State`
+            A new system state.
+
+        Raises
+        ------
+        NotImplementedError
+            If the dimension of the mesh is not valid.
+
+        ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+
+        TypeError
+            If `coin` is not a :py:class:`sparkquantum.dtqw.coin.Coin` or
+            if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.Mesh`.
+
+        """
+        if not is_coin(coin):
+            if logger:
+                logger.error(
+                    "'Coin' instance expected, not '{}'".format(type(coin)))
+            raise TypeError(
+                "'Coin' instance expected, not '{}'".format(type(coin)))
+
+        if not is_mesh(mesh):
+            if logger:
+                logger.error(
+                    "'Mesh' instance expected, not '{}'".format(type(mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(type(mesh)))
+
+        spark_context = SparkContext.getOrCreate()
+
+        coin_size = coin.size
+
+        if mesh.is_1d():
+            mesh_size = mesh.size
+        elif mesh.is_2d():
+            mesh_size = mesh.size[0] * mesh.size[1]
+        else:
+            if logger:
+                logger.error("mesh dimension not implemented")
+            raise NotImplementedError("mesh dimension not implemented")
+
+        base_states = []
+
+        num_particles = len(positions)
+
+        shape = (coin_size * mesh_size, 1)
+
+        for p in range(num_particles):
+            if representationFormat == Utils.StateRepresentationFormatCoinPosition:
+                state = (
+                    (a * mesh_size + positions[p],
+                     amplitudes[p][a]) for a in range(
+                        len(amplitudes[p])))
+            elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
+                state = (
+                    (positions[p] * coin_size + a,
+                     amplitudes[p][a]) for a in range(
+                        len(amplitudes[p])))
+            else:
+                if logger:
+                    logger.error("invalid representation format")
+                raise ValueError("invalid representation format")
+
+            rdd = spark_context.parallelize(state)
+
+            base_states.append(
+                State(
+                    rdd,
+                    shape,
+                    mesh,
+                    num_particles))
+
+        initial_state = base_states[0]
+
+        for p in range(1, num_particles):
+            initial_state = initial_state.kron(base_states[p])
+
+        for bs in base_states:
+            bs.destroy()
+
+        return initial_state
 
 
 def is_state(obj):

@@ -46,63 +46,38 @@ walk_path = "{}/".format(
 sim_path = walk_path
 Utils.create_dir(sim_path)
 
-coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
 
 # Center of the mesh
-position = int((mesh.size[0] - 1) / 2) * \
-    mesh.size[1] + int((mesh.size[1] - 1) / 2)
+positions = (int((mesh.size[0] - 1) / 2) *
+             mesh.size[1] + int((mesh.size[1] - 1) / 2), )
 
 # Options of initial states
-if representationFormat == Utils.StateRepresentationFormatCoinPosition:
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-    state = (
-        (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-        (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-        (2 * mesh_size + position, (0.0 - 1.0j) / 2),
-        (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-    )
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-    '''state = (
-        (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-        (1 * mesh_size + position, (0.0 + 1.0j) / 2),
-        (2 * mesh_size + position, (0.0 + 1.0j) / 2),
-        (3 * mesh_size + position, (-1.0 - 0.0j) / 2)
-    )'''
-    # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-    '''state = (
-        (0 * mesh_size + position, (1.0 + 0.0j) / 2),
-        (1 * mesh_size + position, (-1.0 - 0.0j) / 2),
-        (2 * mesh_size + position, (-1.0 - 0.0j) / 2),
-        (3 * mesh_size + position, (1.0 + 0.0j) / 2)
-    )'''
-elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
-    # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> - i|0,0>|1,0> + |0,0>|1,1>) / 2
-    state = (
-        (position * coin_size + 0, (1.0 + 0.0j) / 2),
-        (position * coin_size + 1, (0.0 + 1.0j) / 2),
-        (position * coin_size + 2, (0.0 - 1.0j) / 2),
-        (position * coin_size + 3, (1.0 + 0.0j) / 2)
-    )
-    # |x,y>|i,j> --> (|0,0>|0,0> + i|0,0>|0,1> + i|0,0>|1,0> - |0,0>|1,1>) / 2
-    '''state = (
-        (position * coin_size + 0, (1.0 + 0.0j) / 2),
-        (position * coin_size + 1, (0.0 + 1.0j) / 2),
-        (position * coin_size + 2, (0.0 + 1.0j) / 2),
-        (position * coin_size + 3, (-1.0 - 0.0j) / 2)
-    )'''
-    # |x,y>|i,j> --> (|0,0>|0,0> - |0,0>|0,1> - |0,0>|1,0> + |0,0>|1,1>) / 2
-    '''state = (
-        (position * coin_size + 0, (1.0 + 0.0j) / 2),
-        (position * coin_size + 1, (-1.0 - 0.0j) / 2),
-        (position * coin_size + 2, (-1.0 - 0.0j) / 2),
-        (position * coin_size + 3, (1.0 + 0.0j) / 2)
-    )'''
+# |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
+amplitudes = ((((1.0 + 0.0j) / 2),
+               ((0.0 + 1.0j) / 2),
+               ((0.0 - 1.0j) / 2),
+               ((1.0 + 0.0j) / 2)), )
+
+# |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
+# amplitudes = ((((1.0 + 0.0j) / 2),
+#               ((0.0 + 1.0j) / 2),
+#               ((0.0 + 1.0j) / 2),
+#               ((-1.0 - 0.0j) / 2)), )
+
+# |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
+# amplitudes = ((((1.0 + 0.0j) / 2),
+#               ((-1.0 - 0.0j) / 2),
+#               ((-1.0 - 0.0j) / 2),
+#               ((1.0 + 0.0j) / 2)), )
 
 # Building the initial state
-rdd = sparkContext.parallelize(state)
-shape = (coin_size * mesh_size, 1)
-initial_state = State(rdd, shape, mesh, num_particles)
+initial_state = State.create(
+    coin,
+    mesh,
+    positions,
+    amplitudes,
+    representationFormat)
 
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
@@ -114,9 +89,6 @@ final_state = dtqw.walk(steps, initial_state)
 joint = final_state.measure()
 joint.plot(sim_path + 'joint_2d1p', dpi=300)
 joint.plot_contour(sim_path + 'joint_2d1p_contour', dpi=300)
-
-# Exporting the profiling data
-profiler.export(sim_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()
