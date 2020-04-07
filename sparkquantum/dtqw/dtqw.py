@@ -987,32 +987,21 @@ class DiscreteTimeQuantumWalk:
             if self._logger:
                 self._logger.info("starting the walk...")
 
-            checkpoint_states = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.checkpointStates'
+            checkpointing_frequency = int(
+                Utils.get_conf(
+                    self._spark_context,
+                    'quantum.dtqw.walk.checkpointingFrequency'
+                )
             )
 
-            if checkpoint_states == 'True':
-                checkpointing_frequency = int(
-                    Utils.get_conf(
-                        self._spark_context,
-                        'quantum.dtqw.walk.checkpointingFrequency'
-                    )
+            dumping_frequency = int(
+                Utils.get_conf(
+                    self._spark_context,
+                    'quantum.dtqw.walk.dumpingFrequency'
                 )
-
-            dump_states = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.dumpStates'
             )
 
-            if dump_states == 'True':
-                dumping_frequency = int(
-                    Utils.get_conf(
-                        self._spark_context,
-                        'quantum.dtqw.walk.dumpingFrequency'
-                    )
-                )
-
+            if dumping_frequency >= 0:
                 dumping_path = Utils.get_conf(
                     self._spark_context,
                     'quantum.dtqw.walk.dumpingPath'
@@ -1077,13 +1066,11 @@ class DiscreteTimeQuantumWalk:
                 result_tmp.materialize(storage_level)
                 result.unpersist()
 
-                if checkpoint_states == 'True':
-                    if i % checkpointing_frequency == 0:
-                        result_tmp.checkpoint()
+                if checkpointing_frequency >= 0 and i % checkpointing_frequency == 0:
+                    result_tmp.checkpoint()
 
-                if dump_states == 'True':
-                    if i % dumping_frequency == 0:
-                        result_tmp.dump(dumping_path + "states/" + str(i))
+                if dumping_frequency >= 0 and i % dumping_frequency == 0:
+                    result_tmp.dump(dumping_path + "states/" + str(i))
 
                 if check_unitary == 'True':
                     if not result_tmp.is_unitary():

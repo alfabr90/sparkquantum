@@ -76,29 +76,27 @@ class Utils():
     """
 
     ConfigDefaults = {
-        'quantum.dumpingGlue': ' ',
-        'quantum.dumpingCompressionCodec': None,
-        'quantum.math.roundPrecision': 10,
-        'quantum.math.dumpingMode': DumpingModePartFiles,
-        'quantum.cluster.numPartitionsSafetyFactor': 1.3,
-        'quantum.cluster.useSparkDefaultNumPartitions': 'False',
-        'quantum.cluster.totalCores': 1,
         'quantum.cluster.maxPartitionSize': 64 * 10 ** 6,
-        'quantum.dtqw.mesh.brokenLinks.generationMode': BrokenLinksGenerationModeBroadcast,
+        'quantum.cluster.numPartitionsSafetyFactor': 1.3,
+        'quantum.cluster.totalCores': 1,
+        'quantum.cluster.useSparkDefaultNumPartitions': 'False',
         'quantum.dtqw.interactionOperator.checkpoint': 'False',
+        'quantum.dtqw.mesh.brokenLinks.generationMode': BrokenLinksGenerationModeBroadcast,
+        'quantum.dtqw.profiler.logExecutors': 'False',
+        'quantum.dtqw.walk.checkpointingFrequency': -1,
+        'quantum.dtqw.walk.checkUnitary': 'False',
+        'quantum.dtqw.walk.dumpingFrequency': -1,
+        'quantum.dtqw.walk.dumpingPath': './',
+        'quantum.dtqw.walk.dumpStatesPDF': 'False',
         'quantum.dtqw.walkOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.kroneckerMode': KroneckerModeBroadcast,
         'quantum.dtqw.walkOperator.tempPath': './',
-        'quantum.dtqw.walk.checkpointStates': 'False',
-        'quantum.dtqw.walk.checkpointingFrequency': -1,
-        'quantum.dtqw.walk.dumpStates': 'False',
-        'quantum.dtqw.walk.dumpingFrequency': -1,
-        'quantum.dtqw.walk.dumpingPath': './',
-        'quantum.dtqw.walk.checkUnitary': 'False',
-        'quantum.dtqw.walk.dumpStatesPDF': 'False',
-        'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
         'quantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
-        'quantum.dtqw.profiler.logExecutors': 'False'
+        'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
+        'quantum.dumpingCompressionCodec': None,
+        'quantum.dumpingGlue': ' ',
+        'quantum.math.dumpingMode': DumpingModePartFiles,
+        'quantum.math.roundPrecision': 10
     }
     """
     Dict with the default values for all accepted configurations of the package.

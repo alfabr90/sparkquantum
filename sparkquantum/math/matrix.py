@@ -37,11 +37,13 @@ class Matrix(Base):
         """int"""
         return self._coordinate_format
 
-    def dump(self, path, glue=None, codec=None):
-        """Dump this object's RDD to disk in many part-* files.
+    def dump(self, path, glue=None, codec=None, filename=None):
+        """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
         -----
+        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
+        This is not suitable for large working sets, as all data may not fit into driver's main memory.
         This method exports the data in the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault` format.
 
         Parameters
@@ -54,6 +56,9 @@ class Matrix(Base):
         codec : str, optional
             Codec name used to compress the dumped data.
             Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+        filename : str, optional
+            File name used when the dumping mode is in a single file. Default value is None.
+            In this case, a temporary named file is generated inside the informed path.
 
         """
         if glue is None:
@@ -63,6 +68,11 @@ class Matrix(Base):
             codec = Utils.get_conf(
                 self._spark_context,
                 'quantum.dumpingCompressionCodec')
+
+        dumping_mode = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.math.dumpingMode'))
 
         if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
             rdd = self.data.map(
@@ -77,7 +87,26 @@ class Matrix(Base):
                 lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
             )
 
-        rdd.saveAsTextFile(path, codec)
+        if dumping_mode == Utils.DumpingModeUniqueFile:
+            data = rdd.collect()
+
+            Utils.create_dir(path)
+
+            if not filename:
+                filename = Utils.get_temp_path(path)
+            else:
+                filename = Utils.append_slash_dir(path) + filename
+
+            if len(data):
+                with open(filename, 'a') as f:
+                    for d in data:
+                        f.write(d + "\n")
+        elif dumping_mode == Utils.DumpingModePartFiles:
+            rdd.saveAsTextFile(path, codec)
+        else:
+            if self._logger:
+                self._logger.error("invalid dumping mode")
+            raise NotImplementedError("invalid dumping mode")
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
