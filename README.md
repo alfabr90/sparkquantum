@@ -61,9 +61,6 @@ size = steps = 30
 coin = Hadamard1D()
 mesh = Line(size)
 
-coin_size = coin.size
-mesh_size = mesh.size
-
 mesh_size = mesh.size
 
 # Center of the mesh
