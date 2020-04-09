@@ -36,7 +36,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon']
 
-autodoc_mock_imports = ['pyspark']
+autodoc_mock_imports = ['numpy', 'matplotlib', 'pyspark']
 napoleon_google_docstring = False
 
 # Add any paths that contain templates here, relative to this directory.
