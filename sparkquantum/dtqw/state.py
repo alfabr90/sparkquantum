@@ -856,7 +856,7 @@ class State(Vector):
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
             Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
-        logger : py:class:`sparkquantum.utils.logger.Logger`, optional
+        logger : py:class:`sparkquantum.utils.logger.Logger.Logger`, optional
             A logger object
 
         Returns

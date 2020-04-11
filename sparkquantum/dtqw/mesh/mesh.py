@@ -74,7 +74,7 @@ class Mesh:
 
     @property
     def logger(self):
-        """:py:class:`sparkquantum.utils.Logger`.
+        """:py:class:`sparkquantum.utils.logger.Logger`.
 
         To disable logging, set it to None.
 
@@ -83,7 +83,7 @@ class Mesh:
 
     @property
     def profiler(self):
-        """:py:class:`sparkquantum.utils.Profiler`.
+        """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
         To disable profiling, set it to None.
 

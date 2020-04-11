@@ -56,7 +56,7 @@ class Profiler:
 
     @property
     def logger(self):
-        """:py:class:`sparkquantum.utils.Logger`.
+        """:py:class:`sparkquantum.utils.logger.Logger`.
 
         To disable logging, set it to None.
 
@@ -830,7 +830,7 @@ class Profiler:
 
 
 def is_profiler(obj):
-    """Check whether argument is a :py:class:`sparkquantum.utils.Profiler` object.
+    """Check whether argument is a :py:class:`sparkquantum.utils.profiler.Profiler` object.
 
     Parameters
     ----------
@@ -840,7 +840,7 @@ def is_profiler(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.utils.Profiler` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.utils.profiler.Profiler` object, False otherwise.
 
     """
     return isinstance(obj, Profiler)

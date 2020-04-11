@@ -113,7 +113,7 @@ class Logger:
 
 
 def is_logger(obj):
-    """Check whether argument is a :py:class:`sparkquantum.utils.Logger` object.
+    """Check whether argument is a :py:class:`sparkquantum.utils.logger.Logger` object.
 
     Parameters
     ----------
@@ -123,7 +123,7 @@ def is_logger(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.utils.Logger` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.utils.logger.Logger` object, False otherwise.
 
     """
     return isinstance(obj, Logger)
