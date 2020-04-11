@@ -11,14 +11,14 @@ Below, there is a list with a summary of each example file:
 - **[dtqw_1d1p.py](./dtqw_1d1p.py):** a simple quantum walk with one particle over a one-dimensional mesh;
 - **[dtqw_1d1p_broken_links.py](./dtqw_1d1p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
 - **[dtqw_1d1p_profiling.py](./dtqw_1d1p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
-- **[dtqw_1d2p.py](./dtqw_1d1p.py):** a simple quantum walk with two particles over a one-dimensional mesh. A variable inside the script may be set to enable the entanglement between them;
-- **[dtqw_1d2p_broken_links.py](./dtqw_1d1p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
-- **[dtqw_1d2p_profiling.py](./dtqw_1d1p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
-- **[dtqw_2d1p.py](./dtqw_1d1p.py):** a simple quantum walk with one particle over a two-dimensional mesh;
-- **[dtqw_2d1p_broken_links.py](./dtqw_1d1p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
-- **[dtqw_2d1p_profiling.py](./dtqw_1d1p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
-- **[dtqw_2d2p.py](./dtqw_1d1p.py):** a simple quantum walk with two particles over a two-dimensional mesh. A variable inside the script may be set to enable the entanglement between them;
-- **[dtqw_2d2p_broken_links.py](./dtqw_1d1p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
-- **[dtqw_2d2p_profiling.py](./dtqw_1d1p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
+- **[dtqw_1d2p.py](./dtqw_1d2p.py):** a simple quantum walk with two particles over a one-dimensional mesh. A variable inside the script may be set to enable the entanglement between them;
+- **[dtqw_1d2p_broken_links.py](./dtqw_1d2p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
+- **[dtqw_1d2p_profiling.py](./dtqw_1d2p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
+- **[dtqw_2d1p.py](./dtqw_2d1p.py):** a simple quantum walk with one particle over a two-dimensional mesh;
+- **[dtqw_2d1p_broken_links.py](./dtqw_2d1p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
+- **[dtqw_2d1p_profiling.py](./dtqw_2d1p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
+- **[dtqw_2d2p.py](./dtqw_2d2p.py):** a simple quantum walk with two particles over a two-dimensional mesh. A variable inside the script may be set to enable the entanglement between them;
+- **[dtqw_2d2p_broken_links.py](./dtqw_2d2p_broken_links.py):** same as above, but a random broken links generator has been applied to the mesh;
+- **[dtqw_2d2p_profiling.py](./dtqw_2d2p_profiling.py):** same as the corresponding simpler case, but a logger and a profiler have been set for all objects;
 
 All the above scripts can be adapted by the user in order to change the coins, meshes and broken links generators, if wanted.
