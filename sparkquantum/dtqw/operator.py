@@ -167,7 +167,7 @@ class Operator(Matrix):
 
 
 def is_operator(obj):
-    """Check whether argument is an Operator object.
+    """Check whether argument is an :py:class:`sparkquantum.dtqw.Operator` object.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def is_operator(obj):
     Returns
     -------
     bool
-        True if argument is an Operator object, False otherwise.
+        True if argument is an :py:class:`sparkquantum.dtqw.Operator` object, False otherwise.
 
     """
     return isinstance(obj, Operator)
