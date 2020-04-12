@@ -58,8 +58,8 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the operator.
-        operator : :py:class:`sparkquantum.dtqw.Operator`
-            The :py:class:`sparkquantum.dtqw.Operator` object.
+        operator : :py:class:`sparkquantum.dtqw.operator.Operator`
+            The :py:class:`sparkquantum.dtqw.operator.Operator` object.
         time : float
             The measured building time of the operator.
 
@@ -71,7 +71,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
-            If `operator` is not a :py:class:`sparkquantum.dtqw.Operator`.
+            If `operator` is not a :py:class:`sparkquantum.dtqw.operator.Operator`.
 
         """
         if self._logger:
@@ -112,7 +112,7 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the state.
-        state : :py:class:`sparkquantum.dtqw.State`
+        state : :py:class:`sparkquantum.dtqw.state.State`
             The ``nth`` step corresponding state.
         time : float
             The measured building time of the state.
@@ -125,7 +125,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
-            If `state` is not a :py:class:`sparkquantum.dtqw.State`.
+            If `state` is not a :py:class:`sparkquantum.dtqw.state.State`.
 
         """
         if self._logger:
@@ -166,7 +166,7 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the pdf.
-        pdf : :py:class:`sparkquantum.math.statistics.PDF`
+        pdf : :py:class:`sparkquantum.math.statistics.pdf.PDF`
             The pdf object.
         time : float
             The measured building time of the pdf.
@@ -179,7 +179,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
-            If `pdf` is not a :py:class:`sparkquantum.math.statistics.PDF`.
+            If `pdf` is not a :py:class:`sparkquantum.math.statistics.pdf.PDF`.
 
         """
         if self._logger:
@@ -218,7 +218,7 @@ class QuantumWalkProfiler(Profiler):
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.dtqw.Operator`.
+            The name used for a :py:class:`sparkquantum.dtqw.operator.Operator`.
 
         Returns
         -------
@@ -248,7 +248,7 @@ class QuantumWalkProfiler(Profiler):
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.dtqw.State`.
+            The name used for a :py:class:`sparkquantum.dtqw.state.State`.
 
         Returns
         -------
@@ -278,7 +278,7 @@ class QuantumWalkProfiler(Profiler):
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.math.statistics.PDF`.
+            The name used for a :py:class:`sparkquantum.math.statistics.pdf.PDF`.
 
         Returns
         -------

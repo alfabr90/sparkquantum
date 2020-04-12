@@ -42,7 +42,7 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.dtqw.Operator`
+        other : :py:class:`sparkquantum.dtqw.operator.Operator`
             The other operator.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
@@ -50,13 +50,13 @@ class Operator(Matrix):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator`
+        :py:class:`sparkquantum.dtqw.operator.Operator`
             The resulting operator.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.dtqw.Operator`.
+            If `other` is not a :py:class:`sparkquantum.dtqw.operator.Operator`.
 
         """
         if not is_operator(other):
@@ -134,7 +134,7 @@ class Operator(Matrix):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
+        other : :py:class:`sparkquantum.dtqw.operator.Operator` or :py:class:`sparkquantum.dtqw.state.State`
             An operator if multiplying another operator, state otherwise.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
@@ -142,13 +142,13 @@ class Operator(Matrix):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator` or :py:class:`sparkquantum.dtqw.State`
-            :py:class:`sparkquantum.dtqw.Operator` if multiplying another operator, :py:class:`sparkquantum.dtqw.State` otherwise.
+        :py:class:`sparkquantum.dtqw.operator.Operator` or :py:class:`sparkquantum.dtqw.state.State`
+            :py:class:`sparkquantum.dtqw.operator.Operator` if multiplying another operator, :py:class:`sparkquantum.dtqw.state.State` otherwise.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.dtqw.Operator` nor :py:class:`sparkquantum.dtqw.State`.
+            If `other` is not a :py:class:`sparkquantum.dtqw.operator.Operator` nor :py:class:`sparkquantum.dtqw.state.State`.
 
         ValueError
             If this matrix's and `other`'s shapes are incompatible for multiplication.
@@ -167,7 +167,7 @@ class Operator(Matrix):
 
 
 def is_operator(obj):
-    """Check whether argument is an :py:class:`sparkquantum.dtqw.Operator` object.
+    """Check whether argument is an :py:class:`sparkquantum.dtqw.operator.Operator` object.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def is_operator(obj):
     Returns
     -------
     bool
-        True if argument is an :py:class:`sparkquantum.dtqw.Operator` object, False otherwise.
+        True if argument is an :py:class:`sparkquantum.dtqw.operator.Operator` object, False otherwise.
 
     """
     return isinstance(obj, Operator)

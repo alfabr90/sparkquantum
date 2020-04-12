@@ -24,13 +24,13 @@ class DiscreteTimeQuantumWalk:
 
         Parameters
         ----------
-        coin : :py:class:`sparkquantum.dtqw.coin.Coin`
+        coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
             A Coin object.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
-            A :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
+            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
         num_particles : int
             The number of particles present in the walk.
-        interaction: :py:class:`sparkquantum.dtqw.interaction.Interaction`, optional
+        interaction: :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
             A particles interaction object.
 
         """
@@ -62,12 +62,12 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def coin(self):
-        """:py:class:`sparkquantum.dtqw.coin.Coin`"""
+        """:py:class:`sparkquantum.dtqw.coin.coin.Coin`"""
         return self._coin
 
     @property
     def mesh(self):
-        """:py:class:`sparkquantum.dtqw.mesh.Mesh`"""
+        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
 
     @property
@@ -77,27 +77,27 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def interaction(self):
-        """:py:class:`sparkquantum.dtqw.interaction.Interaction`"""
+        """:py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`"""
         return self._interaction
 
     @property
     def coin_operator(self):
-        """:py:class:`sparkquantum.dtqw.Operator`"""
+        """:py:class:`sparkquantum.dtqw.operator.Operator`"""
         return self._coin_operator
 
     @property
     def shift_operator(self):
-        """:py:class:`sparkquantum.dtqw.Operator`"""
+        """:py:class:`sparkquantum.dtqw.operator.Operator`"""
         return self._shift_operator
 
     @property
     def interaction_operator(self):
-        """:py:class:`sparkquantum.dtqw.Operator`"""
+        """:py:class:`sparkquantum.dtqw.operator.Operator`"""
         return self._interaction_operator
 
     @property
     def walk_operator(self):
-        """:py:class:`sparkquantum.dtqw.Operator` or list of :py:class:`sparkquantum.dtqw.Operator`"""
+        """:py:class:`sparkquantum.dtqw.operator.Operator` or list of :py:class:`sparkquantum.dtqw.operator.Operator`"""
         return self._walk_operator
 
     @property
@@ -648,25 +648,25 @@ class DiscreteTimeQuantumWalk:
                 raise ValueError("invalid kronecker mode")
 
     def destroy_coin_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
     def destroy_shift_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
     def destroy_interaction_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
     def destroy_walk_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.Operator.destroy`'s method."""
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                 self._walk_operator.destroy()
@@ -696,7 +696,7 @@ class DiscreteTimeQuantumWalk:
         ----------
         steps : int
             The number of steps of the walk.
-        initial_state : :py:class:`sparkquantum.dtqw.State`
+        initial_state : :py:class:`sparkquantum.dtqw.state.State`
             The initial state of the system.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
@@ -704,7 +704,7 @@ class DiscreteTimeQuantumWalk:
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.State`
+        :py:class:`sparkquantum.dtqw.state.State`
             The final state of the system after performing the walk.
 
         Raises

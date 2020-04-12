@@ -20,7 +20,7 @@ class CollisionPDF(PDF):
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a two-dimensional tuple.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
@@ -111,7 +111,7 @@ class CollisionPDF(PDF):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.CollisionPDF`
+        :py:class:`sparkquantum.math.statistics.collision_pdf.CollisionPDF`
             The normalized PDF.
 
         Raises

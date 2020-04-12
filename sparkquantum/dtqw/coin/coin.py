@@ -144,7 +144,7 @@ class Coin:
 
 
 def is_coin(obj):
-    """Check whether argument is a :py:class:`sparkquantum.dtqw.coin.Coin` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.coin.coin.Coin` object.
 
     Parameters
     ----------
@@ -154,7 +154,7 @@ def is_coin(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.dtqw.coin.Coin` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.coin.coin.Coin` object, False otherwise.
 
     """
     return isinstance(obj, Coin)

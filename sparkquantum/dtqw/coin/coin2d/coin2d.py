@@ -14,7 +14,7 @@ class Coin2D(Coin):
     """Top-level class for two-dimensional coins."""
 
     def __init__(self):
-        """Build a top-level two-dimensional :py:class:`sparkquantum.dtqw.coin.Coin` object."""
+        """Build a top-level two-dimensional :py:class:`sparkquantum.dtqw.coin.coin.Coin` object."""
         super().__init__()
 
         self._size = 4
@@ -95,8 +95,8 @@ class Coin2D(Coin):
 
         Parameters
         ----------
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
-            A :py:class:`sparkquantum.dtqw.mesh.Mesh` instance.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
+            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` instance.
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
             Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
@@ -105,7 +105,7 @@ class Coin2D(Coin):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator`
+        :py:class:`sparkquantum.dtqw.operator.Operator`
             The created operator using this coin.
 
         Raises

@@ -22,7 +22,7 @@ class PDF(Base):
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a two-dimensional tuple.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
@@ -323,7 +323,7 @@ class PDF(Base):
 
 
 def is_pdf(obj):
-    """Check whether argument is a :py:class:`sparkquantum.math.statistics.PDF` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.statistics.pdf.PDF` object.
 
     Parameters
     ----------
@@ -333,7 +333,7 @@ def is_pdf(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.math.statistics.PDF` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.statistics.pdf.PDF` object, False otherwise.
 
     """
     return isinstance(obj, PDF)

@@ -10,7 +10,7 @@ class Natural(Mesh2D):
     """Top-level class for Natural meshes."""
 
     def __init__(self, size, broken_links=None):
-        """Build a top-level Natural :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a top-level Natural :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
 
         Parameters
         ----------

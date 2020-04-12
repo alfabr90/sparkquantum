@@ -305,7 +305,7 @@ class TorusNatural(Natural):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator`
+        :py:class:`sparkquantum.dtqw.operator.Operator`
             The created operator using this mesh.
 
         Raises

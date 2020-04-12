@@ -246,7 +246,7 @@ class Mesh:
 
 
 def is_mesh(obj):
-    """Check whether argument is a :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
 
     Parameters
     ----------
@@ -256,7 +256,7 @@ def is_mesh(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.dtqw.mesh.Mesh` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object, False otherwise.
 
     """
     return isinstance(obj, Mesh)

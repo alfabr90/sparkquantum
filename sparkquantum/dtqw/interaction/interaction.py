@@ -19,7 +19,7 @@ class Interaction:
         ----------
         num_particles : int
             The number of particles present in the walk.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles will walk over.
         logger : py:class:`sparkquantum.utils.logger.Logger`, optional
             A logger object.
@@ -47,7 +47,7 @@ class Interaction:
 
     @property
     def mesh(self):
-        """:py:class:`sparkquantum.dtqw.mesh.Mesh`"""
+        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
 
     @property
@@ -136,7 +136,7 @@ class Interaction:
 
 
 def is_interaction(obj):
-    """Check whether argument is a :py:class:`sparkquantum.dtqw.interaction.Interaction` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction` object.
 
     Parameters
     ----------
@@ -146,7 +146,7 @@ def is_interaction(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.dtqw.interaction.Interaction` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction` object, False otherwise.
 
     """
     return isinstance(obj, Interaction)

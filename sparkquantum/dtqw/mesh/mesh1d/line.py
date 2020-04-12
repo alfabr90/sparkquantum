@@ -13,7 +13,7 @@ class Line(Mesh1D):
     """Class for Line mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Line :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a Line :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -218,7 +218,7 @@ class Line(Mesh1D):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator`
+        :py:class:`sparkquantum.dtqw.operator.Operator`
             The created operator using this mesh.
 
         Raises

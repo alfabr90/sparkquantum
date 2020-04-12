@@ -13,7 +13,7 @@ class Cycle(Mesh1D):
     """Class for Cycle mesh."""
 
     def __init__(self, size, broken_links=None):
-        """Build a Cycle :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a Cycle :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
 
         Parameters
         ----------
@@ -198,7 +198,7 @@ class Cycle(Mesh1D):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.Operator`
+        :py:class:`sparkquantum.dtqw.operator.Operator`
             The created operator using this mesh.
 
         Raises

@@ -27,7 +27,7 @@ class State(Vector):
             The base RDD of this object.
         shape : tuple
             The shape of this state object. Must be a two-dimensional tuple.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles are walking on.
         num_particles : int
             The number of particles present in the walk.
@@ -46,7 +46,7 @@ class State(Vector):
 
     @property
     def mesh(self):
-        """:py:class:`sparkquantum.dtqw.mesh.Mesh`"""
+        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
 
     @property
@@ -268,18 +268,18 @@ class State(Vector):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.dtqw.State`
+        other : :py:class:`sparkquantum.dtqw.state.State`
             The other system state.
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.State`
+        :py:class:`sparkquantum.dtqw.state.State`
             The resulting state.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.dtqw.State`.
+            If `other` is not a :py:class:`sparkquantum.dtqw.state.State`.
 
         """
         if not is_state(other):
@@ -491,14 +491,14 @@ class State(Vector):
 
         Parameters
         ----------
-        full_measurement : :py:class:`sparkquantum.math.statistics.PDF`
+        full_measurement : :py:class:`sparkquantum.math.statistics.pdf.PDF`
             The measurement of the entire system.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.CollisionPDF`
+        :py:class:`sparkquantum.math.statistics.collision_pdf.CollisionPDF`
             The PDF of the system when all particles are located at the same site.
 
         Raises
@@ -617,7 +617,7 @@ class State(Vector):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.MarginalPDF`
+        :py:class:`sparkquantum.math.statistics.marginal_pdf.MarginalPDF`
             The PDF of each particle.
 
         Raises
@@ -812,8 +812,8 @@ class State(Vector):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.PDF` or tuple
-            :py:class:`sparkquantum.math.statistics.PDF` if the system is composed by only one particle, tuple otherwise.
+        :py:class:`sparkquantum.math.statistics.pdf.PDF` or tuple
+            :py:class:`sparkquantum.math.statistics.pdf.PDF` if the system is composed by only one particle, tuple otherwise.
 
         Raises
         ------
@@ -845,9 +845,9 @@ class State(Vector):
 
         Parameters
         ----------
-        coin : :py:class:`sparkquantum.dtqw.coin.Coin`
+        coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
             A coin object.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particle(s) is(are) walking on.
         positions : tuple or list
             The position of each particle present in the quantum walk.
@@ -861,7 +861,7 @@ class State(Vector):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.State`
+        :py:class:`sparkquantum.dtqw.state.State`
             A new system state.
 
         Raises
@@ -873,8 +873,8 @@ class State(Vector):
             If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         TypeError
-            If `coin` is not a :py:class:`sparkquantum.dtqw.coin.Coin` or
-            if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.Mesh`.
+            If `coin` is not a :py:class:`sparkquantum.dtqw.coin.coin.Coin` or
+            if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`.
 
         """
         if not is_coin(coin):
@@ -947,7 +947,7 @@ class State(Vector):
 
 
 def is_state(obj):
-    """Check whether argument is a :py:class:`sparkquantum.dtqw.State` object.
+    """Check whether argument is a :py:class:`sparkquantum.dtqw.state.State` object.
 
     Parameters
     ----------
@@ -957,7 +957,7 @@ def is_state(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.dtqw.State` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.dtqw.state.State` object, False otherwise.
 
     """
     return isinstance(obj, State)

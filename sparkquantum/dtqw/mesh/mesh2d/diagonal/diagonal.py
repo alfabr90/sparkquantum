@@ -10,7 +10,7 @@ class Diagonal(Mesh2D):
     """Top-level class for Diagonal meshes."""
 
     def __init__(self, size, broken_links=None):
-        """Build a top-level Diagonal :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
+        """Build a top-level Diagonal :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
 
         Parameters
         ----------

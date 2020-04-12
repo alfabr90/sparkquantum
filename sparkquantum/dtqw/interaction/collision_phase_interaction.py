@@ -23,7 +23,7 @@ class CollisionPhaseInteraction(Interaction):
         ----------
         num_particles : int
             The number of particles present in the walk.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.Mesh`
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles will walk over.
         collision_phase : complex
             The phase change applied during collisions.
