@@ -4,6 +4,7 @@ import cmath
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
+from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
@@ -147,8 +148,14 @@ else:
     shape = ((coin_size * mesh_size) ** num_particles, 1)
     initial_state = State(rdd, shape, mesh, num_particles)
 
+interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
+
 # Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles, phase=phase)
+dtqw = DiscreteTimeQuantumWalk(
+    coin,
+    mesh,
+    num_particles,
+    interaction=interaction)
 
 dtqw.logger = Logger(dtqw.to_string(), sim_path)
 dtqw.profiler = profiler

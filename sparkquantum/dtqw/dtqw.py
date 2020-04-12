@@ -6,6 +6,7 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.operator import Operator, is_operator
 from sparkquantum.dtqw.state import State
 from sparkquantum.utils.logger import is_logger
@@ -18,7 +19,7 @@ __all__ = ['DiscreteTimeQuantumWalk']
 class DiscreteTimeQuantumWalk:
     """Build the necessary operators and perform a discrete time quantum walk."""
 
-    def __init__(self, coin, mesh, num_particles, phase=None):
+    def __init__(self, coin, mesh, num_particles, interaction=None):
         """Build a discrete time quantum walk object.
 
         Parameters
@@ -29,8 +30,8 @@ class DiscreteTimeQuantumWalk:
             A :py:class:`sparkquantum.dtqw.mesh.Mesh` object.
         num_particles : int
             The number of particles present in the walk.
-        phase: float, optional
-            The collision phase of the particles.
+        interaction: :py:class:`sparkquantum.dtqw.interaction.Interaction`, optional
+            A particles interaction object.
 
         """
         self._spark_context = SparkContext.getOrCreate()
@@ -38,7 +39,7 @@ class DiscreteTimeQuantumWalk:
         self._mesh = mesh
         self._num_particles = num_particles
 
-        self._phase = phase
+        self._interaction = interaction
 
         self._coin_operator = None
         self._shift_operator = None
@@ -70,9 +71,14 @@ class DiscreteTimeQuantumWalk:
         return self._mesh
 
     @property
-    def phase(self):
-        """complex"""
-        return self._phase
+    def num_particles(self):
+        """int"""
+        return self._num_particles
+
+    @property
+    def interaction(self):
+        """:py:class:`sparkquantum.dtqw.interaction.Interaction`"""
+        return self._interaction
 
     @property
     def coin_operator(self):
@@ -175,6 +181,14 @@ class DiscreteTimeQuantumWalk:
             raise TypeError(
                 "'Operator' instance expected, not '{}'".format(type(wo)))
 
+    @interaction.setter
+    def interaction(self, interaction):
+        if is_interaction(interaction) or interaction is None:
+            self.interaction = interaction
+        else:
+            raise TypeError(
+                "'Interaction' instance expected, not '{}'".format(type(interaction)))
+
     @logger.setter
     def logger(self, logger):
         if is_logger(logger) or logger is None:
@@ -216,209 +230,6 @@ class DiscreteTimeQuantumWalk:
         """
         return "Quantum Walk with {} Particle(s) on a {}".format(
             self._num_particles, self._mesh.title())
-
-    def create_interaction_operator(
-            self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the particles' interaction operator for the walk.
-
-        Parameters
-        ----------
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD.
-            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        ValueError
-            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
-
-        """
-        if not self._phase:
-            if self._logger:
-                self._logger.error(
-                    "no collision phase or a zeroed collision phase was informed")
-            raise ValueError(
-                "no collision phase or a zeroed collision phase was informed")
-
-        if self._logger:
-            self._logger.info("building interaction operator...")
-
-        t1 = datetime.now()
-
-        phase = cmath.exp(self._phase * (0.0 + 1.0j))
-        num_particles = self._num_particles
-
-        repr_format = int(Utils.get_conf(self._spark_context,
-                                         'quantum.dtqw.state.representationFormat'))
-
-        if self._mesh.is_1d():
-            ndim = self._mesh.dimension
-            coin_size = self._mesh.coin_size
-            size = self._mesh.size
-            cs_size = int(coin_size / ndim) * size
-
-            rdd_range = cs_size ** num_particles
-            shape = (rdd_range, rdd_range)
-
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
-                def __map(m):
-                    x = []
-
-                    for p in range(num_particles):
-                        x.append(
-                            int(m / (cs_size ** (num_particles - 1 - p))) % size)
-
-                    for p1 in range(num_particles):
-                        for p2 in range(num_particles):
-                            if p1 != p2 and x[p1] == x[p2]:
-                                return m, m, phase
-
-                    return m, m, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
-                def __map(m):
-                    x = []
-
-                    for p in range(num_particles):
-                        x.append(
-                            int(m / (cs_size ** (num_particles - 1 - p) * coin_size)) % size)
-
-                    for p1 in range(num_particles):
-                        for p2 in range(num_particles):
-                            if p1 != p2 and x[p1] == x[p2]:
-                                return m, m, phase
-
-                    return m, m, 1
-            else:
-                if self._logger:
-                    self._logger.error("invalid representation format")
-                raise ValueError("invalid representation format")
-        elif self._mesh.is_2d():
-            ndim = self._mesh.dimension
-            coin_size = self._mesh.coin_size
-            size_x, size_y = self._mesh.size
-            cs_size_x = int(coin_size / ndim) * size_x
-            cs_size_y = int(coin_size / ndim) * size_y
-            cs_size_xy = cs_size_x * cs_size_y
-
-            rdd_range = cs_size_xy ** num_particles
-            shape = (rdd_range, rdd_range)
-
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
-                def __map(m):
-                    xy = []
-
-                    for p in range(num_particles):
-                        xy.append(
-                            (
-                                int(m / (cs_size_xy **
-                                         (num_particles - 1 - p) * size_y)) % size_x,
-                                int(m / (cs_size_xy ** (num_particles - 1 - p))) % size_y
-                            )
-                        )
-
-                    for p1 in range(num_particles):
-                        for p2 in range(num_particles):
-                            if p1 != p2 and xy[p1][0] == xy[p2][0] and xy[p1][1] == xy[p2][1]:
-                                return m, m, phase
-
-                    return m, m, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
-                def __map(m):
-                    xy = []
-
-                    for p in range(num_particles):
-                        xy.append(
-                            (
-                                int(m / (cs_size_xy ** (num_particles - 1 - p)
-                                         * coin_size * size_y)) % size_x,
-                                int(m / (cs_size_xy ** (num_particles -
-                                                        1 - p) * coin_size)) % size_y
-                            )
-                        )
-
-                    for p1 in range(num_particles):
-                        for p2 in range(num_particles):
-                            if p1 != p2 and xy[p1][0] == xy[p2][0] and xy[p1][1] == xy[p2][1]:
-                                return m, m, phase
-
-                    return m, m, 1
-            else:
-                if self._logger:
-                    self._logger.error("invalid representation format")
-                raise ValueError("invalid representation format")
-        else:
-            if self._logger:
-                self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        rdd = self._spark_context.range(
-            rdd_range
-        ).map(
-            __map
-        )
-
-        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
-            )
-
-            # The walk operators must be guaranteed to be previously built
-            # in order to the number of partitions be already known.
-            # Using the same number of partitions is important to avoid shuffle
-            # when multiplying the state by the operators.
-            num_partitions = self._num_partitions
-
-            if not num_partitions:
-                expected_elems = rdd_range
-                expected_size = Utils.get_size_of_type(
-                    complex) * expected_elems
-                num_partitions = Utils.get_num_partitions(
-                    self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
-
-        io = Operator(
-            rdd, shape, coord_format=coord_format
-        ).persist(storage_level)
-
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.interactionOperator.checkpoint') == 'True':
-            io = io.checkpoint()
-
-        self._interaction_operator = io.materialize(storage_level)
-
-        app_id = self._spark_context.applicationId
-
-        if self._profiler:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_operator(
-                'interactionOperator', self._interaction_operator, (datetime.now(
-                ) - t1).total_seconds()
-            )
-
-            if self._logger:
-                self._logger.info(
-                    "interaction operator was built in {}s".format(info['buildingTime']))
-                self._logger.info(
-                    "interaction operator is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
-                )
-
-            if Utils.get_conf(self._spark_context,
-                              'quantum.dtqw.profiler.logExecutors') == 'True':
-                self._profiler.log_executors(app_id=app_id)
 
     def create_walk_operator(self, coord_format=Utils.MatrixCoordinateDefault,
                              storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -923,14 +734,13 @@ class DiscreteTimeQuantumWalk:
                 "number of particles: {}".format(self._num_particles))
 
             if self._num_particles > 1:
-                if self._phase is None:
-                    self._logger.info("no collision phase has been defined")
-                elif self._phase == 0.0:
+                if self._interaction is None:
                     self._logger.info(
-                        "a zeroed collision phase was defined. No interaction operator will be built")
+                        "no interaction between particles has been defined")
                 else:
                     self._logger.info(
-                        "collision phase: {}".format(self._phase))
+                        "interaction between particles: {}".format(
+                            self._interaction.to_string()))
 
             if self._mesh.broken_links is None:
                 self._logger.info("no broken links has been defined")
@@ -975,11 +785,11 @@ class DiscreteTimeQuantumWalk:
                     self.create_walk_operator(
                         coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
-            if self._num_particles > 1 and self._phase and self._interaction_operator is None:
+            if self._num_particles > 1 and self._interaction and self._interaction_operator is None:
                 if self._logger:
                     self._logger.info(
                         "no interaction operator has been set. A new one will be built")
-                self.create_interaction_operator(
+                self._interaction_operator = self._interaction.create_operator(
                     coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
             t1 = datetime.now()
