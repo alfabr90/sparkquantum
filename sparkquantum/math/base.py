@@ -134,7 +134,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -155,7 +155,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -175,7 +175,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -202,7 +202,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -229,7 +229,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -248,7 +248,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
@@ -270,7 +270,7 @@ class Base:
 
         Returns
         -------
-        :py:class`sparkquantum.math.base.Base`
+        :py:class:`sparkquantum.math.base.Base`
             A reference to this object.
 
         """
