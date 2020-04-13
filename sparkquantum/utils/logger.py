@@ -15,7 +15,7 @@ class Logger:
             The name of the class that is providing log data.
         path : str
             The base path for the log file.
-        level : enumerate, optional
+        level : int, optional
             The severity level for the log data. Default value is :py:const:`logging.DEBUG`.
 
         """
