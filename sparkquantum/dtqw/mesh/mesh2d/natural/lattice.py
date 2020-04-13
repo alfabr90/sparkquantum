@@ -28,7 +28,7 @@ class LatticeNatural(Natural):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid mesh size")
             raise ValueError("invalid mesh size")
 
@@ -164,7 +164,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -243,7 +243,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -253,7 +253,7 @@ class LatticeNatural(Natural):
                     __map
                 )
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
@@ -291,7 +291,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
@@ -342,7 +342,7 @@ class LatticeNatural(Natural):
             if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building shift operator...")
 
         initial_time = datetime.now()

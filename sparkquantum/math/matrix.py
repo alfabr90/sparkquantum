@@ -104,7 +104,7 @@ class Matrix(Base):
         elif dumping_mode == Utils.DumpingModePartFiles:
             rdd.saveAsTextFile(path, codec)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid dumping mode")
             raise NotImplementedError("invalid dumping mode")
 
@@ -213,7 +213,7 @@ class Matrix(Base):
 
         """
         if not is_matrix(other):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Matrix' instance expected, not '{}'".format(
                         type(other)))
@@ -275,7 +275,7 @@ class Matrix(Base):
 
     def _multiply_matrix(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "incompatible shapes {} and {}".format(
                         self._shape, other.shape))
@@ -317,7 +317,7 @@ class Matrix(Base):
 
     def _multiply_vector(self, other):
         if self._shape[1] != other.shape[0]:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "incompatible shapes {} and {}".format(
                         self._shape, other.shape))
@@ -367,7 +367,7 @@ class Matrix(Base):
         elif is_vector(other):
             return self._multiply_vector(other)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Matrix' or 'Vector' instance expected, not '{}'".format(
                         type(other)))

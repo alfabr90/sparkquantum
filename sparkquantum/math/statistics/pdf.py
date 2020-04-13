@@ -111,7 +111,7 @@ class PDF(Base):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -141,7 +141,7 @@ class PDF(Base):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -172,7 +172,7 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("starting plot of probabilities...")
 
         t1 = datetime.now()
@@ -240,7 +240,7 @@ class PDF(Base):
 
             # figure.set_size_inches(12.8, 12.8)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -248,7 +248,7 @@ class PDF(Base):
         plt.cla()
         plt.clf()
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "plot in {}s".format(
                     (datetime.now() - t1).total_seconds()))
@@ -269,12 +269,12 @@ class PDF(Base):
 
         """
         if not self._mesh.is_2d():
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "it is only possible to plot the contour function of two-dimensional meshes")
             return None
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("starting plot of probabilities...")
 
         t1 = datetime.now()
@@ -316,7 +316,7 @@ class PDF(Base):
         plt.cla()
         plt.clf()
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "contour plot in {}s".format(
                     (datetime.now() - t1).total_seconds()))

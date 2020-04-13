@@ -73,7 +73,7 @@ class Vector(Base):
 
         """
         if not is_vector(other):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Vector' instance expected, not '{}'".format(
                         type(other)))

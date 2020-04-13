@@ -39,7 +39,7 @@ class Mesh2D(Mesh):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid size")
             raise ValueError("invalid size")
 
@@ -108,7 +108,8 @@ class Mesh2D(Mesh):
         """
         raise NotImplementedError
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
+                        storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
         Parameters

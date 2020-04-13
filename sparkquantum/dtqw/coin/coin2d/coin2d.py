@@ -62,7 +62,7 @@ class Coin2D(Coin):
                     for j in range(data.value.shape[1]):
                         yield (xy * coin_size + i, xy * coin_size + j, data.value[i][j])
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid representation format")
             raise ValueError("invalid representation format")
 
@@ -117,13 +117,13 @@ class Coin2D(Coin):
             If `mesh` is not two-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building coin operator...")
 
         initial_time = datetime.now()
 
         if not is_mesh(mesh):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "expected 'Mesh' instance, not '{}'".format(
                         type(mesh)))
@@ -132,7 +132,7 @@ class Coin2D(Coin):
                     type(mesh)))
 
         if not mesh.is_2d():
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "non correspondent coin and mesh dimensions")
             raise ValueError("non correspondent coin and mesh dimensions")

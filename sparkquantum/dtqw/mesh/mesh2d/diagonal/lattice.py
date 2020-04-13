@@ -28,7 +28,7 @@ class LatticeDiagonal(Diagonal):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid size")
             raise ValueError("invalid size")
 
@@ -152,7 +152,7 @@ class LatticeDiagonal(Diagonal):
 
                                 yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -217,7 +217,7 @@ class LatticeDiagonal(Diagonal):
 
                                 yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -227,7 +227,7 @@ class LatticeDiagonal(Diagonal):
                     __map
                 )
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
@@ -265,7 +265,7 @@ class LatticeDiagonal(Diagonal):
 
                             yield m, n, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
@@ -316,7 +316,7 @@ class LatticeDiagonal(Diagonal):
             if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building shift operator...")
 
         initial_time = datetime.now()

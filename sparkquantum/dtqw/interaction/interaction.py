@@ -101,7 +101,7 @@ class Interaction:
                 ) - initial_time).total_seconds()
             )
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "interaction operator was built in {}s".format(
                         info['buildingTime']))

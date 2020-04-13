@@ -132,7 +132,7 @@ class Mesh:
                 ) - initial_time).total_seconds()
             )
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "shift operator was built in {}s".format(
                         info['buildingTime']))

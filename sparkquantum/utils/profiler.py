@@ -106,7 +106,7 @@ class Profiler:
         return self.__str__()
 
     def _request(self, url_suffix=''):
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("performing request to '{}'...".format(
                 self._base_url + 'applications' + url_suffix))
 
@@ -116,11 +116,11 @@ class Profiler:
             with request.urlopen(self._base_url + 'applications' + url_suffix) as response:
                 result = response.read()
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.debug("request performed in {}s".format(
                     (datetime.now() - t1).total_seconds()))
         except error.URLError as e:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "request failed with the following error: '{}' and no data will be returned".format(e.reason))
             return None
@@ -128,7 +128,7 @@ class Profiler:
         if result is not None:
             result = json.loads(result.decode('utf-8'))
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning("the response is empty")
         return result
 
@@ -329,7 +329,7 @@ class Profiler:
             If `app_id` is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             if data is None:
                 if app_id is None:
                     self._logger.error(
@@ -369,7 +369,7 @@ class Profiler:
             If `app_id` is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             if data is None:
                 if app_id is None:
                     self._logger.error(
@@ -410,7 +410,7 @@ class Profiler:
             The measured execution or building time of the element.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("profiling time for '{}'...".format(name))
 
         self._times[name] = value
@@ -428,7 +428,7 @@ class Profiler:
             The RDD's id.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("profiling RDD for '{}'...".format(name))
 
         if name not in self._rdd:
@@ -450,7 +450,7 @@ class Profiler:
             The application's id.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("profiling application resources...")
 
         data = self.request_executors(app_id)
@@ -479,7 +479,7 @@ class Profiler:
             The executor's id.
 
         """
-        if self._logger:
+        if self._logger is not None:
             if exec_id is None:
                 self._logger.info("profiling resources of executors...")
             else:
@@ -527,13 +527,13 @@ class Profiler:
                 return self._times.copy()
             else:
                 if name not in self._times:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.warning(
                             "no measurement of time has been done for '{}'".format(name))
                     return {}
                 return self._times[name]
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning("no measurement of time has been done")
             return {}
 
@@ -556,13 +556,13 @@ class Profiler:
                 return self._rdd.copy()
             else:
                 if name not in self._rdd:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.warning(
                             "no measurement of RDD resources has been done for '{}'".format(name))
                     return {}
                 return self._rdd[name]
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of RDD resources has been done")
             return {}
@@ -586,13 +586,13 @@ class Profiler:
                 return self._resources.copy()
             else:
                 if name not in self._default_resources():
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.warning(
                             "no measurement of resources has been done for '{}'".format(name))
                     return {}
                 return self._resources[name]
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of resources has been done")
             return {}
@@ -616,13 +616,13 @@ class Profiler:
                 return self._executors.copy()
             else:
                 if exec_id not in self._executors:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.warning(
                             "no measurement of resources has been done for executor {}".format(exec_id))
                     return {}
                 return self._executors[exec_id]
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of executors resources has been done")
             return self._executors
@@ -647,7 +647,7 @@ class Profiler:
             If `extension` is not valid or not supported.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "exporting times in {} format...".format(extension))
 
@@ -655,10 +655,10 @@ class Profiler:
             self._export_values(
                 [self._times], self._times.keys(), path + 'times', extension)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("times successfully exported")
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning("no measurement of time has been done")
 
     def export_rdd(self, path, extension='csv'):
@@ -681,7 +681,7 @@ class Profiler:
             If `extension` is not valid or not supported.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "exporting RDD resources in {} format...".format(extension))
 
@@ -695,10 +695,10 @@ class Profiler:
 
             self._export_values(rdd, rdd[-1].keys(), path + 'rdd', extension)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("RDD resources successfully exported")
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of RDD resources has been done")
 
@@ -722,7 +722,7 @@ class Profiler:
             If `extension` is not valid or not supported.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "exporting resources in {} format...".format(extension))
 
@@ -745,10 +745,10 @@ class Profiler:
             self._export_values(
                 resources, resources[-1].keys(), path + 'resources', extension)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("resources successfully exported")
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of resources has been done")
 
@@ -772,7 +772,7 @@ class Profiler:
             If `extension` is not valid or not supported.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "exporting executors resources in {} format...".format(extension))
 
@@ -796,10 +796,10 @@ class Profiler:
                 self._export_values(
                     executors, executors[-1].keys(), "{}executor_{}".format(path, k1), extension)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("executors resources successfully exported")
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "no measurement of executors resources has been done")
 

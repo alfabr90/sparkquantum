@@ -47,7 +47,7 @@ class CollisionPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -80,7 +80,7 @@ class CollisionPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
