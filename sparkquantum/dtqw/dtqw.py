@@ -206,7 +206,17 @@ class DiscreteTimeQuantumWalk:
                 "'Profiler' instance expected, not '{}'".format(type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
+        particles = '{} particle'.format(self._num_particles)
+
+        if self._num_particles > 1:
+            if self._interaction:
+                particles = '{} interacting particles by {}'.format(
+                    self._num_particles, self._interaction.to_string())
+            else:
+                particles = '{} particles'.format(self._num_particles)
+
+        return '{} with {} and a {} over a {}'.format(
+            'Discrete Time Quantum Walk', particles, self._coin.to_string(), self._mesh.to_string())
 
     def to_string(self):
         """Build a string representing this walk.
@@ -218,18 +228,6 @@ class DiscreteTimeQuantumWalk:
 
         """
         return self.__str__()
-
-    def title(self):
-        """Build a human-readable string with some characteristics of this walk.
-
-        Returns
-        -------
-        str
-            The string with some characteristics of this walk.
-
-        """
-        return "Quantum Walk with {} Particle(s) on a {}".format(
-            self._num_particles, self._mesh.title())
 
     def create_walk_operator(self, coord_format=Utils.MatrixCoordinateDefault,
                              storage_level=StorageLevel.MEMORY_AND_DISK):

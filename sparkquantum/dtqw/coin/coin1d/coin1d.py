@@ -30,6 +30,9 @@ class Coin1D(Coin):
         """
         return True
 
+    def __str__(self):
+        return 'One-dimensional Coin'
+
     def _create_rdd(self, mesh, coord_format, storage_level):
         coin_size = self._size
         mesh_size = mesh.size

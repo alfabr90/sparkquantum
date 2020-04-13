@@ -37,6 +37,9 @@ class Matrix(Base):
         """int"""
         return self._coordinate_format
 
+    def __str__(self):
+        return '{} with shape {}'.format(self.__class__.__name__, self._shape)
+
     def dump(self, path, glue=None, codec=None, filename=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
 

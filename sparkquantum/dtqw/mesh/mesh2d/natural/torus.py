@@ -25,15 +25,7 @@ class TorusNatural(Natural):
         """
         super().__init__(size, broken_links=broken_links)
 
-    def title(self):
-        """Build a human-readable string with the type of this mesh.
-
-        Returns
-        -------
-        str
-            The string with the type of this mesh.
-
-        """
+    def __str__(self):
         return 'Natural Torus'
 
     def check_steps(self, steps):

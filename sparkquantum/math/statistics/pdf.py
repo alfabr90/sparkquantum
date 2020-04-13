@@ -43,6 +43,15 @@ class PDF(Base):
     def mesh(self):
         return self._mesh
 
+    def __str__(self):
+        if self._num_particles == 1:
+            particles = 'one particle'
+        else:
+            particles = '{} particles'.format(self._num_particles)
+
+        return 'Probability Distribution Function with shape {} of {} over a {}'.format(
+            self._shape, particles, self._mesh.to_string())
+
     def sum_values(self):
         """Sum the values of this PDF.
 

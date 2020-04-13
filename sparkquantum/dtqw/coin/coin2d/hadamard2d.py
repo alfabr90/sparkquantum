@@ -18,3 +18,6 @@ class Hadamard2D(Coin2D):
              [1, 1, -1, -1],
              [1, -1, -1, 1]], dtype=complex
         ) / 2.0
+
+    def __str__(self):
+        return 'Two-dimensional Hadamard Coin'

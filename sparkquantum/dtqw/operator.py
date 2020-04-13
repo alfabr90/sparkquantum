@@ -37,6 +37,9 @@ class Operator(Matrix):
         """int"""
         return self._coordinate_format
 
+    def __str__(self):
+        return '{} with shape {}'.format(self.__class__.__name__, self._shape)
+
     def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Perform a tensor (Kronecker) product with another operator.
 

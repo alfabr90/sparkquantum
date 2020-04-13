@@ -55,8 +55,8 @@ class CollisionPhaseInteraction(Interaction):
         return self._collision_phase
 
     def __str__(self):
-        return '{} with collision phase {}'.format(
-            self.__class__.__name__, self._num_particles)
+        return 'Collision Phase Interaction with phase value of {}'.format(
+            self._num_particles)
 
     def _create_rdd(self, coord_format, storage_level):
         phase = cmath.exp(self._collision_phase * (0.0 + 1.0j))

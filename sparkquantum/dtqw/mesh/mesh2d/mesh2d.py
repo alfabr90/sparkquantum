@@ -48,6 +48,9 @@ class Mesh2D(Mesh):
     def _define_num_edges(self, size):
         raise NotImplementedError
 
+    def __str__(self):
+        return 'Two-dimensional Mesh'
+
     def filename(self):
         """Build a string representing this mesh to be used in filenames.
 

@@ -54,6 +54,15 @@ class State(Vector):
         """int"""
         return self._num_particles
 
+    def __str__(self):
+        if self._num_particles == 1:
+            particles = 'one particle'
+        else:
+            particles = '{} particles'.format(self._num_particles)
+
+        return 'Quantum State with shape {} of {} over a {}'.format(
+            self._shape, particles, self._mesh.to_string())
+
     def dump(self, path, glue=None, codec=None,
              filename='', dumping_format=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.

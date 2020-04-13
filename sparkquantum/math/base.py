@@ -108,7 +108,7 @@ class Base:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
+        return 'Base math entity with shape {}'.format(self._shape)
 
     def to_string(self):
         return self.__str__()

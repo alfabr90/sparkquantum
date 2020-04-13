@@ -34,15 +34,7 @@ class LatticeDiagonal(Diagonal):
 
         return 2 * size[0] + 1, 2 * size[1] + 1
 
-    def title(self):
-        """Build a human-readable string with the type of this mesh.
-
-        Returns
-        -------
-        str
-            The string with the type of this mesh.
-
-        """
+    def __str__(self):
         return 'Diagonal Lattice'
 
     def axis(self):

@@ -52,6 +52,9 @@ class Mesh1D(Mesh):
         #              x
         return self._define_size(size)
 
+    def __str__(self):
+        return 'One-dimensional Mesh'
+
     def filename(self):
         """Build a string representing this mesh to be used in filenames.
 

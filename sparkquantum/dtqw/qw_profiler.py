@@ -43,6 +43,9 @@ class QuantumWalkProfiler(Profiler):
         return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
                 'numElements': 0, 'numNonzeroElements': 0}
 
+    def __str__(self):
+        return 'Quantum Walk Profiler with base URL {}'.format(self._base_url)
+
     def start(self):
         """Reset the profiler attributes to get info for a new profiling round."""
         super().start()
