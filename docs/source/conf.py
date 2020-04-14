@@ -38,7 +38,9 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon']
 
+autodoc_member_order = 'groupwise'
 autodoc_mock_imports = ['numpy', 'matplotlib', 'mpl_toolkits', 'pyspark']
+napoleon_include_init_with_doc = True
 napoleon_google_docstring = False
 
 # Add any paths that contain templates here, relative to this directory.
