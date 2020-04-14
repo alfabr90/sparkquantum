@@ -783,7 +783,7 @@ class DiscreteTimeQuantumWalk:
                     self.create_walk_operator(
                         coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
-            if self._num_particles > 1 and self._interaction and self._interaction_operator is None:
+            if self._num_particles > 1 and self._interaction is not None and self._interaction_operator is None:
                 if self._logger is not None:
                     self._logger.info(
                         "no interaction operator has been set. A new one will be built")
