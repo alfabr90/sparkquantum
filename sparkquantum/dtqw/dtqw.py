@@ -1,5 +1,4 @@
 import math
-import cmath
 import fileinput
 from glob import glob
 from datetime import datetime
@@ -265,6 +264,7 @@ class DiscreteTimeQuantumWalk:
             if self._logger is not None:
                 self._logger.info(
                     "no coin operator has been set. A new one will be built")
+
             self._coin_operator = self._coin.create_operator(
                 self._mesh, coord_format=Utils.MatrixCoordinateMultiplicand, storage_level=storage_level
             )
@@ -278,6 +278,7 @@ class DiscreteTimeQuantumWalk:
             if self._logger is not None:
                 self._logger.info(
                     "no shift operator has been set. A new one will be built")
+
             self._shift_operator = self._mesh.create_operator(
                 coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level
             )
@@ -357,6 +358,7 @@ class DiscreteTimeQuantumWalk:
             if kron_mode == Utils.KroneckerModeBroadcast:
                 eo = Utils.broadcast(self._spark_context,
                                      evolution_operator.data.collect())
+
                 evolution_operator.unpersist()
 
                 for p in range(self._num_particles):
@@ -453,8 +455,6 @@ class DiscreteTimeQuantumWalk:
                             rdd = rdd.partitionBy(
                                 numPartitions=num_partitions
                             )
-
-                        self._num_partitions = num_partitions
 
                     wo = Operator(
                         rdd, shape, coord_format=coord_format
@@ -601,8 +601,6 @@ class DiscreteTimeQuantumWalk:
                                 numPartitions=num_partitions
                             )
 
-                        self._num_partitions = num_partitions
-
                     wo = Operator(
                         rdd, shape, coord_format=coord_format
                     ).persist(storage_level)
@@ -639,6 +637,7 @@ class DiscreteTimeQuantumWalk:
                             self._profiler.log_executors(app_id=app_id)
 
                 evolution_operator.unpersist()
+
                 Utils.remove_path(path)
             else:
                 if self._logger is not None:
@@ -774,7 +773,7 @@ class DiscreteTimeQuantumWalk:
 
         if self._logger is not None:
             self._logger.info("steps: {}".format(steps))
-            self._logger.info("space size: {}".format(self._mesh.size))
+            self._logger.info("mesh: {}".format(self._mesh.to_string()))
             self._logger.info(
                 "number of particles: {}".format(self._num_particles))
 
@@ -788,10 +787,10 @@ class DiscreteTimeQuantumWalk:
                             self._interaction.to_string()))
 
             if self._mesh.broken_links is None:
-                self._logger.info("no broken links has been defined")
+                self._logger.info("no broken links have been defined")
             else:
                 self._logger.info("broken links probability: {}".format(
-                    self._mesh.broken_links.probability))
+                    self._mesh.broken_links.to_string()))
 
         result = initial_state.materialize(storage_level)
 
