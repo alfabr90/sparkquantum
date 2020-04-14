@@ -100,9 +100,18 @@ class Profiler:
             raise NotImplementedError("unsupported file extension")
 
     def __str__(self):
-        return self.__class__.__name__
+        return 'Profiler configured to request data from {}'.format(
+            self._base_url)
 
     def to_string(self):
+        """Build a string representing this profiler.
+
+        Returns
+        -------
+        str
+            The string representation of this profiler.
+
+        """
         return self.__str__()
 
     def _request(self, url_suffix=''):
