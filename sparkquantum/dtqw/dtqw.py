@@ -686,6 +686,53 @@ class DiscreteTimeQuantumWalk:
         if self._logger is not None:
             self._logger.info("operators have been destroyed")
 
+    def _get_configs(self):
+        configs = {}
+
+        configs['checkpointing_frequency'] = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.checkpointingFrequency'
+            )
+        )
+
+        configs['dumping_frequency'] = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingFrequency'
+            )
+        )
+
+        if configs['dumping_frequency'] >= 0:
+            configs['dumping_path'] = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingPath'
+            )
+
+            if not configs['dumping_path'].endswith('/'):
+                configs['dumping_path'] += '/'
+
+        configs['check_unitary'] = Utils.get_conf(
+            self._spark_context,
+            'quantum.dtqw.walk.checkUnitary'
+        )
+
+        configs['dump_states_pdf'] = Utils.get_conf(
+            self._spark_context,
+            'quantum.dtqw.walk.dumpStatesPDF'
+        )
+
+        if configs['dump_states_pdf'] == 'True':
+            configs['dumping_path'] = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingPath'
+            )
+
+            if not configs['dumping_path'].endswith('/'):
+                configs['dumping_path'] += '/'
+
+        return configs
+
     def walk(self, steps, initial_state,
              storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform a walk.
@@ -771,6 +818,8 @@ class DiscreteTimeQuantumWalk:
         if self._logger is not None:
             self._profiler.log_rdd(app_id=app_id)
 
+        configs = self._get_configs()
+
         if steps > 0:
             # Building walk operators once if not simulating decoherence with broken links
             # When there is a broken links probability, the walk operators will
@@ -794,48 +843,6 @@ class DiscreteTimeQuantumWalk:
 
             if self._logger is not None:
                 self._logger.info("starting the walk...")
-
-            checkpointing_frequency = int(
-                Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.checkpointingFrequency'
-                )
-            )
-
-            dumping_frequency = int(
-                Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingFrequency'
-                )
-            )
-
-            if dumping_frequency >= 0:
-                dumping_path = Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingPath'
-                )
-
-                if not dumping_path.endswith('/'):
-                    dumping_path += '/'
-
-            check_unitary = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.checkUnitary'
-            )
-
-            dump_states_pdf = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.dumpStatesPDF'
-            )
-
-            if dump_states_pdf == 'True':
-                dumping_path = Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingPath'
-                )
-
-                if not dumping_path.endswith('/'):
-                    dumping_path += '/'
 
             for i in range(1, steps + 1, 1):
                 if self._mesh.broken_links and self._mesh.broken_links.is_random():
@@ -874,13 +881,14 @@ class DiscreteTimeQuantumWalk:
                 result_tmp.materialize(storage_level)
                 result.unpersist()
 
-                if checkpointing_frequency >= 0 and i % checkpointing_frequency == 0:
+                if configs['checkpointing_frequency'] >= 0 and i % configs['checkpointing_frequency'] == 0:
                     result_tmp.checkpoint()
 
-                if dumping_frequency >= 0 and i % dumping_frequency == 0:
-                    result_tmp.dump(dumping_path + "states/" + str(i))
+                if configs['dumping_frequency'] >= 0 and i % configs['dumping_frequency'] == 0:
+                    result_tmp.dump(
+                        configs['dumping_path'] + "states/" + str(i))
 
-                if check_unitary == 'True':
+                if configs['check_unitary'] == 'True':
                     if not result_tmp.is_unitary():
                         if self._logger is not None:
                             self._logger.error(
@@ -888,18 +896,20 @@ class DiscreteTimeQuantumWalk:
                         raise ValueError(
                             "the state {} is not unitary".format(i))
 
-                if dump_states_pdf == 'True':
+                if configs['dump_states_pdf'] == 'True':
                     if self._num_particles == 1:
-                        result_tmp.measure().dump(dumping_path + "pdf/" + str(i))
+                        result_tmp.measure().dump(
+                            configs['dumping_path'] + "pdf/" + str(i))
                     else:
                         joint, collision, marginal = result_tmp.measure()
 
-                        joint.dump(dumping_path + "pdf/joint/" + str(i))
+                        joint.dump(
+                            configs['dumping_path'] + "pdf/joint/" + str(i))
                         collision.dump(
-                            dumping_path + "pdf/collision/" + str(i))
+                            configs['dumping_path'] + "pdf/collision/" + str(i))
                         for p in range(len(marginal)):
                             marginal[p].dump(
-                                dumping_path + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
+                                configs['dumping_path'] + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
 
                 result = result_tmp
 
