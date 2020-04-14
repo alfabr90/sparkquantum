@@ -16,6 +16,20 @@ class BrokenLinks():
     def spark_context(self):
         return self._spark_context
 
+    def __str__(self):
+        return 'Broken Links Generator'
+
+    def to_string(self):
+        """Build a string representing this broken links generator.
+
+        Returns
+        -------
+        str
+            The string representation of this broken links generator.
+
+        """
+        return self.__str__()
+
     def is_random(self):
         """Check if this is a random broken links generator.
 

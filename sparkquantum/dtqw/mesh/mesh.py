@@ -153,17 +153,6 @@ class Mesh:
         """
         return self.__str__()
 
-    def title(self):
-        """Build a human-readable string with the type of this mesh.
-
-        Returns
-        -------
-        str
-            The string with the type of this mesh.
-
-        """
-        return self.__str__()
-
     def filename(self):
         """Build a string representing this mesh to be used in filenames.
 

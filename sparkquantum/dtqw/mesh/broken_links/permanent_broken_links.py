@@ -33,6 +33,16 @@ class PermanentBrokenLinks(BrokenLinks):
     def edges(self):
         return self._edges
 
+    def __str__(self):
+        num_edges = len(self._edges)
+
+        if num_edges > 1:
+            broken_links = '{} broken links'.format(num_edges)
+        else:
+            broken_links = '{} broken link'.format(num_edges)
+
+        return 'Permanent Broken Links Generator with {}'.format(broken_links)
+
     def is_permanent(self):
         """Check if this is a permanent broken links generator.
 
