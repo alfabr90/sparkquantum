@@ -645,26 +645,26 @@ class DiscreteTimeQuantumWalk:
                     self._logger.error("invalid kronecker mode")
                 raise ValueError("invalid kronecker mode")
 
-    def destroy_coin_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_coin_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
-    def destroy_shift_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_shift_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
-    def destroy_interaction_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_interaction_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
-    def destroy_walk_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_walk_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                 self._walk_operator.destroy()
@@ -678,10 +678,10 @@ class DiscreteTimeQuantumWalk:
         if self._logger is not None:
             self._logger.info("destroying operators...")
 
-        self.destroy_coin_operator()
-        self.destroy_shift_operator()
-        self.destroy_interaction_operator()
-        self.destroy_walk_operator()
+        self._destroy_coin_operator()
+        self._destroy_shift_operator()
+        self._destroy_interaction_operator()
+        self._destroy_walk_operator()
 
         if self._logger is not None:
             self._logger.info("operators have been destroyed")
@@ -846,8 +846,8 @@ class DiscreteTimeQuantumWalk:
 
             for i in range(1, steps + 1, 1):
                 if self._mesh.broken_links and self._mesh.broken_links.is_random():
-                    self.destroy_shift_operator()
-                    self.destroy_walk_operator()
+                    self._destroy_shift_operator()
+                    self._destroy_walk_operator()
                     self.create_walk_operator(
                         coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
