@@ -26,7 +26,7 @@ class TorusNatural(Natural):
         super().__init__(size, broken_links=broken_links)
 
     def __str__(self):
-        return 'Natural Torus'
+        return 'Natural Torus with dimension {}'.format(self._size)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.

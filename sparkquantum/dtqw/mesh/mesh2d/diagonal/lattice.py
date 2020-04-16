@@ -35,7 +35,7 @@ class LatticeDiagonal(Diagonal):
         return 2 * size[0] + 1, 2 * size[1] + 1
 
     def __str__(self):
-        return 'Diagonal Lattice'
+        return 'Diagonal Lattice with dimension {}'.format(self._size)
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.

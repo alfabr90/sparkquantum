@@ -25,6 +25,9 @@ class Segment(Mesh1D):
         """
         super().__init__(size, broken_links=broken_links)
 
+    def __str__(self):
+        return 'Segment with dimension {}'.format(self._size)
+
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
 

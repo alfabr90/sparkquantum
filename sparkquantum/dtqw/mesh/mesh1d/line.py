@@ -25,6 +25,9 @@ class Line(Mesh1D):
         """
         super().__init__(size, broken_links=broken_links)
 
+    def __str__(self):
+        return 'Line with dimension {}'.format(self._size)
+
     def _define_size(self, size):
         if not self._validate(size):
             if self._logger is not None:
