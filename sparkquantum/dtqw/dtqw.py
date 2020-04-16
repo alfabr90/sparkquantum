@@ -5,7 +5,9 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
+from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.operator import Operator, is_operator
 from sparkquantum.dtqw.state import State
 from sparkquantum.utils.logger import is_logger
@@ -24,12 +26,12 @@ class DiscreteTimeQuantumWalk:
         Parameters
         ----------
         coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
-            A Coin object.
+            The coin for the walk.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
+            The mesh where the particles will walk over.
         num_particles : int
             The number of particles present in the walk.
-        interaction: :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
+        interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
             A particles interaction object.
 
         """
@@ -45,14 +47,10 @@ class DiscreteTimeQuantumWalk:
         self._interaction_operator = None
         self._walk_operator = None
 
-        self._num_partitions = None
-
-        if num_particles < 1:
-            # self._logger.error("invalid number of particles")
-            raise ValueError("invalid number of particles")
-
         self._logger = None
         self._profiler = None
+
+        self._validate()
 
     @property
     def spark_context(self):
@@ -203,6 +201,34 @@ class DiscreteTimeQuantumWalk:
         else:
             raise TypeError(
                 "'Profiler' instance expected, not '{}'".format(type(profiler)))
+
+    def _validate(self):
+        if self._num_particles < 1:
+            if self._logger is not None:
+                self._logger.error("invalid number of particles")
+            raise ValueError("invalid number of particles")
+
+        if not is_coin(self._coin):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Coin' instance expected, not '{}'".format(type(self._coin)))
+            raise TypeError(
+                "'Coin' instance expected, not '{}'".format(type(self._coin)))
+
+        if not is_mesh(self._mesh):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
+
+        if self._num_particles > 1 and self._interaction is not None and not is_interaction(
+                self._interaction):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+            raise TypeError(
+                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
 
     def __str__(self):
         particles = '{} particle'.format(self._num_particles)
