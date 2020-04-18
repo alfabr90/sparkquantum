@@ -25,16 +25,8 @@ class TorusNatural(Natural):
         """
         super().__init__(size, broken_links=broken_links)
 
-    def title(self):
-        """Build a human-readable string with the type of this mesh.
-
-        Returns
-        -------
-        str
-            The string with the type of this mesh.
-
-        """
-        return 'Natural Torus'
+    def __str__(self):
+        return 'Natural Torus with dimension {}'.format(self._size)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -137,7 +129,7 @@ class TorusNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -216,7 +208,7 @@ class TorusNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -226,7 +218,7 @@ class TorusNatural(Natural):
                     __map
                 )
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
@@ -264,7 +256,7 @@ class TorusNatural(Natural):
 
                             yield m, n, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
@@ -315,7 +307,7 @@ class TorusNatural(Natural):
             if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building shift operator...")
 
         initial_time = datetime.now()

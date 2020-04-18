@@ -17,3 +17,6 @@ class Hadamard1D(Coin1D):
             [[1, 1],
              [1, -1]], dtype=complex
         ) / math.sqrt(2)
+
+    def __str__(self):
+        return 'One-dimensional Hadamard Coin'

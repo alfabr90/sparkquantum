@@ -25,6 +25,15 @@ class MarginalPDF(PDF):
         """
         super().__init__(rdd, shape, mesh, num_particles)
 
+    def __str__(self):
+        if self._num_particles == 1:
+            particles = 'one particle'
+        else:
+            particles = '{} particles'.format(self._num_particles)
+
+        return 'Marginal Probability Distribution Function with shape {} of {} over a {}'.format(
+            self._shape, particles, self._mesh.to_string())
+
     def sum_values(self):
         """Sum the values of this PDF.
 
@@ -44,7 +53,7 @@ class MarginalPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -77,7 +86,7 @@ class MarginalPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -115,7 +124,7 @@ class MarginalPDF(PDF):
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -164,7 +173,7 @@ class MarginalPDF(PDF):
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 

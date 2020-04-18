@@ -1,12 +1,13 @@
 import math
-import cmath
 import fileinput
 from glob import glob
 from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
+from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.operator import Operator, is_operator
 from sparkquantum.dtqw.state import State
 from sparkquantum.utils.logger import is_logger
@@ -25,12 +26,12 @@ class DiscreteTimeQuantumWalk:
         Parameters
         ----------
         coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
-            A Coin object.
+            The coin for the walk.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` object.
+            The mesh where the particles will walk over.
         num_particles : int
             The number of particles present in the walk.
-        interaction: :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
+        interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
             A particles interaction object.
 
         """
@@ -46,14 +47,10 @@ class DiscreteTimeQuantumWalk:
         self._interaction_operator = None
         self._walk_operator = None
 
-        self._num_partitions = None
-
-        if num_particles < 1:
-            # self._logger.error("invalid number of particles")
-            raise ValueError("invalid number of particles")
-
         self._logger = None
         self._profiler = None
+
+        self._validate()
 
     @property
     def spark_context(self):
@@ -123,7 +120,7 @@ class DiscreteTimeQuantumWalk:
         if is_operator(co):
             self._coin_operator = co
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Operator' instance expected, not '{}'".format(type(co)))
             raise TypeError(
@@ -134,7 +131,7 @@ class DiscreteTimeQuantumWalk:
         if is_operator(so):
             self._shift_operator = so
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Operator' instance expected, not '{}'".format(type(so)))
             raise TypeError(
@@ -145,7 +142,7 @@ class DiscreteTimeQuantumWalk:
         if is_operator(io) or io is None:
             self._interaction_operator = io
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Operator' instance expected, not '{}'".format(type(io)))
             raise TypeError(
@@ -158,7 +155,7 @@ class DiscreteTimeQuantumWalk:
             self._num_partitions = self._walk_operator.data.getNumPartitions()
         elif isinstance(wo, (list, tuple)):
             if len(wo) != self._num_particles:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("{} walk operators expected, not {}".format(
                         self._num_particles, len(wo)))
                 raise ValueError("{} walk operators expected, not {}".format(
@@ -166,7 +163,7 @@ class DiscreteTimeQuantumWalk:
 
             for o in wo:
                 if not is_operator(o):
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error(
                             "'Operator' instance expected, not '{}'".format(type(wo)))
                     raise TypeError(
@@ -175,7 +172,7 @@ class DiscreteTimeQuantumWalk:
             self._num_partitions = self._walk_operator[0].data.getNumPartitions(
             )
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Operator' instance expected, not '{}'".format(type(wo)))
             raise TypeError(
@@ -205,8 +202,46 @@ class DiscreteTimeQuantumWalk:
             raise TypeError(
                 "'Profiler' instance expected, not '{}'".format(type(profiler)))
 
+    def _validate(self):
+        if self._num_particles < 1:
+            if self._logger is not None:
+                self._logger.error("invalid number of particles")
+            raise ValueError("invalid number of particles")
+
+        if not is_coin(self._coin):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Coin' instance expected, not '{}'".format(type(self._coin)))
+            raise TypeError(
+                "'Coin' instance expected, not '{}'".format(type(self._coin)))
+
+        if not is_mesh(self._mesh):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
+
+        if self._num_particles > 1 and self._interaction is not None and not is_interaction(
+                self._interaction):
+            if self._logger is not None:
+                self._logger.error(
+                    "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+            raise TypeError(
+                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+
     def __str__(self):
-        return self.__class__.__name__
+        particles = '{} particle'.format(self._num_particles)
+
+        if self._num_particles > 1:
+            if self._interaction:
+                particles = '{} interacting particles by {}'.format(
+                    self._num_particles, self._interaction.to_string())
+            else:
+                particles = '{} particles'.format(self._num_particles)
+
+        return '{} with {} and a {} over a {}'.format(
+            'Discrete Time Quantum Walk', particles, self._coin.to_string(), self._mesh.to_string())
 
     def to_string(self):
         """Build a string representing this walk.
@@ -218,18 +253,6 @@ class DiscreteTimeQuantumWalk:
 
         """
         return self.__str__()
-
-    def title(self):
-        """Build a human-readable string with some characteristics of this walk.
-
-        Returns
-        -------
-        str
-            The string with some characteristics of this walk.
-
-        """
-        return "Quantum Walk with {} Particle(s) on a {}".format(
-            self._num_particles, self._mesh.title())
 
     def create_walk_operator(self, coord_format=Utils.MatrixCoordinateDefault,
                              storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -264,33 +287,35 @@ class DiscreteTimeQuantumWalk:
         app_id = self._spark_context.applicationId
 
         if self._coin_operator is None:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "no coin operator has been set. A new one will be built")
+
             self._coin_operator = self._coin.create_operator(
                 self._mesh, coord_format=Utils.MatrixCoordinateMultiplicand, storage_level=storage_level
             )
 
-            if self._profiler:
+            if self._profiler is not None:
                 if Utils.get_conf(self._spark_context,
                                   'quantum.dtqw.profiler.logExecutors') == 'True':
                     self._profiler.log_executors(app_id=app_id)
 
         if self._shift_operator is None:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "no shift operator has been set. A new one will be built")
+
             self._shift_operator = self._mesh.create_operator(
                 coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level
             )
 
-            if self._profiler:
+            if self._profiler is not None:
                 if Utils.get_conf(self._spark_context,
                                   'quantum.dtqw.profiler.logExecutors') == 'True':
                     self._profiler.log_executors(app_id=app_id)
 
         if self._num_particles == 1:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "with just one particle, the walk operator is the evolution operator")
 
@@ -310,7 +335,7 @@ class DiscreteTimeQuantumWalk:
             self._coin_operator.unpersist()
             self._shift_operator.unpersist()
 
-            if self._profiler:
+            if self._profiler is not None:
                 self._profiler.profile_resources(app_id)
                 self._profiler.profile_executors(app_id)
 
@@ -319,7 +344,7 @@ class DiscreteTimeQuantumWalk:
                     ) - t1).total_seconds()
                 )
 
-                if self._logger:
+                if self._logger is not None:
                     self._logger.info(
                         "walk operator was built in {}s".format(info['buildingTime']))
                     self._logger.info(
@@ -332,7 +357,7 @@ class DiscreteTimeQuantumWalk:
                                   'quantum.dtqw.profiler.logExecutors') == 'True':
                     self._profiler.log_executors(app_id=app_id)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("building walk operator...")
 
             t_tmp = datetime.now()
@@ -359,10 +384,11 @@ class DiscreteTimeQuantumWalk:
             if kron_mode == Utils.KroneckerModeBroadcast:
                 eo = Utils.broadcast(self._spark_context,
                                      evolution_operator.data.collect())
+
                 evolution_operator.unpersist()
 
                 for p in range(self._num_particles):
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.debug(
                             "building walk operator for particle {}...".format(p + 1))
 
@@ -456,8 +482,6 @@ class DiscreteTimeQuantumWalk:
                                 numPartitions=num_partitions
                             )
 
-                        self._num_partitions = num_partitions
-
                     wo = Operator(
                         rdd, shape, coord_format=coord_format
                     ).persist(storage_level)
@@ -468,7 +492,7 @@ class DiscreteTimeQuantumWalk:
 
                     self._walk_operator.append(wo.materialize(storage_level))
 
-                    if self._profiler:
+                    if self._profiler is not None:
                         self._profiler.profile_resources(app_id)
                         self._profiler.profile_executors(app_id)
 
@@ -478,7 +502,7 @@ class DiscreteTimeQuantumWalk:
                                                       t_tmp).total_seconds()
                         )
 
-                        if self._logger:
+                        if self._logger is not None:
                             self._logger.info(
                                 "walk operator for particle {} was built in {}s".format(
                                     p + 1, info['buildingTime'])
@@ -503,7 +527,7 @@ class DiscreteTimeQuantumWalk:
                 evolution_operator.dump(path)
 
                 for p in range(self._num_particles):
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.debug(
                             "building walk operator for particle {}...".format(p + 1))
 
@@ -603,8 +627,6 @@ class DiscreteTimeQuantumWalk:
                                 numPartitions=num_partitions
                             )
 
-                        self._num_partitions = num_partitions
-
                     wo = Operator(
                         rdd, shape, coord_format=coord_format
                     ).persist(storage_level)
@@ -615,7 +637,7 @@ class DiscreteTimeQuantumWalk:
 
                     self._walk_operator.append(wo.materialize(storage_level))
 
-                    if self._profiler:
+                    if self._profiler is not None:
                         self._profiler.profile_resources(app_id)
                         self._profiler.profile_executors(app_id)
 
@@ -625,7 +647,7 @@ class DiscreteTimeQuantumWalk:
                                                       t_tmp).total_seconds()
                         )
 
-                        if self._logger:
+                        if self._logger is not None:
                             self._logger.info(
                                 "walk operator for particle {} was built in {}s".format(
                                     p + 1, info['buildingTime'])
@@ -641,32 +663,33 @@ class DiscreteTimeQuantumWalk:
                             self._profiler.log_executors(app_id=app_id)
 
                 evolution_operator.unpersist()
+
                 Utils.remove_path(path)
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid kronecker mode")
                 raise ValueError("invalid kronecker mode")
 
-    def destroy_coin_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_coin_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._coin_operator is not None:
             self._coin_operator.destroy()
             self._coin_operator = None
 
-    def destroy_shift_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_shift_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._shift_operator is not None:
             self._shift_operator.destroy()
             self._shift_operator = None
 
-    def destroy_interaction_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_interaction_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._interaction_operator is not None:
             self._interaction_operator.destroy()
             self._interaction_operator = None
 
-    def destroy_walk_operator(self):
-        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy`'s method."""
+    def _destroy_walk_operator(self):
+        """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
         if self._walk_operator is not None:
             if self._num_particles == 1:
                 self._walk_operator.destroy()
@@ -677,16 +700,63 @@ class DiscreteTimeQuantumWalk:
 
     def destroy_operators(self):
         """Release all operators from memory and/or disk."""
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("destroying operators...")
 
-        self.destroy_coin_operator()
-        self.destroy_shift_operator()
-        self.destroy_interaction_operator()
-        self.destroy_walk_operator()
+        self._destroy_coin_operator()
+        self._destroy_shift_operator()
+        self._destroy_interaction_operator()
+        self._destroy_walk_operator()
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("operators have been destroyed")
+
+    def _get_configs(self):
+        configs = {}
+
+        configs['checkpointing_frequency'] = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.checkpointingFrequency'
+            )
+        )
+
+        configs['dumping_frequency'] = int(
+            Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingFrequency'
+            )
+        )
+
+        if configs['dumping_frequency'] >= 0:
+            configs['dumping_path'] = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingPath'
+            )
+
+            if not configs['dumping_path'].endswith('/'):
+                configs['dumping_path'] += '/'
+
+        configs['check_unitary'] = Utils.get_conf(
+            self._spark_context,
+            'quantum.dtqw.walk.checkUnitary'
+        )
+
+        configs['dump_states_pdf'] = Utils.get_conf(
+            self._spark_context,
+            'quantum.dtqw.walk.dumpStatesPDF'
+        )
+
+        if configs['dump_states_pdf'] == 'True':
+            configs['dumping_path'] = Utils.get_conf(
+                self._spark_context,
+                'quantum.dtqw.walk.dumpingPath'
+            )
+
+            if not configs['dumping_path'].endswith('/'):
+                configs['dumping_path'] += '/'
+
+        return configs
 
     def walk(self, steps, initial_state,
              storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -722,14 +792,14 @@ class DiscreteTimeQuantumWalk:
 
         """
         if not self._mesh.check_steps(steps):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "invalid number of steps for the chosen mesh")
             raise ValueError("invalid number of steps for the chosen mesh")
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("steps: {}".format(steps))
-            self._logger.info("space size: {}".format(self._mesh.size))
+            self._logger.info("mesh: {}".format(self._mesh.to_string()))
             self._logger.info(
                 "number of particles: {}".format(self._num_particles))
 
@@ -743,35 +813,37 @@ class DiscreteTimeQuantumWalk:
                             self._interaction.to_string()))
 
             if self._mesh.broken_links is None:
-                self._logger.info("no broken links has been defined")
+                self._logger.info("no broken links have been defined")
             else:
                 self._logger.info("broken links probability: {}".format(
-                    self._mesh.broken_links.probability))
+                    self._mesh.broken_links.to_string()))
 
         result = initial_state.materialize(storage_level)
 
         if not result.is_unitary():
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("the initial state is not unitary")
             raise ValueError("the initial state is not unitary")
 
         app_id = self._spark_context.applicationId
 
-        if self._profiler:
+        if self._profiler is not None:
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
 
             info = self._profiler.profile_state('initialState', result, 0.0)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "initial state is consuming {} bytes in memory and {} bytes in disk".format(
                         info['memoryUsed'], info['diskUsed']
                     )
                 )
 
-        if self._logger:
+        if self._logger is not None:
             self._profiler.log_rdd(app_id=app_id)
+
+        configs = self._get_configs()
 
         if steps > 0:
             # Building walk operators once if not simulating decoherence with broken links
@@ -779,14 +851,14 @@ class DiscreteTimeQuantumWalk:
             # be built in each step of the walk
             if not self._mesh.broken_links:
                 if self._walk_operator is None:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.info(
                             "no walk operator has been set. A new one will be built")
                     self.create_walk_operator(
                         coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
-            if self._num_particles > 1 and self._interaction and self._interaction_operator is None:
-                if self._logger:
+            if self._num_particles > 1 and self._interaction is not None and self._interaction_operator is None:
+                if self._logger is not None:
                     self._logger.info(
                         "no interaction operator has been set. A new one will be built")
                 self._interaction_operator = self._interaction.create_operator(
@@ -794,55 +866,13 @@ class DiscreteTimeQuantumWalk:
 
             t1 = datetime.now()
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("starting the walk...")
-
-            checkpointing_frequency = int(
-                Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.checkpointingFrequency'
-                )
-            )
-
-            dumping_frequency = int(
-                Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingFrequency'
-                )
-            )
-
-            if dumping_frequency >= 0:
-                dumping_path = Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingPath'
-                )
-
-                if not dumping_path.endswith('/'):
-                    dumping_path += '/'
-
-            check_unitary = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.checkUnitary'
-            )
-
-            dump_states_pdf = Utils.get_conf(
-                self._spark_context,
-                'quantum.dtqw.walk.dumpStatesPDF'
-            )
-
-            if dump_states_pdf == 'True':
-                dumping_path = Utils.get_conf(
-                    self._spark_context,
-                    'quantum.dtqw.walk.dumpingPath'
-                )
-
-                if not dumping_path.endswith('/'):
-                    dumping_path += '/'
 
             for i in range(1, steps + 1, 1):
                 if self._mesh.broken_links and self._mesh.broken_links.is_random():
-                    self.destroy_shift_operator()
-                    self.destroy_walk_operator()
+                    self._destroy_shift_operator()
+                    self._destroy_walk_operator()
                     self.create_walk_operator(
                         coord_format=Utils.MatrixCoordinateMultiplier, storage_level=storage_level)
 
@@ -876,36 +906,39 @@ class DiscreteTimeQuantumWalk:
                 result_tmp.materialize(storage_level)
                 result.unpersist()
 
-                if checkpointing_frequency >= 0 and i % checkpointing_frequency == 0:
+                if configs['checkpointing_frequency'] >= 0 and i % configs['checkpointing_frequency'] == 0:
                     result_tmp.checkpoint()
 
-                if dumping_frequency >= 0 and i % dumping_frequency == 0:
-                    result_tmp.dump(dumping_path + "states/" + str(i))
+                if configs['dumping_frequency'] >= 0 and i % configs['dumping_frequency'] == 0:
+                    result_tmp.dump(
+                        configs['dumping_path'] + "states/" + str(i))
 
-                if check_unitary == 'True':
+                if configs['check_unitary'] == 'True':
                     if not result_tmp.is_unitary():
-                        if self._logger:
+                        if self._logger is not None:
                             self._logger.error(
                                 "the state {} is not unitary".format(i))
                         raise ValueError(
                             "the state {} is not unitary".format(i))
 
-                if dump_states_pdf == 'True':
+                if configs['dump_states_pdf'] == 'True':
                     if self._num_particles == 1:
-                        result_tmp.measure().dump(dumping_path + "pdf/" + str(i))
+                        result_tmp.measure().dump(
+                            configs['dumping_path'] + "pdf/" + str(i))
                     else:
                         joint, collision, marginal = result_tmp.measure()
 
-                        joint.dump(dumping_path + "pdf/joint/" + str(i))
+                        joint.dump(
+                            configs['dumping_path'] + "pdf/joint/" + str(i))
                         collision.dump(
-                            dumping_path + "pdf/collision/" + str(i))
+                            configs['dumping_path'] + "pdf/collision/" + str(i))
                         for p in range(len(marginal)):
                             marginal[p].dump(
-                                dumping_path + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
+                                configs['dumping_path'] + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
 
                 result = result_tmp
 
-                if self._profiler:
+                if self._profiler is not None:
                     self._profiler.profile_resources(app_id)
                     self._profiler.profile_executors(app_id)
 
@@ -914,7 +947,7 @@ class DiscreteTimeQuantumWalk:
                             i), result, (datetime.now() - t_tmp).total_seconds()
                     )
 
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.info(
                             "step was done in {}s".format(info['buildingTime']))
                         self._logger.info(
@@ -923,34 +956,34 @@ class DiscreteTimeQuantumWalk:
                             )
                         )
 
-                if self._logger:
+                if self._logger is not None:
                     self._profiler.log_rdd(app_id=app_id)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("walk was done in {}s".format(
                     (datetime.now() - t1).total_seconds()))
 
             t1 = datetime.now()
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.debug("checking if the final state is unitary...")
 
             if not result.is_unitary():
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("the final state is not unitary")
                 raise ValueError("the final state is not unitary")
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.debug("unitarity check was done in {}s".format(
                     (datetime.now() - t1).total_seconds()))
 
-        if self._profiler:
+        if self._profiler is not None:
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
 
             info = self._profiler.profile_state('finalState', result, 0.0)
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "final state is consuming {} bytes in memory and {} bytes in disk".format(
                         info['memoryUsed'], info['diskUsed']

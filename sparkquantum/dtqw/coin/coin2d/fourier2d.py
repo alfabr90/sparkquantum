@@ -18,3 +18,6 @@ class Fourier2D(Coin2D):
              [1, -1, 1, -1],
              [1, -1.0j, -1, 1.0j]], dtype=complex
         ) / 2.0
+
+    def __str__(self):
+        return 'Two-dimensional Fourier Coin'

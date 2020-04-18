@@ -27,6 +27,9 @@ class Vector(Base):
         """
         super().__init__(rdd, shape, data_type=data_type)
 
+    def __str__(self):
+        return '{} with shape {}'.format(self.__class__.__name__, self._shape)
+
     def _kron(self, other):
         other_shape = other.shape
         new_shape = (self._shape[0] * other_shape[0], 1)
@@ -73,7 +76,7 @@ class Vector(Base):
 
         """
         if not is_vector(other):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Vector' instance expected, not '{}'".format(
                         type(other)))

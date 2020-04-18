@@ -41,7 +41,7 @@ class CollisionPhaseInteraction(Interaction):
         super().__init__(num_particles, mesh, logger, profiler)
 
         if not collision_phase:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "no collision phase or a zeroed collision phase was informed")
             raise ValueError(
@@ -55,8 +55,8 @@ class CollisionPhaseInteraction(Interaction):
         return self._collision_phase
 
     def __str__(self):
-        return '{} with collision phase {}'.format(
-            self.__class__.__name__, self._num_particles)
+        return 'Collision Phase Interaction with phase value of {}'.format(
+            self._collision_phase)
 
     def _create_rdd(self, coord_format, storage_level):
         phase = cmath.exp(self._collision_phase * (0.0 + 1.0j))
@@ -103,7 +103,7 @@ class CollisionPhaseInteraction(Interaction):
 
                     return m, m, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
         elif self._mesh.is_2d():
@@ -157,11 +157,11 @@ class CollisionPhaseInteraction(Interaction):
 
                     return m, m, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -207,7 +207,7 @@ class CollisionPhaseInteraction(Interaction):
             If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building interaction operator...")
 
         initial_time = datetime.now()

@@ -108,7 +108,7 @@ class Base:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
+        return 'Base math entity with shape {}'.format(self._shape)
 
     def to_string(self):
         return self.__str__()
@@ -182,17 +182,17 @@ class Base:
         if self.data is not None:
             if not self.data.is_cached:
                 self.data.persist(storage_level)
-                if self._logger:
+                if self._logger is not None:
                     self._logger.info(
                         "RDD {} was persisted".format(
                             self.data.id()))
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.info(
                         "RDD {} has already been persisted".format(
                             self.data.id()))
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning("there is no data to be persisted")
 
         return self
@@ -209,17 +209,17 @@ class Base:
         if self.data is not None:
             if self.data.is_cached:
                 self.data.unpersist()
-                if self._logger:
+                if self._logger is not None:
                     self._logger.info(
                         "RDD {} was unpersisted".format(
                             self.data.id()))
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.info(
                         "RDD {} has already been unpersisted".format(
                             self.data.id()))
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning("there is no data to be unpersisted")
 
         return self
@@ -255,7 +255,7 @@ class Base:
         self.persist(storage_level)
         self._num_nonzero_elements = self.data.count()
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("RDD {} was materialized".format(self.data.id()))
 
         return self
@@ -275,18 +275,18 @@ class Base:
 
         """
         if self.data.isCheckpointed():
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info("RDD already checkpointed")
             return self
 
         if not self.data.is_cached:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.warning(
                     "it is recommended to cache the RDD before checkpointing it")
 
         self.data.checkpoint()
 
-        if self._logger:
+        if self._logger is not None:
             self._logger.info(
                 "RDD {} was checkpointed in {}".format(
                     self.data.id(),
@@ -349,7 +349,7 @@ class Base:
                 lambda m: glue.join([str(e) for e in m])
             ).saveAsTextFile(path, codec)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid dumping mode")
             raise NotImplementedError("invalid dumping mode")
 

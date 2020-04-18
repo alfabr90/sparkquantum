@@ -37,6 +37,9 @@ class Operator(Matrix):
         """int"""
         return self._coordinate_format
 
+    def __str__(self):
+        return '{} with shape {}'.format(self.__class__.__name__, self._shape)
+
     def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Perform a tensor (Kronecker) product with another operator.
 
@@ -60,7 +63,7 @@ class Operator(Matrix):
 
         """
         if not is_operator(other):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(
@@ -72,7 +75,7 @@ class Operator(Matrix):
 
     def _multiply_operator(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("incompatible shapes {} and {}".format(
                     self._shape, other.shape))
             raise ValueError("incompatible shapes {} and {}".format(
@@ -111,7 +114,7 @@ class Operator(Matrix):
 
     def _multiply_state(self, other):
         if self._shape[1] != other.shape[0]:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("incompatible shapes {} and {}".format(
                     self._shape, other.shape))
             raise ValueError("incompatible shapes {} and {}".format(
@@ -159,7 +162,7 @@ class Operator(Matrix):
         elif is_state(other):
             return self._multiply_state(other)
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error(
                     "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(

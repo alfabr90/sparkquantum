@@ -28,6 +28,15 @@ class CollisionPDF(PDF):
         """
         super().__init__(rdd, shape, mesh, num_particles)
 
+    def __str__(self):
+        if self._num_particles == 1:
+            particles = 'one particle'
+        else:
+            particles = '{} particles'.format(self._num_particles)
+
+        return 'Collistion Probability Distribution Function with shape {} of {} over a {}'.format(
+            self._shape, particles, self._mesh.to_string())
+
     def sum_values(self):
         """Sum the probabilities of this PDF.
 
@@ -47,7 +56,7 @@ class CollisionPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
@@ -80,7 +89,7 @@ class CollisionPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 

@@ -132,7 +132,7 @@ class Mesh:
                 ) - initial_time).total_seconds()
             )
 
-            if self._logger:
+            if self._logger is not None:
                 self._logger.info(
                     "shift operator was built in {}s".format(
                         info['buildingTime']))
@@ -149,17 +149,6 @@ class Mesh:
         -------
         str
             The string representation of this mesh.
-
-        """
-        return self.__str__()
-
-    def title(self):
-        """Build a human-readable string with the type of this mesh.
-
-        Returns
-        -------
-        str
-            The string with the type of this mesh.
 
         """
         return self.__str__()

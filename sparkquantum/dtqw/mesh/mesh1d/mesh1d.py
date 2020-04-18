@@ -35,7 +35,7 @@ class Mesh1D(Mesh):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid size")
             raise ValueError("invalid size")
 
@@ -51,6 +51,9 @@ class Mesh1D(Mesh):
         # ---------------------------
         #              x
         return self._define_size(size)
+
+    def __str__(self):
+        return 'One-dimensional Mesh'
 
     def filename(self):
         """Build a string representing this mesh to be used in filenames.

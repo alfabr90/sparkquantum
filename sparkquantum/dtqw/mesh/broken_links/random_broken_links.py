@@ -30,6 +30,10 @@ class RandomBrokenLinks(BrokenLinks):
     def probability(self):
         return self._probability
 
+    def __str__(self):
+        return 'Random Broken Links Generator with probability value of {}'.format(
+            self._probability)
+
     def is_random(self):
         """Check if this is a random broken links generator.
 

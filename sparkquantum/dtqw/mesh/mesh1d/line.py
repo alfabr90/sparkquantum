@@ -25,9 +25,12 @@ class Line(Mesh1D):
         """
         super().__init__(size, broken_links=broken_links)
 
+    def __str__(self):
+        return 'Line with dimension {}'.format(self._size)
+
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger:
+            if self._logger is not None:
                 self._logger.error("invalid mesh size")
             raise ValueError("invalid mesh size")
 
@@ -111,7 +114,7 @@ class Line(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -152,7 +155,7 @@ class Line(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger:
+                    if self._logger is not None:
                         self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
@@ -162,7 +165,7 @@ class Line(Mesh1D):
                     __map
                 )
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
@@ -177,7 +180,7 @@ class Line(Mesh1D):
                         l = (-1) ** i
                         yield ((x + l) % size) * coin_size + i, x * coin_size + i, 1
             else:
-                if self._logger:
+                if self._logger is not None:
                     self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
@@ -228,7 +231,7 @@ class Line(Mesh1D):
             if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
-        if self._logger:
+        if self._logger is not None:
             self._logger.info("building shift operator...")
 
         initial_time = datetime.now()
