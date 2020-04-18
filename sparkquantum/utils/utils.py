@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import logging
 import tempfile as tf
 
 __all__ = ['Utils']
@@ -95,8 +96,12 @@ class Utils():
         'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
         'quantum.dumpingCompressionCodec': None,
         'quantum.dumpingGlue': ' ',
+        'quantum.logging.enabled': 'False',
+        'quantum.logging.level': logging.WARNING,
         'quantum.math.dumpingMode': DumpingModePartFiles,
-        'quantum.math.roundPrecision': 10
+        'quantum.math.roundPrecision': 10,
+        'quantum.profiling.enabled': 'False',
+        'quantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
     }
     """
     Dict with the default values for all accepted configurations of the package.

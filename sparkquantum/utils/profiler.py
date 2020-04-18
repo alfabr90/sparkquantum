@@ -3,7 +3,10 @@ import json
 from datetime import datetime
 from urllib import request, error
 
+from pyspark import SparkContext
+
 from sparkquantum.utils.logger import is_logger
+from sparkquantum.utils.utils import Utils
 
 __all__ = ['Profiler']
 
@@ -16,23 +19,19 @@ class Profiler:
 
     """
 
-    def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """Build a profiler object.
-
-        Parameters
-        ----------
-        base_url: str, optional
-            The base URL for getting information about the consumed resources. Default value is http://localhost:4040/api/v1/.
-
-        """
-        self._base_url = base_url
+    def __init__(self):
+        """Build a profiler object."""
+        self._spark_context = SparkContext.getOrCreate()
 
         self._times = None
         self._rdd = None
         self._resources = None
         self._executors = None
+        self._base_url = self._get_baseurl()
 
         self._logger = None
+
+        self._start()
 
     @property
     def times(self):
@@ -113,6 +112,24 @@ class Profiler:
 
         """
         return self.__str__()
+
+    def _is_enabled(self):
+        return Utils.get_conf(self._spark_context,
+                              'quantum.profiling.enabled') == 'True'
+
+    def _get_baseurl(self):
+        return Utils.get_conf(self._spark_context,
+                              'quantum.profiling.baseUrl')
+
+    def _start(self):
+        self._times = {}
+        self._rdd = {}
+        self._resources = self._default_resources()
+        self._executors = {}
+
+    def reset(self):
+        """Reset the profiler attributes to get info for a new profiling round."""
+        self._start()
 
     def _request(self, url_suffix=''):
         if self._logger is not None:
@@ -310,13 +327,6 @@ class Profiler:
             return self._request("/{}/storage/rdd".format(app_id))
         else:
             return self._request("/{}/storage/rdd/{}".format(app_id, rdd_id))
-
-    def start(self):
-        """Reset the profiler attributes to get info for a new profiling round."""
-        self._times = {}
-        self._rdd = {}
-        self._resources = self._default_resources()
-        self._executors = {}
 
     def log_executors(self, data=None, app_id=None):
         """Log all executors info into the log file.

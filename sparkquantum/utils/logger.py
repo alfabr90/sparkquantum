@@ -1,12 +1,16 @@
 import logging
 
+from pyspark import SparkContext
+
+from sparkquantum.utils.utils import Utils
+
 __all__ = ['Logger']
 
 
 class Logger:
     """Generate a log file and write log data into it."""
 
-    def __init__(self, name, path, level=logging.DEBUG):
+    def __init__(self, name, path):
         """Build a logger.
 
         Parameters
@@ -15,13 +19,15 @@ class Logger:
             The name of the class that is providing log data.
         path : str
             The base path for the log file.
-        level : int, optional
-            The severity level for the log data. Default value is :py:const:`logging.DEBUG`.
 
         """
+        self._spark_context = SparkContext.getOrCreate()
+
         self._name = name
-        self._filename = path + 'log.txt'
-        self._level = level
+        self._filename = path + '/log.txt'  # self._get_filename()
+        self._level = self._get_level()
+
+        self._enabled = self._is_enabled()
 
     @property
     def name(self):
@@ -38,16 +44,16 @@ class Logger:
         """int"""
         return self._level
 
-    def set_level(self, level):
-        """Set the severity level for log writes.
+    def _is_enabled(self):
+        return Utils.get_conf(self._spark_context,
+                              'quantum.logging.enabled') == 'True'
 
-        Parameters
-        ----------
-        level : int
-            Severity level for future logs.
+    def _get_filename(self):
+        return Utils.get_conf(self._spark_context, 'quantum.logging.filename')
 
-        """
-        self._level = level
+    def _get_level(self):
+        return int(Utils.get_conf(
+            self._spark_context, 'quantum.logging.level'))
 
     def _write_message(self, level, name, message):
         with open(self._filename, 'a') as f:
@@ -55,13 +61,15 @@ class Logger:
 
     def blank(self):
         """Write a blank line in the log file."""
-        with open(self._filename, 'a') as f:
-            f.write("\n")
+        if self._enabled:
+            with open(self._filename, 'a') as f:
+                f.write("\n")
 
     def separator(self):
         """Write a separator line in the log file."""
-        with open(self._filename, 'a') as f:
-            f.write("# -------------------- #\n")
+        if self._enabled:
+            with open(self._filename, 'a') as f:
+                f.write("# -------------------- #\n")
 
     def debug(self, message):
         """Write the message in the log file with debug level.
@@ -72,7 +80,7 @@ class Logger:
             Message to be logged.
 
         """
-        if self._level <= logging.DEBUG:
+        if self._enabled and self._level <= logging.DEBUG:
             self._write_message('DEBUG', self._name, message)
 
     def info(self, message):
@@ -84,7 +92,7 @@ class Logger:
             Message to be logged.
 
         """
-        if self._level <= logging.INFO:
+        if self._enabled and self._level <= logging.INFO:
             self._write_message('INFO', self._name, message)
 
     def warning(self, message):
@@ -96,7 +104,7 @@ class Logger:
             Message to be logged.
 
         """
-        if self._level <= logging.WARNING:
+        if self._enabled and self._level <= logging.WARNING:
             self._write_message('WARNING', self._name, message)
 
     def error(self, message):
@@ -108,7 +116,7 @@ class Logger:
             Message to be logged.
 
         """
-        if self._level <= logging.ERROR:
+        if self._enabled and self._level <= logging.ERROR:
             self._write_message('ERROR', self._name, message)
 
 

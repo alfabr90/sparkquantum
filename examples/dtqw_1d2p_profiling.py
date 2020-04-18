@@ -33,6 +33,10 @@ sparkConf = SparkConf().set(
     'quantum.cluster.totalCores', num_cores
 ).set(
     'quantum.dtqw.state.representationFormat', representationFormat
+).set(
+    'quantum.logging.enabled', 'True'
+).set(
+    'quantum.profiling.enabled', 'True'
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
@@ -61,13 +65,12 @@ Utils.create_dir(sim_path)
 # Adding the profiler to the classes and starting it
 profiler = QuantumWalkProfiler()
 
-coin.logger = Logger(coin.to_string(), sim_path)
-mesh.logger = Logger(mesh.to_string(), sim_path)
+coin.logger = Logger(coin.__class__.__name__, sim_path)
+mesh.logger = Logger(mesh.__class__.__name__, sim_path)
 coin.profiler = profiler
 mesh.profiler = profiler
 
-profiler.logger = Logger(profiler.to_string(), sim_path)
-profiler.start()
+profiler.logger = Logger(profiler.__class__.__name__, sim_path)
 
 coin_size = coin.size
 mesh_size = mesh.size
@@ -141,13 +144,13 @@ dtqw = DiscreteTimeQuantumWalk(
     num_particles,
     interaction=interaction)
 
-dtqw.logger = Logger(dtqw.to_string(), sim_path)
+dtqw.logger = Logger(dtqw.__class__.__name__, sim_path)
 dtqw.profiler = profiler
 
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
 
-final_state.logger = Logger(final_state.to_string(), sim_path)
+final_state.logger = Logger(final_state.__class__.__name__, sim_path)
 final_state.profiler = profiler
 
 # Measuring the state of the system and plotting its PDF

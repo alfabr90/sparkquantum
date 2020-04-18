@@ -14,20 +14,15 @@ class QuantumWalkProfiler(Profiler):
 
     """
 
-    def __init__(self, base_url='http://localhost:4040/api/v1/'):
-        """Build a quantum walk profiler object.
-
-        Parameters
-        ----------
-        base_url: str, optional
-            The base URL for getting information about the consumed resources. Default value is http://localhost:4040/api/v1/.
-
-        """
-        super().__init__(base_url)
+    def __init__(self):
+        """Build a quantum walk profiler object."""
+        super().__init__()
 
         self._operators = None
         self._states = None
         self._pdfs = None
+
+        self._start()
 
     @staticmethod
     def _default_operator():
@@ -47,9 +42,8 @@ class QuantumWalkProfiler(Profiler):
         return 'Quantum Walk Profiler configured to request data from {}'.format(
             self._base_url)
 
-    def start(self):
-        """Reset the profiler attributes to get info for a new profiling round."""
-        super().start()
+    def _start(self):
+        super()._start()
 
         self._operators = {}
         self._states = {}
