@@ -316,6 +316,11 @@ class Base:
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
 
+        Raises
+        ------
+        ValueError
+            If the chosen 'quantum.math.dumpingMode' configuration is not valid.
+
         """
         if glue is None:
             glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
@@ -351,7 +356,7 @@ class Base:
         else:
             if self._logger is not None:
                 self._logger.error("invalid dumping mode")
-            raise NotImplementedError("invalid dumping mode")
+            raise ValueError("invalid dumping mode")
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
