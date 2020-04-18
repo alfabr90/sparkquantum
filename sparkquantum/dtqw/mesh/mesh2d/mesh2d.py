@@ -49,7 +49,7 @@ class Mesh2D(Mesh):
         raise NotImplementedError
 
     def __str__(self):
-        return 'Two-dimensional Mesh'
+        return 'Two-dimensional Mesh with dimension {}'.format(self._size)
 
     def filename(self):
         """Build a string representing this mesh to be used in filenames.

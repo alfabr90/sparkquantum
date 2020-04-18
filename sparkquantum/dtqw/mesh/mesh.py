@@ -109,7 +109,7 @@ class Mesh:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
+        return '{} with dimension {}'.format(self.__class__.__name__, self._size)
 
     def _validate(self, size):
         raise NotImplementedError

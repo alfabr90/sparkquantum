@@ -45,7 +45,8 @@ class Diagonal(Mesh2D):
         return size[0] * size[1]
 
     def __str__(self):
-        return 'Two-dimensional Diagonal Mesh'
+        return 'Two-dimensional Diagonal Mesh with dimension {}'.format(
+            self._size)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
