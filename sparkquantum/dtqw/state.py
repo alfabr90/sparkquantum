@@ -94,10 +94,11 @@ class State(Vector):
         Raises
         ------
         NotImplementedError
-            If the dimension of the mesh, `glue`, `dumping_format` or dumping mode is not valid.
+            If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If any of the chosen 'quantum.dtqw.state.dumpingFormat', 'quantum.math.dumpingMode' or
+            'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if glue is None:
@@ -136,7 +137,7 @@ class State(Vector):
             else:
                 if self._logger is not None:
                     self._logger.error("invalid dumping mode")
-                raise NotImplementedError("invalid dumping mode")
+                raise ValueError("invalid dumping mode")
         elif dumping_format == Utils.StateDumpingFormatCoordinate:
             repr_format = int(Utils.get_conf(
                 self._spark_context, 'quantum.dtqw.state.representationFormat'))
@@ -266,11 +267,11 @@ class State(Vector):
             else:
                 if self._logger is not None:
                     self._logger.error("invalid dumping mode")
-                raise NotImplementedError("invalid dumping mode")
+                raise ValueError("invalid dumping mode")
         else:
             if self._logger is not None:
                 self._logger.error("invalid dumping format")
-            raise NotImplementedError("invalid dumping format")
+            raise ValueError("invalid dumping format")
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
