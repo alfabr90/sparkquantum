@@ -35,7 +35,7 @@ class CollisionPDF(PDF):
             particles = '{} particles'.format(self._num_particles)
 
         return 'Collistion Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh.to_string())
+            self._shape, particles, self._mesh)
 
     def sum_values(self):
         """Sum the probabilities of this PDF.

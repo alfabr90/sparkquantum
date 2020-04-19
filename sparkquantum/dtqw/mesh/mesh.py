@@ -108,8 +108,24 @@ class Mesh:
                 "'Profiler' instance expected, not '{}'".format(
                     type(profiler)))
 
+    def __strcomp__(self):
+        broken_links = ''
+
+        if self._broken_links is not None:
+            broken_links = ' and {}'.format(self._broken_links)
+
+        return 'with dimension {}{}'.format(self._size, broken_links)
+
     def __str__(self):
-        return '{} with dimension {}'.format(self.__class__.__name__, self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Mesh {}'.format(self.__strcomp__())
 
     def _validate(self, size):
         raise NotImplementedError
@@ -119,17 +135,6 @@ class Mesh:
 
     def _define_num_edges(self, size):
         raise NotImplementedError
-
-    def to_string(self):
-        """Build a string representing this mesh.
-
-        Returns
-        -------
-        str
-            The string representation of this mesh.
-
-        """
-        return self.__str__()
 
     def filename(self):
         """Build a string representing this mesh to be used in filenames.

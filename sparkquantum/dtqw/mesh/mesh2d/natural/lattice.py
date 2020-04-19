@@ -35,7 +35,15 @@ class LatticeNatural(Natural):
         return 2 * size[0] + 1, 2 * size[0] + 1
 
     def __str__(self):
-        return 'Natural Lattice with dimension {}'.format(self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Natural Lattice {}'.format(self.__strcomp__())
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.

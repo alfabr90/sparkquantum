@@ -73,9 +73,6 @@ class Coin:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
-
-    def to_string(self):
         """Build a string representing this coin.
 
         Returns
@@ -84,7 +81,7 @@ class Coin:
             The string representation of this coin.
 
         """
-        return self.__str__()
+        return self.__class__.__name__
 
     def is_1d(self):
         """Check if this is a coin for one-dimensional meshes.

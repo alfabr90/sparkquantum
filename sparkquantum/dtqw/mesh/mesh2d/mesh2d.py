@@ -49,7 +49,15 @@ class Mesh2D(Mesh):
         raise NotImplementedError
 
     def __str__(self):
-        return 'Two-dimensional Mesh with dimension {}'.format(self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Two-dimensional Mesh {}'.format(self.__strcomp__())
 
     def filename(self):
         """Build a string representing this mesh to be used in filenames.
@@ -66,7 +74,7 @@ class Mesh2D(Mesh):
             broken_links = '-'
 
         return "{}_{}-{}_{}".format(
-            self.to_string(), self._size[0], self._size[1], broken_links
+            self, self._size[0], self._size[1], broken_links
         )
 
     def axis(self):

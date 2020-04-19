@@ -160,19 +160,6 @@ class DiscreteTimeQuantumWalk:
                 "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
 
     def __str__(self):
-        particles = '{} particle'.format(self._num_particles)
-
-        if self._num_particles > 1:
-            if self._interaction:
-                particles = '{} interacting particles by {}'.format(
-                    self._num_particles, self._interaction.to_string())
-            else:
-                particles = '{} particles'.format(self._num_particles)
-
-        return '{} with {} and a {} over a {}'.format(
-            'Discrete Time Quantum Walk', particles, self._coin.to_string(), self._mesh.to_string())
-
-    def to_string(self):
         """Build a string representing this walk.
 
         Returns
@@ -181,7 +168,17 @@ class DiscreteTimeQuantumWalk:
             The string representation of this walk.
 
         """
-        return self.__str__()
+        particles = '{} particle'.format(self._num_particles)
+
+        if self._num_particles > 1:
+            if self._interaction:
+                particles = '{} interacting particles by {}'.format(
+                    self._num_particles, self._interaction)
+            else:
+                particles = '{} particles'.format(self._num_particles)
+
+        return '{} with {} and a {} over a {}'.format(
+            'Discrete Time Quantum Walk', particles, self._coin, self._mesh)
 
     def _profile_operator(self, operator_type, operator, initial_time):
         if self._profiler is not None:
@@ -250,11 +247,11 @@ class DiscreteTimeQuantumWalk:
             initial_time)
 
     def _create_walk_operators(self, coord_format, storage_level):
-        """Build the walk operator for the walk.
+        """Build the walk operators for the walk.
 
-        When performing a multiparticle walk, this method builds a list with n operators,
-        where n is the number of particles of the system. In this case, each operator is built by
-        applying a tensor product between the evolution operator and ``n-1`` identity matrices as follows:
+        This method builds a list with n operators, where n is the number of particles of the system.
+        In a multiparticle quantum walk, each operator is built by applying a tensor product between
+        the evolution operator and ``n-1`` identity matrices as follows:
 
             ``W1 = W1 (X) I2 (X) ... (X) In
             Wi = I1 (X) ... (X) Ii-1 (X) Wi (X) Ii+1 (X) ... In
@@ -267,10 +264,8 @@ class DiscreteTimeQuantumWalk:
         ----------
         coord_format : int, optional
             Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
-            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Raises
         ------
@@ -637,7 +632,7 @@ class DiscreteTimeQuantumWalk:
 
         if self._logger is not None:
             self._logger.info("steps: {}".format(steps))
-            self._logger.info("mesh: {}".format(self._mesh.to_string()))
+            self._logger.info("mesh: {}".format(self._mesh))
             self._logger.info(
                 "number of particles: {}".format(self._num_particles))
 
@@ -648,13 +643,13 @@ class DiscreteTimeQuantumWalk:
                 else:
                     self._logger.info(
                         "interaction between particles: {}".format(
-                            self._interaction.to_string()))
+                            self._interaction))
 
             if self._mesh.broken_links is None:
                 self._logger.info("no broken links have been defined")
             else:
                 self._logger.info("broken links probability: {}".format(
-                    self._mesh.broken_links.to_string()))
+                    self._mesh.broken_links))
 
         result = initial_state.materialize(storage_level)
 

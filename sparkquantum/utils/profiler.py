@@ -99,10 +99,6 @@ class Profiler:
             raise NotImplementedError("unsupported file extension")
 
     def __str__(self):
-        return 'Profiler configured to request data from {}'.format(
-            self._base_url)
-
-    def to_string(self):
         """Build a string representing this profiler.
 
         Returns
@@ -111,7 +107,8 @@ class Profiler:
             The string representation of this profiler.
 
         """
-        return self.__str__()
+        return 'Profiler configured to request data from {}'.format(
+            self._base_url)
 
     def _is_enabled(self):
         return Utils.get_conf(self._spark_context,

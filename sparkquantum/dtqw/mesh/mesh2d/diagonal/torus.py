@@ -27,7 +27,15 @@ class TorusDiagonal(Diagonal):
         super().__init__(size, broken_links=broken_links)
 
     def __str__(self):
-        return 'Diagonal Torus with dimension {}'.format(self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Diagonal Torus {}'.format(self.__strcomp__())
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.

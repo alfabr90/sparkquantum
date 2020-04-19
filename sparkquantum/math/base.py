@@ -108,10 +108,15 @@ class Base:
                     type(profiler)))
 
     def __str__(self):
-        return 'Base math entity with shape {}'.format(self._shape)
+        """Build a string representing this math base entity.
 
-    def to_string(self):
-        return self.__str__()
+        Returns
+        -------
+        str
+            The string representation of this math base entity.
+
+        """
+        return 'Base math entity with shape {}'.format(self._shape)
 
     def sparsity(self):
         """Calculate the sparsity of this object.

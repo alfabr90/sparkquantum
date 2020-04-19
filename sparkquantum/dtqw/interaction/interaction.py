@@ -87,9 +87,6 @@ class Interaction:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
-
-    def to_string(self):
         """Build a string representing this interaction between particles.
 
         Returns
@@ -98,7 +95,7 @@ class Interaction:
             The string representation of this interaction between particles.
 
         """
-        return self.__str__()
+        return self.__class__.__name__
 
     def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
                         storage_level=StorageLevel.MEMORY_AND_DISK):
