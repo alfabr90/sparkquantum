@@ -33,7 +33,47 @@ class Coin1D(Coin):
     def __str__(self):
         return 'One-dimensional Coin'
 
-    def _create_rdd(self, mesh, coord_format, storage_level):
+    def create_operator(
+            self, mesh, coord_format=Utils.MatrixCoordinateDefault):
+        """Build the coin operator for the walk.
+
+        Parameters
+        ----------
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
+            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` instance.
+        coord_format : int, optional
+            Indicate if the operator must be returned in an apropriate format for multiplications.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The created operator using this coin.
+
+        Raises
+        ------
+        TypeError
+            If `mesh` is not valid.
+
+        ValueError
+            If `mesh` is not one-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+
+        """
+        if not is_mesh(mesh):
+            if self._logger is not None:
+                self._logger.error(
+                    "expected 'Mesh' instance, not '{}'".format(
+                        type(mesh)))
+            raise TypeError(
+                "expected 'Mesh' instance, not '{}'".format(
+                    type(mesh)))
+
+        if not mesh.is_1d():
+            if self._logger is not None:
+                self._logger.error(
+                    "non correspondent coin and mesh dimensions")
+            raise ValueError("non correspondent coin and mesh dimensions")
+
         coin_size = self._size
         mesh_size = mesh.size
         shape = (
@@ -89,61 +129,4 @@ class Coin1D(Coin):
                     numPartitions=num_partitions
                 )
 
-        return rdd, shape
-
-    def create_operator(self, mesh, coord_format=Utils.MatrixCoordinateDefault,
-                        storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the coin operator for the walk.
-
-        Parameters
-        ----------
-        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` instance.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.dtqw.operator.Operator`
-            The created operator using this coin.
-
-        Raises
-        ------
-        TypeError
-            If `mesh` is not valid.
-
-        ValueError
-            If `mesh` is not one-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
-
-        """
-        if self._logger is not None:
-            self._logger.info("building coin operator...")
-
-        initial_time = datetime.now()
-
-        if not is_mesh(mesh):
-            if self._logger is not None:
-                self._logger.error(
-                    "expected 'Mesh' instance, not '{}'".format(
-                        type(mesh)))
-            raise TypeError(
-                "expected 'Mesh' instance, not '{}'".format(
-                    type(mesh)))
-
-        if not mesh.is_1d():
-            if self._logger is not None:
-                self._logger.error(
-                    "non correspondent coin and mesh dimensions")
-            raise ValueError("non correspondent coin and mesh dimensions")
-
-        rdd, shape = self._create_rdd(mesh, coord_format, storage_level)
-
-        operator = Operator(
-            rdd, shape, coord_format=coord_format).materialize(storage_level)
-
-        self._profile(operator, initial_time)
-
-        return operator
+        return Operator(rdd, shape, coord_format=coord_format)

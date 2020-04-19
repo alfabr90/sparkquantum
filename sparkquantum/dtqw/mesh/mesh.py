@@ -120,28 +120,6 @@ class Mesh:
     def _define_num_edges(self, size):
         raise NotImplementedError
 
-    def _profile(self, operator, initial_time):
-        if self._profiler is not None:
-            app_id = self._spark_context.applicationId
-
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_operator(
-                'shiftOperator', operator, (datetime.now(
-                ) - initial_time).total_seconds()
-            )
-
-            if self._logger is not None:
-                self._logger.info(
-                    "shift operator was built in {}s".format(
-                        info['buildingTime']))
-                self._logger.info(
-                    "shift operator is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
-                )
-
     def to_string(self):
         """Build a string representing this mesh.
 
