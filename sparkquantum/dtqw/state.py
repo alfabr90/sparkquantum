@@ -62,6 +62,13 @@ class State(Vector):
         """int"""
         return self._num_particles
 
+    def __del__(self):
+        # In cases where multiple simulations are performed,
+        # the same Python's logger object is used for the same class name.
+        # Removing all its handlers, the object is reset.
+        for h in self._logger.handlers:
+            self._logger.removeHandler(h)
+
     def __str__(self):
         if self._num_particles == 1:
             particles = 'one particle'

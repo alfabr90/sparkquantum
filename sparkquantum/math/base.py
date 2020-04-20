@@ -91,6 +91,13 @@ class Base:
                 "'Profiler' instance expected, not '{}'".format(
                     type(profiler)))
 
+    def __del__(self):
+        # In cases where multiple simulations are performed,
+        # the same Python's logger object is used for the same class name.
+        # Removing all its handlers, the object is reset.
+        for h in self._logger.handlers:
+            self._logger.removeHandler(h)
+
     def __str__(self):
         """Build a string representing this math base entity.
 
