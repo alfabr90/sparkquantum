@@ -2,7 +2,6 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
@@ -18,7 +17,8 @@ class Coin:
         self._size = None
         self._data = None
 
-        self._logger = None
+        self._logger = Utils.get_logger(
+            self._spark_context, self.__class__.__name__)
         self._profiler = None
 
     @property
@@ -37,15 +37,6 @@ class Coin:
         return self._data
 
     @property
-    def logger(self):
-        """:py:class:`sparkquantum.utils.logger.Logger`.
-
-        To disable logging, set it to None.
-
-        """
-        return self._logger
-
-    @property
     def profiler(self):
         """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
@@ -53,15 +44,6 @@ class Coin:
 
         """
         return self._profiler
-
-    @logger.setter
-    def logger(self, logger):
-        if is_logger(logger) or logger is None:
-            self._logger = logger
-        else:
-            raise TypeError(
-                "'Logger' instance expected, not '{}'".format(
-                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
@@ -73,31 +55,6 @@ class Coin:
                     type(profiler)))
 
     def __str__(self):
-        return self.__class__.__name__
-
-    def _profile(self, operator, initial_time):
-        if self._profiler is not None:
-            app_id = self._spark_context.applicationId
-
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_operator(
-                'coinOperator', operator, (datetime.now(
-                ) - initial_time).total_seconds()
-            )
-
-            if self._logger is not None:
-                self._logger.info(
-                    "coin operator was built in {}s".format(
-                        info['buildingTime']))
-                self._logger.info(
-                    "coin operator is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
-                )
-
-    def to_string(self):
         """Build a string representing this coin.
 
         Returns
@@ -106,7 +63,7 @@ class Coin:
             The string representation of this coin.
 
         """
-        return self.__str__()
+        return self.__class__.__name__
 
     def is_1d(self):
         """Check if this is a coin for one-dimensional meshes.

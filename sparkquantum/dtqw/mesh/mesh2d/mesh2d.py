@@ -39,8 +39,7 @@ class Mesh2D(Mesh):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger is not None:
-                self._logger.error("invalid size")
+            self._logger.error("invalid size")
             raise ValueError("invalid size")
 
         return size
@@ -49,10 +48,7 @@ class Mesh2D(Mesh):
         raise NotImplementedError
 
     def __str__(self):
-        return 'Two-dimensional Mesh'
-
-    def filename(self):
-        """Build a string representing this mesh to be used in filenames.
+        """Build a string representing this mesh.
 
         Returns
         -------
@@ -60,14 +56,7 @@ class Mesh2D(Mesh):
             The string representation of this mesh.
 
         """
-        if self._broken_links and self._broken_links.is_random():
-            broken_links = self._broken_links.probability
-        else:
-            broken_links = '-'
-
-        return "{}_{}-{}_{}".format(
-            self.to_string(), self._size[0], self._size[1], broken_links
-        )
+        return 'Two-dimensional Mesh {}'.format(self.__strcomp__())
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.

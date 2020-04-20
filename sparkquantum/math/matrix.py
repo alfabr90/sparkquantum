@@ -63,6 +63,11 @@ class Matrix(Base):
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
 
+        Raises
+        ------
+        ValueError
+            If the chosen 'quantum.math.dumpingMode' configuration is not valid.
+
         """
         if glue is None:
             glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
@@ -107,9 +112,8 @@ class Matrix(Base):
         elif dumping_mode == Utils.DumpingModePartFiles:
             rdd.saveAsTextFile(path, codec)
         else:
-            if self._logger is not None:
-                self._logger.error("invalid dumping mode")
-            raise NotImplementedError("invalid dumping mode")
+            self._logger.error("invalid dumping mode")
+            raise ValueError("invalid dumping mode")
 
     def numpy_array(self):
         """Create a numpy array containing this object's RDD data.
@@ -147,7 +151,7 @@ class Matrix(Base):
             other_shape[0],
             self._shape[1] *
             other_shape[1])
-        data_type = Utils.get_precendent_type(self._data_type, other.data_type)
+        data_type = Utils.get_precedent_type(self._data_type, other.data_type)
 
         expected_elems = self._num_nonzero_elements * other.num_nonzero_elements
         expected_size = Utils.get_size_of_type(data_type) * expected_elems
@@ -216,10 +220,9 @@ class Matrix(Base):
 
         """
         if not is_matrix(other):
-            if self._logger is not None:
-                self._logger.error(
-                    "'Matrix' instance expected, not '{}'".format(
-                        type(other)))
+            self._logger.error(
+                "'Matrix' instance expected, not '{}'".format(
+                    type(other)))
             raise TypeError(
                 "'Matrix' instance expected, not '{}'".format(
                     type(other)))
@@ -278,10 +281,9 @@ class Matrix(Base):
 
     def _multiply_matrix(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
-            if self._logger is not None:
-                self._logger.error(
-                    "incompatible shapes {} and {}".format(
-                        self._shape, other.shape))
+            self._logger.error(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
             raise ValueError(
                 "incompatible shapes {} and {}".format(
                     self._shape, other.shape))
@@ -320,10 +322,9 @@ class Matrix(Base):
 
     def _multiply_vector(self, other):
         if self._shape[1] != other.shape[0]:
-            if self._logger is not None:
-                self._logger.error(
-                    "incompatible shapes {} and {}".format(
-                        self._shape, other.shape))
+            self._logger.error(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
             raise ValueError(
                 "incompatible shapes {} and {}".format(
                     self._shape, other.shape))
@@ -370,10 +371,9 @@ class Matrix(Base):
         elif is_vector(other):
             return self._multiply_vector(other)
         else:
-            if self._logger is not None:
-                self._logger.error(
-                    "'Matrix' or 'Vector' instance expected, not '{}'".format(
-                        type(other)))
+            self._logger.error(
+                "'Matrix' or 'Vector' instance expected, not '{}'".format(
+                    type(other)))
             raise TypeError(
                 "'Matrix' or 'Vector' instance expected, not '{}'".format(
                     type(other)))

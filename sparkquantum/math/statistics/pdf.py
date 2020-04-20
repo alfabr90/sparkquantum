@@ -28,16 +28,24 @@ class PDF(Base):
             The number of particles present in the walk.
 
         """
-        if not is_mesh(mesh):
-            # self._logger.error("'Mesh' instance expected, not '{}'".format(type(mesh)))
-            raise TypeError(
-                "'Mesh' instance expected, not '{}'".format(
-                    type(mesh)))
-
         super().__init__(rdd, shape, data_type=float)
 
         self._mesh = mesh
         self._num_particles = num_particles
+
+        if not is_mesh(mesh):
+            self._logger.error(
+                "'Mesh' instance expected, not '{}'".format(
+                    type(mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(
+                    type(mesh)))
+
+        if self._num_particles < 1:
+            self._logger.error(
+                "invalid number of particles. It must be greater than or equal to 1")
+            raise ValueError(
+                "invalid number of particles. It must be greater than or equal to 1")
 
     @property
     def mesh(self):
@@ -50,7 +58,7 @@ class PDF(Base):
             particles = '{} particles'.format(self._num_particles)
 
         return 'Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh.to_string())
+            self._shape, particles, self._mesh)
 
     def sum_values(self):
         """Sum the values of this PDF.
@@ -120,8 +128,7 @@ class PDF(Base):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         def __map(m):
@@ -150,8 +157,7 @@ class PDF(Base):
         elif self._mesh.is_2d():
             ind = 2
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         def __map(m):
@@ -181,8 +187,7 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._logger is not None:
-            self._logger.info("starting plot of probabilities...")
+        self._logger.info("starting plot of probabilities...")
 
         t1 = datetime.now()
 
@@ -249,18 +254,16 @@ class PDF(Base):
 
             # figure.set_size_inches(12.8, 12.8)
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         plt.savefig(filename, **kwargs)
         plt.cla()
         plt.clf()
 
-        if self._logger is not None:
-            self._logger.info(
-                "plot in {}s".format(
-                    (datetime.now() - t1).total_seconds()))
+        self._logger.info(
+            "plot in {}s".format(
+                (datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
         """Plot the contour function of the probabilities over the mesh.
@@ -278,13 +281,11 @@ class PDF(Base):
 
         """
         if not self._mesh.is_2d():
-            if self._logger is not None:
-                self._logger.warning(
-                    "it is only possible to plot the contour function of two-dimensional meshes")
+            self._logger.warning(
+                "it is only possible to plot the contour function of two-dimensional meshes")
             return None
 
-        if self._logger is not None:
-            self._logger.info("starting plot of probabilities...")
+        self._logger.info("starting plot of probabilities...")
 
         t1 = datetime.now()
 
@@ -325,10 +326,9 @@ class PDF(Base):
         plt.cla()
         plt.clf()
 
-        if self._logger is not None:
-            self._logger.info(
-                "contour plot in {}s".format(
-                    (datetime.now() - t1).total_seconds()))
+        self._logger.info(
+            "contour plot in {}s".format(
+                (datetime.now() - t1).total_seconds()))
 
 
 def is_pdf(obj):

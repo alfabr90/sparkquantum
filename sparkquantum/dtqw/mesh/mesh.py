@@ -3,7 +3,6 @@ from datetime import datetime
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
-from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
@@ -30,17 +29,20 @@ class Mesh:
         self._coin_size = None
         self._dimension = None
 
-        if broken_links:
+        self._broken_links = broken_links
+
+        self._logger = Utils.get_logger(
+            self._spark_context, self.__class__.__name__)
+        self._profiler = None
+
+        if broken_links is not None:
             if not is_broken_links(broken_links):
-                # self._logger.error("'BrokenLinks' instance expected, not '{}'".format(type(broken_links)))
+                self._logger.error(
+                    "'BrokenLinks' instance expected, not '{}'".format(
+                        type(broken_links)))
                 raise TypeError(
                     "'BrokenLinks' instance expected, not '{}'".format(
                         type(broken_links)))
-
-        self._broken_links = broken_links
-
-        self._logger = None
-        self._profiler = None
 
     @property
     def spark_context(self):
@@ -73,15 +75,6 @@ class Mesh:
         return self._dimension
 
     @property
-    def logger(self):
-        """:py:class:`sparkquantum.utils.logger.Logger`.
-
-        To disable logging, set it to None.
-
-        """
-        return self._logger
-
-    @property
     def profiler(self):
         """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
@@ -89,15 +82,6 @@ class Mesh:
 
         """
         return self._profiler
-
-    @logger.setter
-    def logger(self, logger):
-        if is_logger(logger) or logger is None:
-            self._logger = logger
-        else:
-            raise TypeError(
-                "'Logger' instance expected, not '{}'".format(
-                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
@@ -108,8 +92,24 @@ class Mesh:
                 "'Profiler' instance expected, not '{}'".format(
                     type(profiler)))
 
+    def __strcomp__(self):
+        broken_links = ''
+
+        if self._broken_links is not None:
+            broken_links = ' and {}'.format(self._broken_links)
+
+        return 'with dimension {}{}'.format(self._size, broken_links)
+
     def __str__(self):
-        return self.__class__.__name__
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Mesh {}'.format(self.__strcomp__())
 
     def _validate(self, size):
         raise NotImplementedError
@@ -119,50 +119,6 @@ class Mesh:
 
     def _define_num_edges(self, size):
         raise NotImplementedError
-
-    def _profile(self, operator, initial_time):
-        if self._profiler is not None:
-            app_id = self._spark_context.applicationId
-
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_operator(
-                'shiftOperator', operator, (datetime.now(
-                ) - initial_time).total_seconds()
-            )
-
-            if self._logger is not None:
-                self._logger.info(
-                    "shift operator was built in {}s".format(
-                        info['buildingTime']))
-                self._logger.info(
-                    "shift operator is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
-                )
-
-    def to_string(self):
-        """Build a string representing this mesh.
-
-        Returns
-        -------
-        str
-            The string representation of this mesh.
-
-        """
-        return self.__str__()
-
-    def filename(self):
-        """Build a string representing this mesh to be used in filenames.
-
-        Returns
-        -------
-        str
-            The string representation of this mesh.
-
-        """
-        return self.__str__()
 
     def axis(self):
         """Build a generator (or meshgrid) with the size(s) of this mesh.

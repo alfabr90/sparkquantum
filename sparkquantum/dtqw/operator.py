@@ -63,9 +63,8 @@ class Operator(Matrix):
 
         """
         if not is_operator(other):
-            if self._logger is not None:
-                self._logger.error(
-                    "'Operator' instance expected, not '{}'".format(type(other)))
+            self._logger.error(
+                "'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'Operator' instance expected, not '{}'".format(type(other)))
 
@@ -75,9 +74,8 @@ class Operator(Matrix):
 
     def _multiply_operator(self, other, coord_format):
         if self._shape[1] != other.shape[0]:
-            if self._logger is not None:
-                self._logger.error("incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+            self._logger.error("incompatible shapes {} and {}".format(
+                self._shape, other.shape))
             raise ValueError("incompatible shapes {} and {}".format(
                 self._shape, other.shape))
 
@@ -114,9 +112,8 @@ class Operator(Matrix):
 
     def _multiply_state(self, other):
         if self._shape[1] != other.shape[0]:
-            if self._logger is not None:
-                self._logger.error("incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+            self._logger.error("incompatible shapes {} and {}".format(
+                self._shape, other.shape))
             raise ValueError("incompatible shapes {} and {}".format(
                 self._shape, other.shape))
 
@@ -162,9 +159,8 @@ class Operator(Matrix):
         elif is_state(other):
             return self._multiply_state(other)
         else:
-            if self._logger is not None:
-                self._logger.error(
-                    "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
+            self._logger.error(
+                "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 

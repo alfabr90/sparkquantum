@@ -28,14 +28,21 @@ class LatticeDiagonal(Diagonal):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger is not None:
-                self._logger.error("invalid size")
+            self._logger.error("invalid size")
             raise ValueError("invalid size")
 
         return 2 * size[0] + 1, 2 * size[1] + 1
 
     def __str__(self):
-        return 'Diagonal Lattice with dimension {}'.format(self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Diagonal Lattice {}'.format(self.__strcomp__())
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.
@@ -71,7 +78,27 @@ class LatticeDiagonal(Diagonal):
         return steps <= int(
             (self._size[0] - 1) / 2) and steps <= int((self._size[1] - 1) / 2)
 
-    def _create_rdd(self, coord_format, storage_level):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
+        """Build the shift operator for the walk.
+
+        Parameters
+        ----------
+        coord_format : bool, optional
+            Indicate if the operator must be returned in an apropriate format for multiplications.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The created operator using this mesh.
+
+        Raises
+        ------
+        ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+
+        """
         coin_size = self._coin_size
         size_per_coin = int(coin_size / self._dimension)
         size = self._size
@@ -144,8 +171,7 @@ class LatticeDiagonal(Diagonal):
 
                                 yield m, n, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -209,8 +235,7 @@ class LatticeDiagonal(Diagonal):
 
                                 yield m, n, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -219,8 +244,7 @@ class LatticeDiagonal(Diagonal):
                     __map
                 )
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid broken links generation mode")
+                self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -257,8 +281,7 @@ class LatticeDiagonal(Diagonal):
 
                             yield m, n, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
@@ -282,49 +305,4 @@ class LatticeDiagonal(Diagonal):
                     numPartitions=num_partitions
                 )
 
-        return (rdd, shape, broken_links)
-
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
-                        storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the shift operator for the walk.
-
-        Parameters
-        ----------
-        coord_format : bool, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.dtqw.operator.Operator`
-            The created operator using this mesh.
-
-        Raises
-        ------
-        ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
-
-        """
-        if self._logger is not None:
-            self._logger.info("building shift operator...")
-
-        initial_time = datetime.now()
-
-        rdd, shape, broken_links = self._create_rdd(
-            coord_format, storage_level)
-
-        operator = Operator(
-            rdd,
-            shape,
-            data_type=int,
-            coord_format=coord_format).materialize(storage_level)
-
-        if broken_links:
-            broken_links.unpersist()
-
-        self._profile(operator, initial_time)
-
-        return operator
+        return Operator(rdd, shape, int, coord_format)

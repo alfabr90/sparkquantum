@@ -33,16 +33,24 @@ class State(Vector):
             The number of particles present in the walk.
 
         """
-        if not is_mesh(mesh):
-            # self._logger.error("'Mesh' instance expected, not
-            # '{}'".format(type(mesh)))
-            raise TypeError(
-                "'Mesh' instance expected, not '{}'".format(type(mesh)))
-
         super().__init__(rdd, shape, data_type=complex)
 
         self._mesh = mesh
         self._num_particles = num_particles
+
+        if not is_mesh(mesh):
+            self._logger.error(
+                "'Mesh' instance expected, not '{}'".format(
+                    type(mesh)))
+            raise TypeError(
+                "'Mesh' instance expected, not '{}'".format(
+                    type(mesh)))
+
+        if self._num_particles < 1:
+            self._logger.error(
+                "invalid number of particles. It must be greater than or equal to 1")
+            raise ValueError(
+                "invalid number of particles. It must be greater than or equal to 1")
 
     @property
     def mesh(self):
@@ -61,7 +69,7 @@ class State(Vector):
             particles = '{} particles'.format(self._num_particles)
 
         return 'Quantum State with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh.to_string())
+            self._shape, particles, self._mesh)
 
     def dump(self, path, glue=None, codec=None,
              filename='', dumping_format=None):
@@ -94,10 +102,11 @@ class State(Vector):
         Raises
         ------
         NotImplementedError
-            If the dimension of the mesh, `glue`, `dumping_format` or dumping mode is not valid.
+            If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If any of the chosen 'quantum.dtqw.state.dumpingFormat', 'quantum.math.dumpingMode' or
+            'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if glue is None:
@@ -134,9 +143,8 @@ class State(Vector):
                     lambda m: glue.join([str(e) for e in m])
                 ).saveAsTextFile(path, codec)
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid dumping mode")
-                raise NotImplementedError("invalid dumping mode")
+                self._logger.error("invalid dumping mode")
+                raise ValueError("invalid dumping mode")
         elif dumping_format == Utils.StateDumpingFormatCoordinate:
             repr_format = int(Utils.get_conf(
                 self._spark_context, 'quantum.dtqw.state.representationFormat'))
@@ -182,8 +190,7 @@ class State(Vector):
 
                         return glue.join(xi)
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
             elif self._mesh.is_2d():
                 ndim = self._mesh.dimension
@@ -237,12 +244,10 @@ class State(Vector):
 
                         return glue.join(xyij)
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
             else:
-                if self._logger is not None:
-                    self._logger.error("mesh dimension not implemented")
+                self._logger.error("mesh dimension not implemented")
                 raise NotImplementedError("mesh dimension not implemented")
 
             if dumping_mode == Utils.DumpingModeUniqueFile:
@@ -264,13 +269,11 @@ class State(Vector):
                     __map
                 ).saveAsTextFile(path, codec)
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid dumping mode")
-                raise NotImplementedError("invalid dumping mode")
+                self._logger.error("invalid dumping mode")
+                raise ValueError("invalid dumping mode")
         else:
-            if self._logger is not None:
-                self._logger.error("invalid dumping format")
-            raise NotImplementedError("invalid dumping format")
+            self._logger.error("invalid dumping format")
+            raise ValueError("invalid dumping format")
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
@@ -292,9 +295,8 @@ class State(Vector):
 
         """
         if not is_state(other):
-            if self._logger is not None:
-                self._logger.error(
-                    "'State' instance expected, not '{}'".format(type(other)))
+            self._logger.error(
+                "'State' instance expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'State' instance expected, not '{}'".format(type(other)))
 
@@ -324,8 +326,7 @@ class State(Vector):
             If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or if the sum of the calculated PDF is not equal to one.
 
         """
-        if self._logger is not None:
-            self._logger.info("measuring the state of the system...")
+        self._logger.info("measuring the state of the system...")
 
         t1 = datetime.now()
 
@@ -367,8 +368,7 @@ class State(Vector):
 
                     return tuple(x), (abs(m[1]) ** 2).real
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             def __unmap(m):
@@ -422,8 +422,7 @@ class State(Vector):
 
                     return tuple(xy), (abs(m[1]) ** 2).real
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             def __unmap(m):
@@ -437,8 +436,7 @@ class State(Vector):
 
                 return tuple(xy)
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
@@ -460,15 +458,13 @@ class State(Vector):
         pdf = JointPDF(rdd, shape, self._mesh,
                        self._num_particles).materialize(storage_level)
 
-        if self._logger is not None:
-            self._logger.info("checking if the probabilities sum one...")
+        self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
-            if self._logger is not None:
-                self._logger.error("PDFs must sum one")
+            self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
         app_id = self._spark_context.applicationId
@@ -480,14 +476,13 @@ class State(Vector):
             info = self._profiler.profile_pdf(
                 'fullMeasurement', pdf, (datetime.now() - t1).total_seconds())
 
-            if self._logger is not None:
-                self._logger.info(
-                    "full measurement was done in {}s".format(info['buildingTime']))
-                self._logger.info(
-                    "PDF with full measurement is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
+            self._logger.info(
+                "full measurement was done in {}s".format(info['buildingTime']))
+            self._logger.info(
+                "PDF with full measurement is consuming {} bytes in memory and {} bytes in disk".format(
+                    info['memoryUsed'], info['diskUsed']
                 )
+            )
 
             self._profiler.log_rdd(app_id=app_id)
 
@@ -520,22 +515,19 @@ class State(Vector):
 
         """
         if self._num_particles <= 1:
-            if self._logger is not None:
-                self._logger.error(
-                    "the measurement of collision cannot be performed for quantum walks with only one particle")
+            self._logger.error(
+                "the measurement of collision cannot be performed for quantum walks with only one particle")
             raise NotImplementedError(
                 "the measurement of collision cannot be performed for quantum walks with only one particle")
 
-        if self._logger is not None:
-            self._logger.info(
-                "measuring the state of the system considering that the particles are at the same positions...")
+        self._logger.info(
+            "measuring the state of the system considering that the particles are at the same positions...")
 
         t1 = datetime.now()
 
         if not is_pdf(full_measurement):
-            if self._logger is not None:
-                self._logger.error(
-                    "'PDF' instance expected, not '{}'".format(type(full_measurement)))
+            self._logger.error(
+                "'PDF' instance expected, not '{}'".format(type(full_measurement)))
             raise TypeError("'PDF' instance expected, not '{}'".format(
                 type(full_measurement)))
 
@@ -572,8 +564,7 @@ class State(Vector):
             def __map(m):
                 return m[0], m[1], m[ind]
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
@@ -600,14 +591,13 @@ class State(Vector):
             info = self._profiler.profile_pdf(
                 'collisionMeasurement', pdf, (datetime.now() - t1).total_seconds())
 
-            if self._logger is not None:
-                self._logger.info(
-                    "collision measurement was done in {}s".format(info['buildingTime']))
-                self._logger.info(
-                    "PDF with collision measurement is consuming {} bytes in memory and {} bytes in disk".format(
-                        info['memoryUsed'], info['diskUsed']
-                    )
+            self._logger.info(
+                "collision measurement was done in {}s".format(info['buildingTime']))
+            self._logger.info(
+                "PDF with collision measurement is consuming {} bytes in memory and {} bytes in disk".format(
+                    info['memoryUsed'], info['diskUsed']
                 )
+            )
 
             self._profiler.log_rdd(app_id=app_id)
 
@@ -641,13 +631,11 @@ class State(Vector):
 
         """
         if particle < 0 or particle >= self._num_particles:
-            if self._logger is not None:
-                self._logger.error("invalid particle number")
+            self._logger.error("invalid particle number")
             raise ValueError("invalid particle number")
 
-        if self._logger is not None:
-            self._logger.info(
-                "measuring the state of the system for particle {}...".format(particle + 1))
+        self._logger.info(
+            "measuring the state of the system for particle {}...".format(particle + 1))
 
         t1 = datetime.now()
 
@@ -675,8 +663,7 @@ class State(Vector):
                                                 1 - particle) * size_per_coin)) % size
                     return x, (abs(m[1]) ** 2).real
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             def __unmap(m):
@@ -712,15 +699,13 @@ class State(Vector):
                     )
                     return xy, (abs(m[1]) ** 2).real
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             def __unmap(m):
                 return m[0][0], m[0][1], m[1]
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         expected_size = Utils.get_size_of_type(float) * expected_elems
@@ -742,15 +727,13 @@ class State(Vector):
         pdf = MarginalPDF(rdd, shape, self._mesh,
                           self._num_particles).materialize(storage_level)
 
-        if self._logger is not None:
-            self._logger.info("checking if the probabilities sum one...")
+        self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
         if round(pdf.sum_values(), round_precision) != 1.0:
-            if self._logger is not None:
-                self._logger.error("PDFs must sum one")
+            self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
         app_id = self._spark_context.applicationId
@@ -764,16 +747,15 @@ class State(Vector):
                     particle + 1), pdf, (datetime.now() - t1).total_seconds()
             )
 
-            if self._logger is not None:
-                self._logger.info("partial measurement for particle {} was done in {}s".format(
-                    particle + 1, info['buildingTime'])
+            self._logger.info("partial measurement for particle {} was done in {}s".format(
+                particle + 1, info['buildingTime'])
+            )
+            self._logger.info(
+                "PDF with partial measurements for particle {} "
+                "are consuming {} bytes in memory and {} bytes in disk".format(
+                    particle + 1, info['memoryUsed'], info['diskUsed']
                 )
-                self._logger.info(
-                    "PDF with partial measurements for particle {} "
-                    "are consuming {} bytes in memory and {} bytes in disk".format(
-                        particle + 1, info['memoryUsed'], info['diskUsed']
-                    )
-                )
+            )
 
             self._profiler.log_rdd(app_id=app_id)
 
@@ -846,7 +828,7 @@ class State(Vector):
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes,
-               representationFormat=Utils.StateRepresentationFormatCoinPosition, logger=None):
+               representationFormat=Utils.StateRepresentationFormatCoinPosition):
         """Create a system state.
 
         For system states with entangled particles, the state must be created
@@ -865,8 +847,6 @@ class State(Vector):
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
             Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
-        logger : py:class:`sparkquantum.utils.logger.Logger`, optional
-            A logger object
 
         Returns
         -------
@@ -886,21 +866,21 @@ class State(Vector):
             if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`.
 
         """
+        spark_context = SparkContext.getOrCreate()
+
+        logger = Utils.get_logger(spark_context, State.__name__)
+
         if not is_coin(coin):
-            if logger is not None:
-                logger.error(
-                    "'Coin' instance expected, not '{}'".format(type(coin)))
+            logger.error(
+                "'Coin' instance expected, not '{}'".format(type(coin)))
             raise TypeError(
                 "'Coin' instance expected, not '{}'".format(type(coin)))
 
         if not is_mesh(mesh):
-            if logger is not None:
-                logger.error(
-                    "'Mesh' instance expected, not '{}'".format(type(mesh)))
+            logger.error(
+                "'Mesh' instance expected, not '{}'".format(type(mesh)))
             raise TypeError(
                 "'Mesh' instance expected, not '{}'".format(type(mesh)))
-
-        spark_context = SparkContext.getOrCreate()
 
         coin_size = coin.size
 
@@ -909,8 +889,7 @@ class State(Vector):
         elif mesh.is_2d():
             mesh_size = mesh.size[0] * mesh.size[1]
         else:
-            if logger is not None:
-                logger.error("mesh dimension not implemented")
+            logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         base_states = []
@@ -931,8 +910,7 @@ class State(Vector):
                      amplitudes[p][a]) for a in range(
                         len(amplitudes[p])))
             else:
-                if logger is not None:
-                    logger.error("invalid representation format")
+                logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = spark_context.parallelize(state)

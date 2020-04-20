@@ -97,6 +97,8 @@ class Utils():
         'quantum.dumpingCompressionCodec': None,
         'quantum.dumpingGlue': ' ',
         'quantum.logging.enabled': 'False',
+        'quantum.logging.filename': './log.txt',
+        'quantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
         'quantum.logging.level': logging.WARNING,
         'quantum.math.dumpingMode': DumpingModePartFiles,
         'quantum.math.roundPrecision': 10,
@@ -226,29 +228,8 @@ class Utils():
                 return rdd
 
     @staticmethod
-    def filename(mesh_filename, steps, num_particles):
-        """Build a filename concatenating the parameters.
-
-        Parameters
-        ----------
-        mesh_filename : str
-            The generated name for the used mesh.
-        steps : int
-            The number of steps of the walk.
-        num_particles : int
-            The number of particles in the walk.
-
-        Returns
-        -------
-        str
-            The filename built.
-
-        """
-        return "{}_{}_{}".format(mesh_filename, steps, num_particles)
-
-    @staticmethod
-    def get_precendent_type(type1, type2):
-        """Compare and return the most precendent type between two types.
+    def get_precedent_type(type1, type2):
+        """Compare and return the most precedent type between two types.
 
         Parameters
         ----------
@@ -260,7 +241,7 @@ class Utils():
         Returns
         -------
         type
-            The type with most precendent order.
+            The type with most precedent order.
 
         """
         if type1 == complex or type2 == complex:
@@ -446,3 +427,69 @@ class Utils():
             return size
         else:
             return os.stat(path).st_size
+
+    @staticmethod
+    def get_logger(
+            sc, name, level=None, filename=None, format=None):
+        """Create a :py:class:`logging.Logger` object.
+
+        Parameters
+        ----------
+        sc : :py:class:`pyspark.SparkContext`
+            The :py:class:`pyspark.SparkContext` object.
+        name : str
+            The name of the class that is providing log data.
+        level : int, optional
+            The log level. Default value is `None`.
+            In this case, the value of 'quantum.logging.level' configuration parameter is used.
+        filename : int, optional
+            The file where the messages will be logged. Default value is `None`.
+            In this case, the value of 'quantum.logging.filename' configuration parameter is used.
+        format : str, optional
+            The log messages format. Default value is `None`.
+            In this case, the value of 'quantum.logging.format' configuration parameter is used.
+
+        Returns
+        -------
+        :py:class:`logging.Logger`
+            The :py:class:`logging.Logger` object.
+
+        """
+        logger = logging.getLogger(name)
+
+        if level is None:
+            level = int(Utils.get_conf(sc, 'quantum.logging.level'))
+
+        logger.setLevel(level)
+
+        if Utils.get_conf(sc, 'quantum.logging.enabled') == 'True':
+            if filename is None:
+                filename = Utils.get_conf(sc, 'quantum.logging.filename')
+
+            if format is None:
+                format = Utils.get_conf(sc, 'quantum.logging.format')
+
+            formatter = logging.Formatter(format)
+
+            file_handler = logging.FileHandler(filename)
+            file_handler.setLevel(level)
+            file_handler.setFormatter(formatter)
+
+            found_file_handler = False
+
+            # As :py:func:`logging.getLogger` can return an already existent logger,
+            # i.e, a previously created logger with the same name,
+            # we need to ensure that the logger does not already have a FileHandler
+            # that writes to the same location of the FileHandler that is up to
+            # be added.
+            for h in logger.handlers:
+                if isinstance(h, logging.FileHandler):
+                    if h.baseFilename == file_handler.baseFilename:
+                        found_file_handler = True
+
+            if not found_file_handler:
+                logger.addHandler(file_handler)
+        else:
+            logger.addHandler(logging.NullHandler(level))
+
+        return logger

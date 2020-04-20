@@ -45,7 +45,8 @@ class Natural(Mesh2D):
         return size[0] * size[1] + size[0] * size[1]
 
     def __str__(self):
-        return 'Two-dimensional Natural Mesh'
+        return 'Two-dimensional Natural Mesh with dimension {}'.format(
+            self._size)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.

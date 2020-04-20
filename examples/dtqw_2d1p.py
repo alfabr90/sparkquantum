@@ -8,7 +8,6 @@ from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
-from sparkquantum.utils.logger import Logger
 
 '''
     DTQW 2D - 1 particle
@@ -19,6 +18,13 @@ num_cores = 4
 num_particles = 1
 steps = 30
 size = 30
+
+# Choosing a directory to store plots and logs
+walk_path = "{}/{}_{}_{}_{}/".format(
+    base_path, 'DiagonalLattice', 2 * size + 1, steps, num_particles
+)
+
+Utils.create_dir(walk_path)
 
 representationFormat = Utils.StateRepresentationFormatCoinPosition
 # representationFormat = Utils.StateRepresentationFormatPositionCoin
@@ -35,16 +41,6 @@ sparkContext.setLogLevel('ERROR')
 # Choosing a coin and a mesh for the walk
 coin = Hadamard2D()
 mesh = LatticeDiagonal((size, size))
-
-# Adding a directory to store plots and logs
-walk_path = "{}/".format(
-    base_path + Utils.filename(
-        mesh.filename(), steps, num_particles
-    )
-)
-
-sim_path = walk_path
-Utils.create_dir(sim_path)
 
 mesh_size = mesh.size[0] * mesh.size[1]
 
@@ -87,8 +83,8 @@ final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
 joint = final_state.measure()
-joint.plot(sim_path + 'joint_2d1p', dpi=300)
-joint.plot_contour(sim_path + 'joint_2d1p_contour', dpi=300)
+joint.plot(walk_path + 'joint_2d1p', dpi=300)
+joint.plot_contour(walk_path + 'joint_2d1p_contour', dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()

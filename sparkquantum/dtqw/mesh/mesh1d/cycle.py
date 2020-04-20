@@ -26,7 +26,15 @@ class Cycle(Mesh1D):
         super().__init__(size, broken_links=broken_links)
 
     def __str__(self):
-        return 'Cycle with dimension {}'.format(self._size)
+        """Build a string representing this mesh.
+
+        Returns
+        -------
+        str
+            The string representation of this mesh.
+
+        """
+        return 'Cycle {}'.format(self.__strcomp__())
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -44,7 +52,27 @@ class Cycle(Mesh1D):
         """
         return True
 
-    def _create_rdd(self, coord_format, storage_level):
+    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
+        """Build the shift operator for the walk.
+
+        Parameters
+        ----------
+        coord_format : bool, optional
+            Indicate if the operator must be returned in an apropriate format for multiplications.
+            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The created operator using this mesh.
+
+        Raises
+        ------
+        ValueError
+            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+
+        """
         coin_size = self._coin_size
         size_per_coin = int(coin_size / self._dimension)
         size = self._size
@@ -94,8 +122,7 @@ class Cycle(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -135,8 +162,7 @@ class Cycle(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -145,8 +171,7 @@ class Cycle(Mesh1D):
                     __map
                 )
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid broken links generation mode")
+                self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -160,8 +185,7 @@ class Cycle(Mesh1D):
                         l = (-1) ** i
                         yield ((x + l) % size) * coin_size + i, x * coin_size + i, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(
@@ -185,49 +209,4 @@ class Cycle(Mesh1D):
                     numPartitions=num_partitions
                 )
 
-        return (rdd, shape, broken_links)
-
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
-                        storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the shift operator for the walk.
-
-        Parameters
-        ----------
-        coord_format : bool, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.dtqw.operator.Operator`
-            The created operator using this mesh.
-
-        Raises
-        ------
-        ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
-
-        """
-        if self._logger is not None:
-            self._logger.info("building shift operator...")
-
-        initial_time = datetime.now()
-
-        rdd, shape, broken_links = self._create_rdd(
-            coord_format, storage_level)
-
-        operator = Operator(
-            rdd,
-            shape,
-            data_type=int,
-            coord_format=coord_format).materialize(storage_level)
-
-        if broken_links:
-            broken_links.unpersist()
-
-        self._profile(operator, initial_time)
-
-        return operator
+        return Operator(rdd, shape, int, coord_format)
