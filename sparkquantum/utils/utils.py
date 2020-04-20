@@ -228,8 +228,8 @@ class Utils():
                 return rdd
 
     @staticmethod
-    def get_precendent_type(type1, type2):
-        """Compare and return the most precendent type between two types.
+    def get_precedent_type(type1, type2):
+        """Compare and return the most precedent type between two types.
 
         Parameters
         ----------
@@ -241,7 +241,7 @@ class Utils():
         Returns
         -------
         type
-            The type with most precendent order.
+            The type with most precedent order.
 
         """
         if type1 == complex or type2 == complex:

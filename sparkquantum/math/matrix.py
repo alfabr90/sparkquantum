@@ -151,7 +151,7 @@ class Matrix(Base):
             other_shape[0],
             self._shape[1] *
             other_shape[1])
-        data_type = Utils.get_precendent_type(self._data_type, other.data_type)
+        data_type = Utils.get_precedent_type(self._data_type, other.data_type)
 
         expected_elems = self._num_nonzero_elements * other.num_nonzero_elements
         expected_size = Utils.get_size_of_type(data_type) * expected_elems
