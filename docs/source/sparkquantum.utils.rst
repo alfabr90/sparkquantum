@@ -4,14 +4,6 @@ sparkquantum.utils package
 Submodules
 ----------
 
-sparkquantum.utils.logger module
---------------------------------
-
-.. automodule:: sparkquantum.utils.logger
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 sparkquantum.utils.profiler module
 ----------------------------------
 
