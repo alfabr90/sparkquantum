@@ -15,8 +15,7 @@ class CollisionPhaseInteraction(Interaction):
     """Class that represents interaction between particles defined by
     a phase change during collisions."""
 
-    def __init__(self, num_particles, mesh, collision_phase,
-                 logger=None, profiler=None):
+    def __init__(self, num_particles, mesh, collision_phase):
         """Build a interaction object defined by a phase change during collisions.
 
         Parameters
@@ -27,23 +26,19 @@ class CollisionPhaseInteraction(Interaction):
             The mesh where the particles will walk over.
         collision_phase : complex
             The phase change applied during collisions.
-        logger : py:class:`sparkquantum.utils.logger.Logger`, optional
-            A logger object.
-        profiler : py:class:`sparkquantum.utils.profiler.Profiler`, optional
-            A profiler object.
 
         Raises
         ------
         ValueError
-            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat'
+            configuration is not valid.
 
         """
-        super().__init__(num_particles, mesh, logger, profiler)
+        super().__init__(num_particles, mesh)
 
         if not collision_phase:
-            if self._logger is not None:
-                self._logger.error(
-                    "no collision phase or a zeroed collision phase was informed")
+            self._logger.error(
+                "no collision phase or a zeroed collision phase was informed")
             raise ValueError(
                 "no collision phase or a zeroed collision phase was informed")
 
@@ -118,8 +113,8 @@ class CollisionPhaseInteraction(Interaction):
 
                     return m, m, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error(
+                    "invalid representation format")
                 raise ValueError("invalid representation format")
         elif self._mesh.is_2d():
             ndim = self._mesh.dimension
@@ -172,12 +167,10 @@ class CollisionPhaseInteraction(Interaction):
 
                     return m, m, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         rdd = self._spark_context.range(

@@ -11,7 +11,6 @@ from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
-from sparkquantum.utils.logger import Logger
 
 '''
     DTQW 2D - 2 particles
@@ -26,6 +25,14 @@ entangled = True
 phase = 1.0 * cmath.pi
 
 bl_prob = 0.2
+
+# Choosing a directory to store plots and logs
+walk_path = "{}/{}_{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'DiagonalLattice', 2 * size +
+    1, bl_prob, steps, num_particles, phase, 'entangled' if entangled else 'not entangled'
+)
+
+Utils.create_dir(walk_path)
 
 representationFormat = Utils.StateRepresentationFormatCoinPosition
 # representationFormat = Utils.StateRepresentationFormatPositionCoin
@@ -45,23 +52,6 @@ broken_links = RandomBrokenLinks(bl_prob)
 # Choosing a coin and a mesh for the walk
 coin = Hadamard2D()
 mesh = LatticeDiagonal((size, size), broken_links=broken_links)
-
-# Adding a directory to store plots and logs
-if entangled:
-    walk_path = "{}_{}_{}/".format(
-        base_path + Utils.filename(
-            mesh.filename(), steps, num_particles
-        ), phase, 'entangled'
-    )
-else:
-    walk_path = "{}_{}/".format(
-        base_path + Utils.filename(
-            mesh.filename(), steps, num_particles
-        ), phase
-    )
-
-sim_path = walk_path
-Utils.create_dir(sim_path)
 
 coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
@@ -156,13 +146,13 @@ final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
 joint, collision, marginal = final_state.measure()
-collision.plot(sim_path + 'collision_2d2p', dpi=300)
-collision.plot_contour(sim_path + 'collision_2d2p_contour', dpi=300)
+collision.plot(walk_path + 'collision_2d2p', dpi=300)
+collision.plot_contour(walk_path + 'collision_2d2p_contour', dpi=300)
 for p in range(len(marginal)):
-    marginal[p].plot('{}marginal{}_2d2p'.format(sim_path, p + 1), dpi=300)
+    marginal[p].plot('{}marginal{}_2d2p'.format(walk_path, p + 1), dpi=300)
     marginal[p].plot_contour(
         '{}marginal{}_2d2p_contour'.format(
-            sim_path, p + 1), dpi=300)
+            walk_path, p + 1), dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()

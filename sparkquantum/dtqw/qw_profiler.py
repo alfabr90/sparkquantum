@@ -72,14 +72,11 @@ class QuantumWalkProfiler(Profiler):
             If `operator` is not a :py:class:`sparkquantum.dtqw.operator.Operator`.
 
         """
-        if self._logger is not None:
-            self._logger.info(
-                "profiling operator data for '{}'...".format(name))
+        self._logger.info("profiling operator data for '{}'...".format(name))
 
         if not is_operator(operator):
-            if self._logger is not None:
-                self._logger.error(
-                    "'Operator' instance expected, not '{}'".format(type(operator)))
+            self._logger.error(
+                "'Operator' instance expected, not '{}'".format(type(operator)))
             raise TypeError(
                 "'Operator' instance expected, not '{}'".format(type(operator)))
 
@@ -126,14 +123,12 @@ class QuantumWalkProfiler(Profiler):
             If `state` is not a :py:class:`sparkquantum.dtqw.state.State`.
 
         """
-        if self._logger is not None:
-            self._logger.info(
-                "profiling quantum system state data for '{}'...".format(name))
+        self._logger.info(
+            "profiling quantum system state data for '{}'...".format(name))
 
         if not is_state(state):
-            if self._logger is not None:
-                self._logger.error(
-                    "'State' instance expected, not '{}'".format(type(state)))
+            self._logger.error(
+                "'State' instance expected, not '{}'".format(type(state)))
             raise TypeError(
                 "'State' instance expected, not '{}'".format(type(state)))
 
@@ -180,13 +175,11 @@ class QuantumWalkProfiler(Profiler):
             If `pdf` is not a :py:class:`sparkquantum.math.statistics.pdf.PDF`.
 
         """
-        if self._logger is not None:
-            self._logger.info("profiling PDF data for '{}'...".format(name))
+        self._logger.info("profiling PDF data for '{}'...".format(name))
 
         if not is_pdf(pdf):
-            if self._logger is not None:
-                self._logger.error(
-                    "'PDF' instance expected, not '{}'".format(type(pdf)))
+            self._logger.error(
+                "'PDF' instance expected, not '{}'".format(type(pdf)))
             raise TypeError(
                 "'PDF' instance expected, not '{}'".format(type(pdf)))
 
@@ -229,15 +222,13 @@ class QuantumWalkProfiler(Profiler):
                 return self._operators.copy()
             else:
                 if name not in self._operators:
-                    if self._logger is not None:
-                        self._logger.warning(
-                            "no resources information for operator '{}'".format(name))
+                    self._logger.warning(
+                        "no resources information for operator '{}'".format(name))
                     return {}
                 return self._operators[name]
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no resources information for operators have been obtained")
+            self._logger.warning(
+                "no resources information for operators have been obtained")
             return {}
 
     def get_states(self, name=None):
@@ -259,15 +250,13 @@ class QuantumWalkProfiler(Profiler):
                 return self._states.copy()
             else:
                 if name not in self._states:
-                    if self._logger is not None:
-                        self._logger.warning(
-                            "no resources information for state '{}'".format(name))
+                    self._logger.warning(
+                        "no resources information for state '{}'".format(name))
                     return {}
                 return self._states[name]
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no resources information for states have been obtained")
+            self._logger.warning(
+                "no resources information for states have been obtained")
             return {}
 
     def get_pdfs(self, name=None):
@@ -289,15 +278,13 @@ class QuantumWalkProfiler(Profiler):
                 return self._pdfs.copy()
             else:
                 if name not in self._pdfs:
-                    if self._logger is not None:
-                        self._logger.warning(
-                            "no resources information for pdf '{}'".format(name))
+                    self._logger.warning(
+                        "no resources information for pdf '{}'".format(name))
                     return {}
                 return self._pdfs[name]
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no resources information for pdfs have been obtained")
+            self._logger.warning(
+                "no resources information for pdfs have been obtained")
             return {}
 
     def export_operators(self, path, extension='csv'):
@@ -320,9 +307,8 @@ class QuantumWalkProfiler(Profiler):
             If `extension` is not valid or not supported.
 
         """
-        if self._logger is not None:
-            self._logger.info(
-                "exporting operators' resources in {} format...".format(extension))
+        self._logger.info(
+            "exporting operators' resources in {} format...".format(extension))
 
         if len(self._operators):
             operator = []
@@ -335,12 +321,10 @@ class QuantumWalkProfiler(Profiler):
             self._export_values(
                 operator, operator[-1].keys(), path + 'operators', extension)
 
-            if self._logger is not None:
-                self._logger.info("operator's resources successfully exported")
+            self._logger.info("operator's resources successfully exported")
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no measurement of operators' resources has been done")
+            self._logger.warning(
+                "no measurement of operators' resources has been done")
 
     def export_states(self, path, extension='csv'):
         """Export all stored state' resources.
@@ -362,9 +346,8 @@ class QuantumWalkProfiler(Profiler):
             If `extension` is not valid or not supported.
 
         """
-        if self._logger is not None:
-            self._logger.info(
-                "exporting states' resources in {} format...".format(extension))
+        self._logger.info(
+            "exporting states' resources in {} format...".format(extension))
 
         if len(self._states):
             states = []
@@ -377,12 +360,10 @@ class QuantumWalkProfiler(Profiler):
             self._export_values(
                 states, states[-1].keys(), path + 'states', extension)
 
-            if self._logger is not None:
-                self._logger.info("states' resources successfully exported")
+            self._logger.info("states' resources successfully exported")
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no measurement of states' resources has been done")
+            self._logger.warning(
+                "no measurement of states' resources has been done")
 
     def export_pdfs(self, path, extension='csv'):
         """Export all stored pdfs' resources.
@@ -404,9 +385,8 @@ class QuantumWalkProfiler(Profiler):
             If `extension` is not valid or not supported.
 
         """
-        if self._logger is not None:
-            self._logger.info(
-                "exporting pdfs' resources in {} format...".format(extension))
+        self._logger.info(
+            "exporting pdfs' resources in {} format...".format(extension))
 
         if len(self._operators):
             pdfs = []
@@ -419,12 +399,10 @@ class QuantumWalkProfiler(Profiler):
             self._export_values(
                 pdfs, pdfs[-1].keys(), path + 'pdfs', extension)
 
-            if self._logger is not None:
-                self._logger.info("pdfs' resources successfully exported")
+            self._logger.info("pdfs' resources successfully exported")
         else:
-            if self._logger is not None:
-                self._logger.warning(
-                    "no measurement of pdfs' resources has been done")
+            self._logger.warning(
+                "no measurement of pdfs' resources has been done")
 
     def export(self, path, extension='csv'):
         """Export all stored profiling information of quantum walks.

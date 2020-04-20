@@ -1,7 +1,6 @@
 import numpy as np
 from pyspark import RDD, StorageLevel
 
-from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
@@ -24,17 +23,6 @@ class Base:
             The Python type of all values in this object. Default value is complex.
 
         """
-        if not isinstance(rdd, RDD):
-            # self._logger.error("invalid argument to instantiate an RDD-based object")
-            raise TypeError(
-                "'RDD' instance expected, not '{}'".format(
-                    type(rdd)))
-
-        if shape is not None:
-            if not Utils.is_shape(shape):
-                # self._logger.error("invalid shape")
-                raise ValueError("invalid shape")
-
         self._spark_context = rdd.context
         self._shape = shape
         self._num_elements = self._shape[0] * self._shape[1]
@@ -43,8 +31,22 @@ class Base:
 
         self.data = rdd
 
-        self._logger = None
+        self._logger = Utils.get_logger(
+            self._spark_context, self.__class__.__name__)
         self._profiler = None
+
+        if not isinstance(rdd, RDD):
+            self._logger.error(
+                "'RDD' instance expected, not '{}'".format(
+                    type(rdd)))
+            raise TypeError(
+                "'RDD' instance expected, not '{}'".format(
+                    type(rdd)))
+
+        if shape is not None:
+            if not Utils.is_shape(shape):
+                self._logger.error("invalid shape")
+                raise ValueError("invalid shape")
 
     @property
     def spark_context(self):
@@ -72,15 +74,6 @@ class Base:
         return self._data_type
 
     @property
-    def logger(self):
-        """:py:class:`sparkquantum.utils.logger.Logger`.
-
-        To disable logging, set it to None.
-
-        """
-        return self._logger
-
-    @property
     def profiler(self):
         """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
@@ -88,15 +81,6 @@ class Base:
 
         """
         return self._profiler
-
-    @logger.setter
-    def logger(self, logger):
-        if is_logger(logger) or logger is None:
-            self._logger = logger
-        else:
-            raise TypeError(
-                "'Logger' instance expected, not '{}'".format(
-                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
@@ -187,18 +171,16 @@ class Base:
         if self.data is not None:
             if not self.data.is_cached:
                 self.data.persist(storage_level)
-                if self._logger is not None:
-                    self._logger.info(
-                        "RDD {} was persisted".format(
-                            self.data.id()))
+                self._logger.info(
+                    "RDD {} was persisted".format(
+                        self.data.id()))
             else:
-                if self._logger is not None:
-                    self._logger.info(
-                        "RDD {} has already been persisted".format(
-                            self.data.id()))
+                self._logger.info(
+                    "RDD {} has already been persisted".format(
+                        self.data.id()))
         else:
-            if self._logger is not None:
-                self._logger.warning("there is no data to be persisted")
+            self._logger.warning(
+                "there is no data to be persisted")
 
         return self
 
@@ -214,18 +196,16 @@ class Base:
         if self.data is not None:
             if self.data.is_cached:
                 self.data.unpersist()
-                if self._logger is not None:
-                    self._logger.info(
-                        "RDD {} was unpersisted".format(
-                            self.data.id()))
+                self._logger.info(
+                    "RDD {} was unpersisted".format(
+                        self.data.id()))
             else:
-                if self._logger is not None:
-                    self._logger.info(
-                        "RDD {} has already been unpersisted".format(
-                            self.data.id()))
+                self._logger.info(
+                    "RDD {} has already been unpersisted".format(
+                        self.data.id()))
         else:
-            if self._logger is not None:
-                self._logger.warning("there is no data to be unpersisted")
+            self._logger.warning(
+                "there is no data to be unpersisted")
 
         return self
 
@@ -258,10 +238,10 @@ class Base:
 
         """
         self.persist(storage_level)
+
         self._num_nonzero_elements = self.data.count()
 
-        if self._logger is not None:
-            self._logger.info("RDD {} was materialized".format(self.data.id()))
+        self._logger.info("RDD {} was materialized".format(self.data.id()))
 
         return self
 
@@ -280,22 +260,19 @@ class Base:
 
         """
         if self.data.isCheckpointed():
-            if self._logger is not None:
-                self._logger.info("RDD already checkpointed")
+            self._logger.info("RDD already checkpointed")
             return self
 
         if not self.data.is_cached:
-            if self._logger is not None:
-                self._logger.warning(
-                    "it is recommended to cache the RDD before checkpointing it")
+            self._logger.warning(
+                "it is recommended to cache the RDD before checkpointing it")
 
         self.data.checkpoint()
 
-        if self._logger is not None:
-            self._logger.info(
-                "RDD {} was checkpointed in {}".format(
-                    self.data.id(),
-                    self.data.getCheckpointFile()))
+        self._logger.info(
+            "RDD {} was checkpointed in {}".format(
+                self.data.id(),
+                self.data.getCheckpointFile()))
 
         return self
 
@@ -359,8 +336,7 @@ class Base:
                 lambda m: glue.join([str(e) for e in m])
             ).saveAsTextFile(path, codec)
         else:
-            if self._logger is not None:
-                self._logger.error("invalid dumping mode")
+            self._logger.error("invalid dumping mode")
             raise ValueError("invalid dumping mode")
 
     def numpy_array(self):

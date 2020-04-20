@@ -28,8 +28,7 @@ class LatticeNatural(Natural):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger is not None:
-                self._logger.error("invalid mesh size")
+            self._logger.error("invalid mesh size")
             raise ValueError("invalid mesh size")
 
         return 2 * size[0] + 1, 2 * size[0] + 1
@@ -184,8 +183,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -263,8 +261,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -273,8 +270,7 @@ class LatticeNatural(Natural):
                     __map
                 )
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid broken links generation mode")
+                self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -311,8 +307,7 @@ class LatticeNatural(Natural):
 
                             yield m, n, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(

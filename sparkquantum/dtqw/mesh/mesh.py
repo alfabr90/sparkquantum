@@ -3,7 +3,6 @@ from datetime import datetime
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
-from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
@@ -30,17 +29,20 @@ class Mesh:
         self._coin_size = None
         self._dimension = None
 
-        if broken_links:
+        self._broken_links = broken_links
+
+        self._logger = Utils.get_logger(
+            self._spark_context, self.__class__.__name__)
+        self._profiler = None
+
+        if broken_links is not None:
             if not is_broken_links(broken_links):
-                # self._logger.error("'BrokenLinks' instance expected, not '{}'".format(type(broken_links)))
+                self._logger.error(
+                    "'BrokenLinks' instance expected, not '{}'".format(
+                        type(broken_links)))
                 raise TypeError(
                     "'BrokenLinks' instance expected, not '{}'".format(
                         type(broken_links)))
-
-        self._broken_links = broken_links
-
-        self._logger = None
-        self._profiler = None
 
     @property
     def spark_context(self):
@@ -73,15 +75,6 @@ class Mesh:
         return self._dimension
 
     @property
-    def logger(self):
-        """:py:class:`sparkquantum.utils.logger.Logger`.
-
-        To disable logging, set it to None.
-
-        """
-        return self._logger
-
-    @property
     def profiler(self):
         """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
@@ -89,15 +82,6 @@ class Mesh:
 
         """
         return self._profiler
-
-    @logger.setter
-    def logger(self, logger):
-        if is_logger(logger) or logger is None:
-            self._logger = logger
-        else:
-            raise TypeError(
-                "'Logger' instance expected, not '{}'".format(
-                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):
@@ -135,17 +119,6 @@ class Mesh:
 
     def _define_num_edges(self, size):
         raise NotImplementedError
-
-    def filename(self):
-        """Build a string representing this mesh to be used in filenames.
-
-        Returns
-        -------
-        str
-            The string representation of this mesh.
-
-        """
-        return self.__str__()
 
     def axis(self):
         """Build a generator (or meshgrid) with the size(s) of this mesh.

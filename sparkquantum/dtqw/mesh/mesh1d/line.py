@@ -38,8 +38,7 @@ class Line(Mesh1D):
 
     def _define_size(self, size):
         if not self._validate(size):
-            if self._logger is not None:
-                self._logger.error("invalid mesh size")
+            self._logger.error("invalid mesh size")
             raise ValueError("invalid mesh size")
 
         return 2 * size + 1
@@ -142,8 +141,7 @@ class Line(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -183,8 +181,7 @@ class Line(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -193,8 +190,7 @@ class Line(Mesh1D):
                     __map
                 )
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid broken links generation mode")
+                self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -208,8 +204,7 @@ class Line(Mesh1D):
                         l = (-1) ** i
                         yield ((x + l) % size) * coin_size + i, x * coin_size + i, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(

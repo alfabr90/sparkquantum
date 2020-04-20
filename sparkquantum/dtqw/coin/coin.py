@@ -2,7 +2,6 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.logger import is_logger
 from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
@@ -18,7 +17,8 @@ class Coin:
         self._size = None
         self._data = None
 
-        self._logger = None
+        self._logger = Utils.get_logger(
+            self._spark_context, self.__class__.__name__)
         self._profiler = None
 
     @property
@@ -37,15 +37,6 @@ class Coin:
         return self._data
 
     @property
-    def logger(self):
-        """:py:class:`sparkquantum.utils.logger.Logger`.
-
-        To disable logging, set it to None.
-
-        """
-        return self._logger
-
-    @property
     def profiler(self):
         """:py:class:`sparkquantum.utils.profiler.Profiler`.
 
@@ -53,15 +44,6 @@ class Coin:
 
         """
         return self._profiler
-
-    @logger.setter
-    def logger(self, logger):
-        if is_logger(logger) or logger is None:
-            self._logger = logger
-        else:
-            raise TypeError(
-                "'Logger' instance expected, not '{}'".format(
-                    type(logger)))
 
     @profiler.setter
     def profiler(self, profiler):

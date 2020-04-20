@@ -60,18 +60,16 @@ class Coin1D(Coin):
 
         """
         if not is_mesh(mesh):
-            if self._logger is not None:
-                self._logger.error(
-                    "expected 'Mesh' instance, not '{}'".format(
-                        type(mesh)))
+            self._logger.error(
+                "expected 'Mesh' instance, not '{}'".format(
+                    type(mesh)))
             raise TypeError(
                 "expected 'Mesh' instance, not '{}'".format(
                     type(mesh)))
 
         if not mesh.is_1d():
-            if self._logger is not None:
-                self._logger.error(
-                    "non correspondent coin and mesh dimensions")
+            self._logger.error(
+                "non correspondent coin and mesh dimensions")
             raise ValueError("non correspondent coin and mesh dimensions")
 
         coin_size = self._size
@@ -104,8 +102,7 @@ class Coin1D(Coin):
                     for j in range(data.value.shape[1]):
                         yield (x * coin_size + i, x * coin_size + j, data.value[i][j])
         else:
-            if self._logger is not None:
-                self._logger.error("invalid representation format")
+            self._logger.error("invalid representation format")
             raise ValueError("invalid representation format")
 
         rdd = self._spark_context.range(

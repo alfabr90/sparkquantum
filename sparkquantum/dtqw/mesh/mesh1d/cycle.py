@@ -122,8 +122,7 @@ class Cycle(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -163,8 +162,7 @@ class Cycle(Mesh1D):
 
                             yield ((x + l) % size) * coin_size + i + l, x * coin_size + 1 - i, 1
                 else:
-                    if self._logger is not None:
-                        self._logger.error("invalid representation format")
+                    self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
 
                 rdd = self._spark_context.range(
@@ -173,8 +171,7 @@ class Cycle(Mesh1D):
                     __map
                 )
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid broken links generation mode")
+                self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
@@ -188,8 +185,7 @@ class Cycle(Mesh1D):
                         l = (-1) ** i
                         yield ((x + l) % size) * coin_size + i, x * coin_size + i, 1
             else:
-                if self._logger is not None:
-                    self._logger.error("invalid representation format")
+                self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
 
             rdd = self._spark_context.range(

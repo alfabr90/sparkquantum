@@ -58,8 +58,7 @@ class JointPDF(PDF):
         elif self._mesh.is_2d():
             ind = self._num_particles * 2
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         data_type = self._data_type()
@@ -91,8 +90,7 @@ class JointPDF(PDF):
         elif self._mesh.is_2d():
             ind = 2 * self._num_particles
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         data_type = self._data_type()
@@ -131,8 +129,7 @@ class JointPDF(PDF):
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         def _map(m):
@@ -183,8 +180,7 @@ class JointPDF(PDF):
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         if mean is None:
@@ -229,8 +225,7 @@ class JointPDF(PDF):
             ndim = 2
             ind = ndim * self._num_particles
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         def __map(m):
@@ -260,8 +255,7 @@ class JointPDF(PDF):
             ndim = 2
             ind = ndim * self._num_particles
         else:
-            if self._logger is not None:
-                self._logger.error("mesh dimension not implemented")
+            self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
         def __map(m):
@@ -287,16 +281,14 @@ class JointPDF(PDF):
 
         """
         if self._mesh.is_1d() and self._num_particles > 2:
-            if self._logger is not None:
-                self._logger.warning("for one-dimensional meshes, \
+            self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of one and two particles"
                                      )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
-            if self._logger is not None:
-                self._logger.warning("for two-dimensional meshes, \
+            self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of just one particle"
                                      )
@@ -305,8 +297,7 @@ class JointPDF(PDF):
         if not (self._mesh.is_1d() and self._num_particles == 2):
             super().plot(filename, title=title, labels=labels, **kwargs)
         else:
-            if self._logger is not None:
-                self._logger.info("starting plot of probabilities...")
+            self._logger.info("starting plot of probabilities...")
 
             t1 = datetime.now()
 
@@ -357,8 +348,7 @@ class JointPDF(PDF):
             plt.cla()
             plt.clf()
 
-            if self._logger is not None:
-                self._logger.info(
+            self._logger.info(
                     "plot in {}s".format(
                         (datetime.now() - t1).total_seconds()))
 
@@ -378,16 +368,14 @@ class JointPDF(PDF):
 
         """
         if self._mesh.is_1d() and self._num_particles != 2:
-            if self._logger is not None:
-                self._logger.warning("for one-dimensional meshes, \
+            self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of two particles"
                                      )
             return None
 
         if self._mesh.is_2d() and self._num_particles > 1:
-            if self._logger is not None:
-                self._logger.warning("for two-dimensional meshes, \
+            self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of just one particle"
                                      )
@@ -396,8 +384,7 @@ class JointPDF(PDF):
         if not (self._mesh.is_1d() and self._num_particles == 2):
             super().plot_contour(filename, title=title, labels=labels, **kwargs)
         else:
-            if self._logger is not None:
-                self._logger.info("starting contour plot of probabilities...")
+            self._logger.info("starting contour plot of probabilities...")
 
             t1 = datetime.now()
 
@@ -442,7 +429,6 @@ class JointPDF(PDF):
             plt.cla()
             plt.clf()
 
-            if self._logger is not None:
-                self._logger.info(
+            self._logger.info(
                     "contour plot in {}s".format(
                         (datetime.now() - t1).total_seconds()))

@@ -1,5 +1,6 @@
 import math
 import cmath
+import logging
 
 from pyspark import SparkContext, SparkConf
 
@@ -10,7 +11,6 @@ from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
-from sparkquantum.utils.logger import Logger
 
 '''
     DTQW 2D - 2 particles
@@ -25,6 +25,14 @@ size = 5
 entangled = True
 phase = 1.0 * cmath.pi
 
+# Choosing a directory to store plots and logs
+walk_path = "{}/{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'DiagonalLattice', 2 * size +
+    1, steps, num_particles, phase, 'entangled' if entangled else 'not entangled'
+)
+
+Utils.create_dir(walk_path)
+
 representationFormat = Utils.StateRepresentationFormatCoinPosition
 # representationFormat = Utils.StateRepresentationFormatPositionCoin
 
@@ -36,6 +44,10 @@ sparkConf = SparkConf().set(
 ).set(
     'quantum.logging.enabled', 'True'
 ).set(
+    'quantum.logging.level', logging.DEBUG
+).set(
+    'quantum.logging.filename', walk_path + 'log.txt'
+).set(
     'quantum.profiling.enabled', 'True'
 )
 sparkContext = SparkContext(conf=sparkConf)
@@ -45,32 +57,11 @@ sparkContext.setLogLevel('ERROR')
 coin = Hadamard2D()
 mesh = LatticeDiagonal((size, size))
 
-# Adding a directory to store plots and logs
-if entangled:
-    walk_path = "{}_{}_{}/".format(
-        base_path + Utils.filename(
-            mesh.filename(), steps, num_particles
-        ), phase, 'entangled'
-    )
-else:
-    walk_path = "{}_{}/".format(
-        base_path + Utils.filename(
-            mesh.filename(), steps, num_particles
-        ), phase
-    )
-
-sim_path = walk_path
-Utils.create_dir(sim_path)
-
 # Adding the profiler to the classes and starting it
 profiler = QuantumWalkProfiler()
 
-coin.logger = Logger(coin.__class__.__name__, sim_path)
-mesh.logger = Logger(mesh.__class__.__name__, sim_path)
 coin.profiler = profiler
 mesh.profiler = profiler
-
-profiler.logger = Logger(profiler.__class__.__name__, sim_path)
 
 coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
@@ -160,27 +151,25 @@ dtqw = DiscreteTimeQuantumWalk(
     num_particles,
     interaction=interaction)
 
-dtqw.logger = Logger(dtqw.__class__.__name__, sim_path)
 dtqw.profiler = profiler
 
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
 
-final_state.logger = Logger(final_state.__class__.__name__, sim_path)
 final_state.profiler = profiler
 
 # Measuring the state of the system and plotting its PDF
 joint, collision, marginal = final_state.measure()
-collision.plot(sim_path + 'collision_2d2p', dpi=300)
-collision.plot_contour(sim_path + 'collision_2d2p_contour', dpi=300)
+collision.plot(walk_path + 'collision_2d2p', dpi=300)
+collision.plot_contour(walk_path + 'collision_2d2p_contour', dpi=300)
 for p in range(len(marginal)):
-    marginal[p].plot('{}marginal{}_2d2p'.format(sim_path, p + 1), dpi=300)
+    marginal[p].plot('{}marginal{}_2d2p'.format(walk_path, p + 1), dpi=300)
     marginal[p].plot_contour(
         '{}marginal{}_2d2p_contour'.format(
-            sim_path, p + 1), dpi=300)
+            walk_path, p + 1), dpi=300)
 
 # Exporting the profiling data
-profiler.export(sim_path)
+profiler.export(walk_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()
