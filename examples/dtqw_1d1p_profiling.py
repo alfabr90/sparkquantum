@@ -4,6 +4,7 @@ import logging
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
@@ -92,7 +93,11 @@ final_state = dtqw.walk(steps, initial_state)
 final_state.profiler = profiler
 
 # Measuring the state of the system and plotting its PDF
-joint = final_state.measure()
+gauge = PositionGauge()
+
+gauge.profiler = profiler
+
+joint = gauge.measure(final_state)
 joint.plot(walk_path + 'joint_1d1p', dpi=300)
 
 # Exporting the profiling data
