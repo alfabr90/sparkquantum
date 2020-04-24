@@ -4,6 +4,7 @@ import cmath
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
+from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
 from sparkquantum.dtqw.state import State
@@ -139,7 +140,9 @@ dtqw = DiscreteTimeQuantumWalk(
 final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
-joint, collision, marginal = final_state.measure()
+gauge = PositionGauge()
+
+joint, collision, marginal = gauge.measure(final_state)
 collision.plot(walk_path + 'collision_2d2p', dpi=300)
 collision.plot_contour(walk_path + 'collision_2d2p_contour', dpi=300)
 for p in range(len(marginal)):
