@@ -43,9 +43,10 @@ import math
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
+from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
 
 # Initiallizing the SparkContext with some options
@@ -86,7 +87,9 @@ dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
 final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
-joint = final_state.measure()
+gauge = PositionGauge()
+
+joint = gauge.measure(final_state)
 joint.plot('./joint_1d1p')
 
 # Destroying the RDD and stopping the SparkContext

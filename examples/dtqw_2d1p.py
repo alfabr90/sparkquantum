@@ -3,6 +3,7 @@ import math
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
+from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
@@ -82,7 +83,9 @@ dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
 final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
-joint = final_state.measure()
+gauge = PositionGauge()
+
+joint = gauge.measure(final_state)
 joint.plot(walk_path + 'joint_2d1p', dpi=300)
 joint.plot_contour(walk_path + 'joint_2d1p_contour', dpi=300)
 

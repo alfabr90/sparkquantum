@@ -4,11 +4,11 @@ import cmath
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.utils.utils import Utils
 
@@ -129,7 +129,9 @@ dtqw = DiscreteTimeQuantumWalk(
 final_state = dtqw.walk(steps, initial_state)
 
 # Measuring the state of the system and plotting its PDF
-joint, collision, marginal = final_state.measure()
+gauge = PositionGauge()
+
+joint, collision, marginal = gauge.measure(final_state)
 joint.plot(walk_path + 'joint_1d2p', dpi=300)
 joint.plot_contour(walk_path + 'joint_1d2p_contour', dpi=300)
 collision.plot(walk_path + 'collision_1d2p', dpi=300)
