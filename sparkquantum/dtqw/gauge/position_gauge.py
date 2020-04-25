@@ -47,7 +47,7 @@ class PositionGauge(Gauge):
         """
         self._logger.info("measuring the state of the system...")
 
-        t1 = datetime.now()
+        initial_time = datetime.now()
 
         repr_format = int(Utils.get_conf(self._spark_context,
                                          'quantum.dtqw.state.representationFormat'))
@@ -186,24 +186,11 @@ class PositionGauge(Gauge):
             self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
-        app_id = self._spark_context.applicationId
-
-        if self._profiler is not None:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_pdf(
-                'fullMeasurement', pdf, (datetime.now() - t1).total_seconds())
-
-            self._logger.info(
-                "full measurement was done in {}s".format(info['buildingTime']))
-            self._logger.info(
-                "PDF with full measurement is consuming {} bytes in memory and {} bytes in disk".format(
-                    info['memoryUsed'], info['diskUsed']
-                )
-            )
-
-            self._profiler.log_rdd(app_id=app_id)
+        self._profile_pdf(
+            'systemMeasurement',
+            'system measurement',
+            pdf,
+            initial_time)
 
         return pdf
 
@@ -244,7 +231,7 @@ class PositionGauge(Gauge):
         self._logger.info(
             "measuring the state of the system considering that the particles are at the same positions...")
 
-        t1 = datetime.now()
+        initial_time = datetime.now()
 
         if not is_pdf(system_measurement):
             self._logger.error(
@@ -303,24 +290,11 @@ class PositionGauge(Gauge):
         pdf = CollisionPDF(rdd, shape, state.mesh,
                            state.num_particles).materialize(storage_level)
 
-        app_id = self._spark_context.applicationId
-
-        if self._profiler is not None:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_pdf(
-                'collisionMeasurement', pdf, (datetime.now() - t1).total_seconds())
-
-            self._logger.info(
-                "collision measurement was done in {}s".format(info['buildingTime']))
-            self._logger.info(
-                "PDF with collision measurement is consuming {} bytes in memory and {} bytes in disk".format(
-                    info['memoryUsed'], info['diskUsed']
-                )
-            )
-
-            self._profiler.log_rdd(app_id=app_id)
+        self._profile_pdf(
+            'collisionMeasurement',
+            'collision measurement',
+            pdf,
+            initial_time)
 
         return pdf
 
@@ -360,7 +334,7 @@ class PositionGauge(Gauge):
         self._logger.info(
             "measuring the state of the system for particle {}...".format(particle + 1))
 
-        t1 = datetime.now()
+        initial_time = datetime.now()
 
         repr_format = int(Utils.get_conf(self._spark_context,
                                          'quantum.dtqw.state.representationFormat'))
@@ -459,28 +433,7 @@ class PositionGauge(Gauge):
             self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
-        app_id = self._spark_context.applicationId
-
-        if self._profiler is not None:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_pdf(
-                'partialMeasurementParticle{}'.format(
-                    particle + 1), pdf, (datetime.now() - t1).total_seconds()
-            )
-
-            self._logger.info("partial measurement for particle {} was done in {}s".format(
-                particle + 1, info['buildingTime'])
-            )
-            self._logger.info(
-                "PDF with partial measurements for particle {} "
-                "are consuming {} bytes in memory and {} bytes in disk".format(
-                    particle + 1, info['memoryUsed'], info['diskUsed']
-                )
-            )
-
-            self._profiler.log_rdd(app_id=app_id)
+        self._profile_pdf('partialMeasurementParticle{}'.format(particle + 1), 'partial measurement for particle {}'.format(particle + 1), pdf, initial_time)
 
         return pdf
 

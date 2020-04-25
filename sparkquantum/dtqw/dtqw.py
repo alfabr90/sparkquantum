@@ -1,6 +1,5 @@
 import math
 import fileinput
-import logging
 from glob import glob
 from datetime import datetime
 
@@ -10,8 +9,8 @@ from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.operator import Operator, is_operator
+from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.state import State
-from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['DiscreteTimeQuantumWalk']
@@ -49,7 +48,7 @@ class DiscreteTimeQuantumWalk:
 
         self._logger = Utils.get_logger(
             self._spark_context, self.__class__.__name__)
-        self._profiler = None
+        self._profiler = QuantumWalkProfiler()
 
         if self._num_particles < 1:
             self._logger.error(
@@ -130,14 +129,6 @@ class DiscreteTimeQuantumWalk:
         """
         return self._profiler
 
-    @profiler.setter
-    def profiler(self, profiler):
-        if is_profiler(profiler) or profiler is None:
-            self._profiler = profiler
-        else:
-            raise TypeError(
-                "'Profiler' instance expected, not '{}'".format(type(profiler)))
-
     def __del__(self):
         # In cases where multiple simulations are performed,
         # the same Python's logger object is used for the same class name.
@@ -166,28 +157,29 @@ class DiscreteTimeQuantumWalk:
         return '{} with {} and a {} over a {}'.format(
             'Discrete Time Quantum Walk', particles, self._coin, self._mesh)
 
-    def _profile_operator(self, operator_type, operator, initial_time):
-        if self._profiler is not None:
-            app_id = self._spark_context.applicationId
+    def _profile_operator(self, profile_title, log_title,
+                          operator, initial_time):
+        app_id = self._spark_context.applicationId
 
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
+        self._profiler.profile_resources(app_id)
+        self._profiler.profile_executors(app_id)
 
-            info = self._profiler.profile_operator(
-                '{}Operator'.format(operator_type),
-                operator,
-                (datetime.now() - initial_time).total_seconds())
+        info = self._profiler.profile_operator(
+            profile_title,
+            operator,
+            (datetime.now() - initial_time).total_seconds())
 
+        if info is not None:
             self._logger.info(
-                "{} operator was built in {}s".format(
-                    operator_type, info['buildingTime']))
+                "{} was built in {}s".format(
+                    log_title, info['buildingTime']))
             self._logger.info(
-                "{} operator is consuming {} bytes in memory and {} bytes in disk".format(
-                    operator_type, info['memoryUsed'], info['diskUsed']))
+                "{} is consuming {} bytes in memory and {} bytes in disk".format(
+                    log_title, info['memoryUsed'], info['diskUsed']))
 
-            if Utils.get_conf(self._spark_context,
-                              'quantum.dtqw.profiler.logExecutors') == 'True':
-                self._profiler.log_executors(app_id=app_id)
+        if Utils.get_conf(self._spark_context,
+                          'quantum.dtqw.profiler.logExecutors') == 'True':
+            self._profiler.log_executors(app_id=app_id)
 
     def _create_coin_operator(self, coord_format, storage_level):
         self._logger.info("building coin operator...")
@@ -198,7 +190,8 @@ class DiscreteTimeQuantumWalk:
             self._mesh, coord_format).materialize(storage_level)
 
         self._profile_operator(
-            'coin',
+            'coinOperator',
+            'coin operator',
             self._coin_operator,
             initial_time)
 
@@ -211,7 +204,8 @@ class DiscreteTimeQuantumWalk:
             coord_format).materialize(storage_level)
 
         self._profile_operator(
-            'shift',
+            'shiftOperator',
+            'shift operator',
             self._shift_operator,
             initial_time)
 
@@ -224,7 +218,8 @@ class DiscreteTimeQuantumWalk:
             coord_format).materialize(storage_level)
 
         self._profile_operator(
-            'interaction',
+            'interactionOperator',
+            'interaction operator',
             self._interaction_operator,
             initial_time)
 
@@ -290,9 +285,9 @@ class DiscreteTimeQuantumWalk:
             self._shift_operator.unpersist()
 
             self._profile_operator(
-                'walk', self._walk_operators[0], initial_time)
+                'walkOperator', 'walk operator', self._walk_operators[0], initial_time)
         else:
-            t_tmp = datetime.now()
+            initial_time = datetime.now()
 
             evolution_operator = self._shift_operator.multiply(
                 self._coin_operator, Utils.MatrixCoordinateDefault
@@ -362,7 +357,7 @@ class DiscreteTimeQuantumWalk:
                     shape = (rdd_shape[0] * shape_tmp[0],
                              rdd_shape[1] * shape_tmp[1])
                 else:
-                    t_tmp = datetime.now()
+                    initial_time = datetime.now()
 
                     # For the other particles, each one has its operator built by applying the
                     # tensor product between its previous particles' identity matrices and its evolution operator.
@@ -446,29 +441,11 @@ class DiscreteTimeQuantumWalk:
 
                 self._walk_operators.append(wo.materialize(storage_level))
 
-                if self._profiler is not None:
-                    self._profiler.profile_resources(app_id)
-                    self._profiler.profile_executors(app_id)
-
-                    info = self._profiler.profile_operator(
-                        'walkOperatorParticle{}'.format(p + 1),
-                        self._walk_operators[-1], (datetime.now() -
-                                                   t_tmp).total_seconds()
-                    )
-
-                    self._logger.info(
-                        "walk operator for particle {} was built in {}s".format(
-                            p + 1, info['buildingTime'])
-                    )
-                    self._logger.info(
-                        "walk operator for particle {} is consuming {} bytes in memory and {} bytes in disk".format(
-                            p + 1, info['memoryUsed'], info['diskUsed']
-                        )
-                    )
-
-                    if Utils.get_conf(
-                            self._spark_context, 'quantum.dtqw.profiler.logExecutors') == 'True':
-                        self._profiler.log_executors(app_id=app_id)
+                self._profile_operator(
+                    'walkOperatorParticle{}'.format(p + 1),
+                    'walk operator for particle {}'.format(p + 1),
+                    self._walk_operators[-1],
+                    initial_time)
 
             if kron_mode == Utils.KroneckerModeBroadcast:
                 eo.unpersist()
@@ -608,20 +585,19 @@ class DiscreteTimeQuantumWalk:
 
         app_id = self._spark_context.applicationId
 
-        if self._profiler is not None:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
+        self._profiler.profile_resources(app_id)
+        self._profiler.profile_executors(app_id)
 
-            info = self._profiler.profile_state('initialState', result, 0.0)
+        info = self._profiler.profile_state('initialState', result, 0.0)
 
+        if info is not None:
             self._logger.info(
                 "initial state is consuming {} bytes in memory and {} bytes in disk".format(
                     info['memoryUsed'], info['diskUsed']
                 )
             )
 
-        if self._profiler is not None:
-            self._profiler.log_rdd(app_id=app_id)
+        self._profiler.log_rdd(app_id=app_id)
 
         configs = self._get_walk_configs()
 
@@ -710,15 +686,15 @@ class DiscreteTimeQuantumWalk:
 
             result = result_tmp
 
-            if self._profiler is not None:
-                self._profiler.profile_resources(app_id)
-                self._profiler.profile_executors(app_id)
+            self._profiler.profile_resources(app_id)
+            self._profiler.profile_executors(app_id)
 
-                info = self._profiler.profile_state(
-                    'systemState{}'.format(
-                        i), result, (datetime.now() - t_tmp).total_seconds()
-                )
+            info = self._profiler.profile_state(
+                'systemState{}'.format(
+                    i), result, (datetime.now() - t_tmp).total_seconds()
+            )
 
+            if info is not None:
                 self._logger.info(
                     "step was done in {}s".format(info['buildingTime']))
                 self._logger.info(
@@ -727,8 +703,7 @@ class DiscreteTimeQuantumWalk:
                     )
                 )
 
-            if self._profiler is not None:
-                self._profiler.log_rdd(app_id=app_id)
+            self._profiler.log_rdd(app_id=app_id)
 
         self._logger.info("walk was done in {}s".format(
             (datetime.now() - t1).total_seconds()))
@@ -744,20 +719,20 @@ class DiscreteTimeQuantumWalk:
         self._logger.debug("unitarity check was done in {}s".format(
             (datetime.now() - t1).total_seconds()))
 
-        if self._profiler is not None:
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
+        self._profiler.profile_resources(app_id)
+        self._profiler.profile_executors(app_id)
 
-            info = self._profiler.profile_state('finalState', result, 0.0)
+        info = self._profiler.profile_state('finalState', result, 0.0)
 
+        if info is not None:
             self._logger.info(
                 "final state is consuming {} bytes in memory and {} bytes in disk".format(
                     info['memoryUsed'], info['diskUsed']
                 )
             )
 
-            if Utils.get_conf(self._spark_context,
-                              'quantum.dtqw.profiler.logExecutors') == 'True':
-                self._profiler.log_executors(app_id=app_id)
+        if Utils.get_conf(self._spark_context,
+                          'quantum.dtqw.profiler.logExecutors') == 'True':
+            self._profiler.log_executors(app_id=app_id)
 
         return result

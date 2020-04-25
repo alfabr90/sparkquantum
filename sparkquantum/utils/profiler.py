@@ -22,36 +22,17 @@ class Profiler:
         """Build a profiler object."""
         self._spark_context = SparkContext.getOrCreate()
 
-        self._times = None
         self._rdd = None
         self._resources = None
         self._executors = None
+
         self._base_url = self._get_baseurl()
+        self._enabled = self._is_enabled()
 
         self._logger = Utils.get_logger(
             self._spark_context, self.__class__.__name__)
 
         self._start()
-
-    @property
-    def times(self):
-        """dict"""
-        return self._times
-
-    @property
-    def rdd(self):
-        """dict"""
-        return self._rdd
-
-    @property
-    def executors(self):
-        """dict"""
-        return self._executors
-
-    @property
-    def resources(self):
-        """dict"""
-        return self._resources
 
     @staticmethod
     def _default_rdd():
@@ -109,7 +90,6 @@ class Profiler:
                               'quantum.profiling.baseUrl')
 
     def _start(self):
-        self._times = {}
         self._rdd = {}
         self._resources = self._default_resources()
         self._executors = {}
@@ -147,10 +127,11 @@ class Profiler:
         Returns
         -------
         list
-            A list with application info.
+            A list with application info if profiling is enabled, `None` otherwise.
 
         """
-        return self._request()
+        if self._enabled:
+            return self._request()
 
     def request_jobs(self, app_id, job_id=None):
         """Request an application's jobs info.
@@ -165,13 +146,15 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's jobs info or a dict with the job info. None when an error occurred.
+            A list with all application's jobs info or a dict with the job info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        if job_id is None:
-            return self._request("/{}/jobs".format(app_id))
-        else:
-            return self._request("/{}/jobs/{}".format(app_id, job_id))
+        if self._enabled:
+            if job_id is None:
+                return self._request("/{}/jobs".format(app_id))
+            else:
+                return self._request("/{}/jobs/{}".format(app_id, job_id))
 
     def request_stages(self, app_id, stage_id=None):
         """Request an application's stages info.
@@ -186,13 +169,15 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's stages info or a dict with the stage info. None when an error occurred.
+            A list with all application's stages info or a dict with the stage info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        if stage_id is None:
-            return self._request("/{}/stages".format(app_id))
-        else:
-            return self._request("/{}/stages/{}".format(app_id, stage_id))
+        if self._enabled:
+            if stage_id is None:
+                return self._request("/{}/stages".format(app_id))
+            else:
+                return self._request("/{}/stages/{}".format(app_id, stage_id))
 
     def request_stageattempt(self, app_id, stage_id, stageattempt_id):
         """Request an application's stage attempts info.
@@ -209,11 +194,13 @@ class Profiler:
         Returns
         -------
         dict
-            A dict with an application's stage attempt info. None when an error occurred.
+            A dict with an application's stage attempt info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        return self._request(
-            "/{}/stages/{}/{}".format(app_id, stage_id, stageattempt_id))
+        if self._enabled:
+            return self._request(
+                "/{}/stages/{}/{}".format(app_id, stage_id, stageattempt_id))
 
     def request_stageattempt_tasksummary(
             self, app_id, stage_id, stageattempt_id):
@@ -231,11 +218,13 @@ class Profiler:
         Returns
         -------
         dict
-            A dict with the task summary of a stage attempt. None when an error occurred.
+            A dict with the task summary of a stage attempt if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        return self._request(
-            "/{}/stages/{}/{}/taskSummary".format(app_id, stage_id, stageattempt_id))
+        if self._enabled:
+            return self._request(
+                "/{}/stages/{}/{}/taskSummary".format(app_id, stage_id, stageattempt_id))
 
     def request_stageattempt_tasklist(self, app_id, stage_id, stageattempt_id):
         """Request the task list of a stage attempt info.
@@ -252,11 +241,13 @@ class Profiler:
         Returns
         -------
         list
-            A list with the task list of a stage attempt. None when an error occurred.
+            A list with the task list of a stage attempt if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        return self._request(
-            "/{}/stages/{}/{}/taskList".format(app_id, stage_id, stageattempt_id))
+        if self._enabled:
+            return self._request(
+                "/{}/stages/{}/{}/taskList".format(app_id, stage_id, stageattempt_id))
 
     def request_executors(self, app_id):
         """Request an application's active executors info.
@@ -269,10 +260,12 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's active executors info. None when an error occurred.
+            A list with all application's active executors info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        return self._request("/{}/executors".format(app_id))
+        if self._enabled:
+            return self._request("/{}/executors".format(app_id))
 
     def request_allexecutors(self, app_id):
         """Request an application's executors info.
@@ -285,10 +278,12 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's executors info. None when an error occurred.
+            A list with all application's executors info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        return self._request("/{}/allexecutors".format(app_id))
+        if self._enabled:
+            return self._request("/{}/allexecutors".format(app_id))
 
     def request_rdd(self, app_id, rdd_id=None):
         """Request an application's RDD info.
@@ -303,13 +298,16 @@ class Profiler:
         Returns
         -------
         list or dict
-            A list with all application's RDD info or a dict with the RDD info. None when an error occurred.
+            A list with all application's RDD info or a dict with the RDD info if profiling is enabled,
+            `None` otherwise or when an error occurred.
 
         """
-        if rdd_id is None:
-            return self._request("/{}/storage/rdd".format(app_id))
-        else:
-            return self._request("/{}/storage/rdd/{}".format(app_id, rdd_id))
+        if self._enabled:
+            if rdd_id is None:
+                return self._request("/{}/storage/rdd".format(app_id))
+            else:
+                return self._request(
+                    "/{}/storage/rdd/{}".format(app_id, rdd_id))
 
     def log_executors(self, data=None, app_id=None):
         """Log all executors info into the log file.
@@ -395,21 +393,6 @@ class Profiler:
                             if k != 'partitions':
                                 self._logger.info("{}: {}".format(k, v))
 
-    def profile_times(self, name, value):
-        """Store the execution or building time for a named quantum walk element.
-
-        Parameters
-        ----------
-        name : str
-            A name for the element.
-        value : float
-            The measured execution or building time of the element.
-
-        """
-        self._logger.info("profiling time for '{}'...".format(name))
-
-        self._times[name] = value
-
     def profile_rdd(self, name, app_id, rdd_id):
         """Store information about a RDD that represents a quantum walk element.
 
@@ -423,17 +406,18 @@ class Profiler:
             The RDD's id.
 
         """
-        self._logger.info("profiling RDD for '{}'...".format(name))
+        if self._enabled:
+            self._logger.info("profiling RDD for '{}'...".format(name))
 
-        if name not in self._rdd:
-            self._rdd[name] = self._default_rdd()
+            if name not in self._rdd:
+                self._rdd[name] = self._default_rdd()
 
-        data = self.request_rdd(app_id, rdd_id)
+            data = self.request_rdd(app_id, rdd_id)
 
-        if data is not None:
-            for k, v in data.items():
-                if k in self._rdd[name]:
-                    self._rdd[name][k] = v
+            if data is not None:
+                for k, v in data.items():
+                    if k in self._rdd[name]:
+                        self._rdd[name][k] = v
 
     def profile_resources(self, app_id):
         """Store information about the resources consumed by the application.
@@ -444,18 +428,19 @@ class Profiler:
             The application's id.
 
         """
-        self._logger.info("profiling application resources...")
+        if self._enabled:
+            self._logger.info("profiling application resources...")
 
-        data = self.request_executors(app_id)
+            data = self.request_executors(app_id)
 
-        for k in self._resources:
-            self._resources[k].append(0)
+            for k in self._resources:
+                self._resources[k].append(0)
 
-        if data is not None:
-            for d in data:
-                for k, v in d.items():
-                    if k in self._resources:
-                        self._resources[k][-1] += v
+            if data is not None:
+                for d in data:
+                    for k, v in d.items():
+                        if k in self._resources:
+                            self._resources[k][-1] += v
 
     def profile_executors(self, app_id, exec_id=None):
         """Store all executors info.
@@ -472,60 +457,35 @@ class Profiler:
             The executor's id.
 
         """
-        if exec_id is None:
-            self._logger.info("profiling resources of executors...")
-        else:
-            self._logger.info(
-                "profiling resources of executor {}...".format(exec_id))
-
-        data = self.request_executors(app_id)
-
-        if data is not None:
+        if self._enabled:
             if exec_id is None:
-                for d in data:
-                    if d['id'] not in self._executors:
-                        self._executors[d['id']] = self._default_executor()
-
-                    for k, v in d.items():
-                        if k in self._executors[d['id']]:
-                            self._executors[d['id']][k].append(v)
+                self._logger.info("profiling resources of executors...")
             else:
-                for d in data:
-                    if d['id'] == exec_id:
+                self._logger.info(
+                    "profiling resources of executor {}...".format(exec_id))
+
+            data = self.request_executors(app_id)
+
+            if data is not None:
+                if exec_id is None:
+                    for d in data:
                         if d['id'] not in self._executors:
                             self._executors[d['id']] = self._default_executor()
 
                         for k, v in d.items():
                             if k in self._executors[d['id']]:
                                 self._executors[d['id']][k].append(v)
-                        break
+                else:
+                    for d in data:
+                        if d['id'] == exec_id:
+                            if d['id'] not in self._executors:
+                                self._executors[d['id']
+                                                ] = self._default_executor()
 
-    def get_times(self, name=None):
-        """Get the measured time of all elements or of the named one.
-
-        Parameters
-        ----------
-        name : str, optional
-            A name for the element.
-
-        Returns
-        -------
-        dict or float
-            A dict with the measured time of all elements or the measured time of the named element.
-
-        """
-        if len(self._times):
-            if name is None:
-                return self._times.copy()
-            else:
-                if name not in self._times:
-                    self._logger.warning(
-                        "no measurement of time has been done for '{}'".format(name))
-                    return {}
-                return self._times[name]
-        else:
-            self._logger.warning("no measurement of time has been done")
-            return {}
+                            for k, v in d.items():
+                                if k in self._executors[d['id']]:
+                                    self._executors[d['id']][k].append(v)
+                            break
 
     def get_rdd(self, name=None):
         """Get the RDD resources of all elements or of the named one.
@@ -610,36 +570,6 @@ class Profiler:
             self._logger.warning(
                 "no measurement of executors resources has been done")
             return self._executors
-
-    def export_times(self, path, extension='csv'):
-        """Export all stored execution and/or building times.
-
-        Notes
-        -----
-        For now, only CSV extension is supported.
-
-        Parameters
-        ----------
-        path: str
-            The location of the files.
-        extension: str, optional
-            The extension of the files. Default value is 'csv'.
-
-        Raises
-        ------
-        NotImplementedError
-            If `extension` is not valid or not supported.
-
-        """
-        self._logger.info("exporting times in {} format...".format(extension))
-
-        if len(self._times):
-            self._export_values(
-                [self._times], self._times.keys(), path + 'times', extension)
-
-            self._logger.info("times successfully exported")
-        else:
-            self._logger.warning("no measurement of time has been done")
 
     def export_rdd(self, path, extension='csv'):
         """Export all stored RDD resources informations.
@@ -794,7 +724,6 @@ class Profiler:
             If `extension` is not valid or not supported.
 
         """
-        self.export_times(path, extension)
         self.export_rdd(path, extension)
         self.export_resources(path, extension)
         self.export_executors(path, extension)

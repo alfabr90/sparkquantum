@@ -53,12 +53,6 @@ sparkContext.setLogLevel('ERROR')
 coin = Hadamard1D()
 mesh = Line(size)
 
-# Adding the profiler to the classes and starting it
-profiler = QuantumWalkProfiler()
-
-coin.profiler = profiler
-mesh.profiler = profiler
-
 mesh_size = mesh.size
 
 # Center of the mesh
@@ -85,23 +79,18 @@ initial_state = State.create(
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
 
-dtqw.profiler = profiler
-
 # Performing the walk
 final_state = dtqw.walk(steps, initial_state)
 
-final_state.profiler = profiler
-
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()
-
-gauge.profiler = profiler
 
 joint = gauge.measure(final_state)
 joint.plot(walk_path + 'joint_1d1p', dpi=300)
 
 # Exporting the profiling data
-profiler.export(walk_path)
+dtqw.profiler.export(walk_path)
+gauge.profiler.export(walk_path)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()

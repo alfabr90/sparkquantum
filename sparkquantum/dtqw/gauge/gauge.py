@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.profiler import is_profiler
+from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Gauge', 'is_gauge']
@@ -17,7 +17,7 @@ class Gauge:
 
         self._logger = Utils.get_logger(
             self._spark_context, self.__class__.__name__)
-        self._profiler = None
+        self._profiler = QuantumWalkProfiler()
 
     @property
     def profiler(self):
@@ -28,13 +28,29 @@ class Gauge:
         """
         return self._profiler
 
-    @profiler.setter
-    def profiler(self, profiler):
-        if is_profiler(profiler) or profiler is None:
-            self._profiler = profiler
-        else:
-            raise TypeError(
-                "'Profiler' instance expected, not '{}'".format(type(profiler)))
+    def _profile_pdf(self, profiler_title, log_title, pdf, initial_time):
+        app_id = self._spark_context.applicationId
+
+        self._profiler.profile_resources(app_id)
+        self._profiler.profile_executors(app_id)
+
+        info = self._profiler.profile_pdf(
+            profiler_title,
+            pdf,
+            (datetime.now() - initial_time).total_seconds())
+
+        if info is not None:
+            self._logger.info(
+                "{} was done in {}s".format(log_title, info['buildingTime']))
+            self._logger.info(
+                "PDF with {} is consuming {} bytes in memory and {} bytes in disk".format(
+                    log_title, info['memoryUsed'], info['diskUsed']
+                )
+            )
+
+        if Utils.get_conf(self._spark_context,
+                          'quantum.dtqw.profiler.logExecutors') == 'True':
+            self._profiler.log_executors(app_id=app_id)
 
     def measure_system(
             self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
