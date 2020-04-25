@@ -2,7 +2,6 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.profiler import is_profiler
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Coin', 'is_coin']
@@ -19,7 +18,6 @@ class Coin:
 
         self._logger = Utils.get_logger(
             self._spark_context, self.__class__.__name__)
-        self._profiler = None
 
     @property
     def spark_context(self):
@@ -35,24 +33,6 @@ class Coin:
     def data(self):
         """:py:class:`pyspark.RDD`"""
         return self._data
-
-    @property
-    def profiler(self):
-        """:py:class:`sparkquantum.utils.profiler.Profiler`.
-
-        To disable profiling, set it to None.
-
-        """
-        return self._profiler
-
-    @profiler.setter
-    def profiler(self, profiler):
-        if is_profiler(profiler) or profiler is None:
-            self._profiler = profiler
-        else:
-            raise TypeError(
-                "'Profiler' instance expected, not '{}'".format(
-                    type(profiler)))
 
     def __del__(self):
         # In cases where multiple simulations are performed,
