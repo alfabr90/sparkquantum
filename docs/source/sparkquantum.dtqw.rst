@@ -8,6 +8,8 @@ Subpackages
    :maxdepth: 4
 
    sparkquantum.dtqw.coin
+   sparkquantum.dtqw.gauge
+   sparkquantum.dtqw.interaction
    sparkquantum.dtqw.mesh
 
 Submodules
