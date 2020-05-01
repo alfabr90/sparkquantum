@@ -4,7 +4,7 @@ This directory contains some example files to better illustrate how to use the s
 
 All previous examples have variations that simulate one and two-dimensional walks with one and two particles.
 
-Each file name gives a clue about which characteristics are being considered for the simulation. For instance, the python script `dtqw_1d2p_broken_links.py` simulates a Discrete Time Quantum Walk (`dtqw`) with two particles (`2p`) over a one-dimensional mesh (`1d`) with broken links (`broken_links`).
+Each file name gives a clue about which characteristics are being considered for the simulation. For instance, the Python script `dtqw_1d2p_broken_links.py` simulates a Discrete Time Quantum Walk (`dtqw`) with two particles (`2p`) over a one-dimensional mesh (`1d`) with broken links (`broken_links`).
 
 Below, there is a list with a summary of each example file:
 

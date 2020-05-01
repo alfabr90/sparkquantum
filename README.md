@@ -1,6 +1,6 @@
 # sparkquantum
 
-The idea of this project (it's still needed a better name for it) is to provide to the community a quantum algorithms simulator using [Apache Spark](https://spark.apache.org/). For now, the user can only simulate discrete time quantum walks, but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
+The idea of this project (perhaps it's still needed a better name for it) is to provide to the community a quantum algorithms simulator using [Apache Spark](https://spark.apache.org/). As they evolve, some quantum algorithms simulations acquire characteristics of a Big Data application due to the exponential grow suffered by their data structures. Thus, employing a framework like Apache Spark is a good approach, making it possible to execute larger simulations in high-performance computing (HPC) environments than when using single-processors, general purpose computers, allowing such data to be generated and processed at a reduced time in a parallel/distributed way. For now, the user can only simulate discrete time quantum walks (DTQW), but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
 
 ## Requirements
 
@@ -10,13 +10,13 @@ The _pyspark_ package is also required, but instead of installing it in the user
 
 ## Discrete Time Quantum Walk
 
-The `dtqw` module of the simulator allows the user to simulate one and two-dimensional discrete time quantum walks composed by _n_ particles, with or without mesh percolations (broken links). The supported coins and meshes in those cases are:
+The `dtqw` module of the simulator allows the user to simulate one and two-dimensional DTQW composed by _n_ particles, with or without mesh percolations (broken links). By default, the following coins and meshes are already implemented:
 
 - For one-dimensional walks:
   - Coin:
     - Hadamard
   - Mesh:
-    - Line: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a correct result;
+    - Line: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation;
     - Segment: a line-based mesh with reflective sites on each border. The particles can start their walk at any site of the mesh;
     - Cycle: a line-based mesh with cyclic sites on each border. The particles can start their walk at any site of the mesh
 - For two-dimensional walks:
@@ -25,17 +25,21 @@ The `dtqw` module of the simulator allows the user to simulate one and two-dimen
     - Grover
     - Fourier
   - Mesh:
-    - Lattice: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a correct result. It's the Line's two-dimension counterpart;
+    - Lattice: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the Line's two-dimension counterpart;
     - Box: a lattice-based mesh with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Segment's two-dimension counterpart;
     - Torus: a lattice-based mesh with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Cycle's two-dimension counterpart
 
+TODO: explain how the user can implement custom coins and meshes
+
 ### Mesh Percolations
 
-The user can simulate discrete time quantum walks with some mesh percolations. The supported variations are Permanent and Random. For the first variation, the user must instantiate its corresponding class (`PermanentBrokenLinks`) passing in a list with the number of the edges that are broken. The second one is represented by the `RandomBrokenLinks` class, which needs to know the probability value that will be used to generate the broken edges of the mesh.
+The user can simulate DTQWs with some mesh percolations. The already implemented variations are "permanent" and "random". For the former, the user must instantiate its corresponding class (`PermanentBrokenLinks`) passing in a list with the number of the edges that are broken. The second one is represented by the `RandomBrokenLinks` class, which needs to know the probability value that will be used to generate the broken edges of the mesh in a random fashion.
+
+TODO: explain how the user can use permanent broken links and implement custom mesh percolations
 
 ### Example
 
-Here, a simple example of how to simulate a discrete time quantum walk with just one particle over a line mesh:
+Here, a simple example of how to simulate a DTQW with just one particle over a line mesh:
 
 ```python
 import math
@@ -56,6 +60,8 @@ sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
 sparkContext = SparkContext(conf=sparkConf)
 
 # In this example, the walk will last 30 steps
+# As we chose a `Line` mesh, its size will be
+# automatically calculated, i.e., 2 * size + 1 sites
 size = steps = 30
 
 # Choosing a coin and a mesh for the walk
@@ -65,9 +71,13 @@ mesh = Line(size)
 mesh_size = mesh.size
 
 # Center of the mesh
+# Notice that we set a tuple with only one element
+# as we are simulating a DTQW with one particle
 positions = (int((mesh_size - 1) / 2), )
 
 # Options of initial states
+# Notice that we set a tuple with only one element
+# as we are simulating a DTQW with one particle
 # |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
 amplitudes = (((1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)), )
