@@ -1,5 +1,8 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
+
+# Distribution / packaging
 build/
-other/
-output/
-spark/
+develop-eggs/
+dist/
+*.egg-info/
