@@ -1,7 +1,7 @@
 import os
-import sys
-import math
 import logging
+import math
+import sys
 import tempfile as tf
 
 __all__ = ['Utils']

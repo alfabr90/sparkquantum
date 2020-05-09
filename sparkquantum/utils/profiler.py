@@ -1,7 +1,7 @@
 import csv
 import json
 from datetime import datetime
-from urllib import request, error
+from urllib import error, request
 
 from pyspark import SparkContext
 

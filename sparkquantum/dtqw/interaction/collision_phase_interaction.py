@@ -1,5 +1,4 @@
 import cmath
-
 from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel

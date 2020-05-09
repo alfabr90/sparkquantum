@@ -1,9 +1,10 @@
+from datetime import datetime
+
 import math
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-from datetime import datetime
+import numpy as np
 
 from sparkquantum.math.statistics.pdf import PDF
 
