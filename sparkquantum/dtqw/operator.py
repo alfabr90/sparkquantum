@@ -1,8 +1,7 @@
 import math
-import numpy as np
 
-from sparkquantum.math.matrix import Matrix
 from sparkquantum.dtqw.state import State, is_state
+from sparkquantum.math.matrix import Matrix
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Operator', 'is_operator']

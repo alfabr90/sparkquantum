@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 
 from sparkquantum.math.base import Base

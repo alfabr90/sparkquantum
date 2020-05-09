@@ -1,11 +1,12 @@
-import numpy as np
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-from datetime import datetime
+import numpy as np
 
-from sparkquantum.math.base import Base
 from sparkquantum.dtqw.mesh.mesh import is_mesh
+from sparkquantum.math.base import Base
 
 __all__ = ['PDF', 'is_pdf']
 
