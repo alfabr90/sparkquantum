@@ -2,10 +2,10 @@ import numpy as np
 
 from sparkquantum.dtqw.coin.coin2d.coin2d import Coin2D
 
-__all__ = ['Grover2D']
+__all__ = ['Grover']
 
 
-class Grover2D(Coin2D):
+class Grover(Coin2D):
     """Class that represents the two-dimensional Grover coin."""
 
     def __init__(self):

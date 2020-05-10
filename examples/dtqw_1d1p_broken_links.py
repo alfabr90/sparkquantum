@@ -2,7 +2,7 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
@@ -45,7 +45,7 @@ sparkContext.setLogLevel('ERROR')
 broken_links = RandomBrokenLinks(bl_prob)
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D()
+coin = Hadamard()
 mesh = Line(size, broken_links=broken_links)
 
 mesh_size = mesh.size

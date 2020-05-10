@@ -3,7 +3,7 @@ import cmath
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
@@ -50,7 +50,7 @@ sparkContext.setLogLevel('ERROR')
 broken_links = RandomBrokenLinks(bl_prob)
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D()
+coin = Hadamard()
 mesh = Line(size, broken_links=broken_links)
 
 coin_size = coin.size

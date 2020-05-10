@@ -46,7 +46,7 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
@@ -65,7 +65,7 @@ sparkContext = SparkContext(conf=sparkConf)
 size = steps = 30
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D()
+coin = Hadamard()
 mesh = Line(size)
 
 mesh_size = mesh.size
@@ -73,22 +73,21 @@ mesh_size = mesh.size
 # Center of the mesh
 # Notice that we set a tuple with only one element
 # as we are simulating a DTQW with one particle
-positions = (int((mesh_size - 1) / 2), )
+positions = [int((mesh_size - 1) / 2)]
 
 # Options of initial states
 # Notice that we set a tuple with only one element
 # as we are simulating a DTQW with one particle
-# |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
-amplitudes = (((1.0 + 0.0j) / math.sqrt(2),
-               (0.0 - 1.0j) / math.sqrt(2)), )
+# |c>|p> --> (|0>|p> - i|1>|p>) / sqrt(2)
+amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
+               (0.0 - 1.0j) / math.sqrt(2)]]
 
 # Building the initial state
 initial_state = State.create(
-    coin,
-    mesh,
-    positions,
-    amplitudes,
-    representationFormat)
+                coin,
+                mesh,
+                positions,
+                amplitudes)
 
 # Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)

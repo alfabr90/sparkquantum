@@ -2,9 +2,9 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
+from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
-from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
+from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
@@ -40,8 +40,8 @@ sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard2D()
-mesh = LatticeDiagonal((size, size))
+coin = Hadamard()
+mesh = Lattice((size, size))
 
 mesh_size = mesh.size[0] * mesh.size[1]
 

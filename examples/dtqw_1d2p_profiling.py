@@ -4,7 +4,7 @@ import logging
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
@@ -55,7 +55,7 @@ sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D()
+coin = Hadamard()
 mesh = Line(size)
 
 coin_size = coin.size

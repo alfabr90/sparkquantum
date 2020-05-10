@@ -6,10 +6,10 @@ from sparkquantum.dtqw.mesh.mesh2d.natural.natural import Natural
 from sparkquantum.dtqw.operator import Operator
 from sparkquantum.utils.utils import Utils
 
-__all__ = ['BoxNatural']
+__all__ = ['Box']
 
 
-class BoxNatural(Natural):
+class Box(Natural):
     """Class for Natural Box mesh."""
 
     def __init__(self, size, broken_links=None):
