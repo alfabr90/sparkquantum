@@ -4,6 +4,7 @@ import math
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.coin.coin import is_coin
+from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.math.vector import Vector
 from sparkquantum.utils.utils import Utils
@@ -14,7 +15,8 @@ __all__ = ['State', 'is_state']
 class State(Vector):
     """Class for the system state."""
 
-    def __init__(self, rdd, shape, mesh, num_particles):
+    def __init__(self, rdd, shape, coin, mesh,
+                 num_particles, interaction=None):
         """Build a state object.
 
         Parameters
@@ -23,16 +25,28 @@ class State(Vector):
             The base RDD of this object.
         shape : tuple
             The shape of this state object. Must be a two-dimensional tuple.
+        coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
+            The coin for the walk.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles are walking on.
         num_particles : int
             The number of particles present in the walk.
+        interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
+            A particles interaction object.
 
         """
         super().__init__(rdd, shape, data_type=complex)
 
+        self._coin = coin
         self._mesh = mesh
         self._num_particles = num_particles
+        self._interaction = interaction
+
+        if not is_coin(self._coin):
+            self._logger.error(
+                "'Coin' instance expected, not '{}'".format(type(self._coin)))
+            raise TypeError(
+                "'Coin' instance expected, not '{}'".format(type(self._coin)))
 
         if not is_mesh(mesh):
             self._logger.error(
@@ -42,11 +56,23 @@ class State(Vector):
                 "'Mesh' instance expected, not '{}'".format(
                     type(mesh)))
 
-        if self._num_particles < 1:
+        if self._num_particles is None or self._num_particles < 1:
             self._logger.error(
                 "invalid number of particles. It must be greater than or equal to 1")
             raise ValueError(
                 "invalid number of particles. It must be greater than or equal to 1")
+
+        if self._num_particles > 1 and self._interaction is not None and not is_interaction(
+                self._interaction):
+            self._logger.error(
+                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+            raise TypeError(
+                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+
+    @property
+    def coin(self):
+        """:py:class:`sparkquantum.dtqw.coin.coin.Coin`"""
+        return self._coin
 
     @property
     def mesh(self):
@@ -57,6 +83,11 @@ class State(Vector):
     def num_particles(self):
         """int"""
         return self._num_particles
+
+    @property
+    def interaction(self):
+        """:py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`"""
+        return self._interaction
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -308,7 +339,7 @@ class State(Vector):
         return State(rdd, new_shape, self._mesh, self._num_particles)
 
     @staticmethod
-    def create(coin, mesh, positions, amplitudes,
+    def create(coin, mesh, positions, amplitudes, interaction=None,
                representationFormat=Utils.StateRepresentationFormatCoinPosition):
         """Create a system state.
 
@@ -318,13 +349,15 @@ class State(Vector):
         Parameters
         ----------
         coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
-            A coin object.
+            The coin for the walk.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            The mesh where the particle(s) is(are) walking on.
+            The mesh where the particles are walking on.
         positions : tuple or list
             The position of each particle present in the quantum walk.
         amplitudes : tuple or list
             The amplitudes for each qubit of each particle in the quantum walk.
+        interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
+            A particles interaction object.
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
             Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
@@ -340,11 +373,13 @@ class State(Vector):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            Iif the length of `positions` and `amplitudes` are not compatible (or invalid) or
+            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         TypeError
-            If `coin` is not a :py:class:`sparkquantum.dtqw.coin.coin.Coin` or
-            if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`.
+            If `coin` is not a :py:class:`sparkquantum.dtqw.coin.coin.Coin`,
+            if `mesh` is not a :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` or
+            if `interaction` is not a :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`.
 
         """
         spark_context = SparkContext.getOrCreate()
@@ -377,6 +412,25 @@ class State(Vector):
 
         num_particles = len(positions)
 
+        if num_particles < 1:
+            logger.error(
+                "invalid number of particles. It must be greater than or equal to 1")
+            raise ValueError(
+                "invalid number of particles. It must be greater than or equal to 1")
+
+        if num_particles != len(amplitudes):
+            logger.error(
+                "incompatible length of positions ({}) and amplitudes ({})".format(num_particles, len(amplitudes)))
+            raise ValueError(
+                "incompatible length of positions ({}) and amplitudes ({})".format(num_particles, len(amplitudes)))
+
+        if num_particles > 1 and interaction is not None and not is_interaction(
+                interaction):
+            logger.error(
+                "'Interaction' instance expected, not '{}'".format(type(interaction)))
+            raise TypeError(
+                "'Interaction' instance expected, not '{}'".format(type(interaction)))
+
         shape = (coin_size * mesh_size, 1)
 
         for p in range(num_particles):
@@ -400,8 +454,10 @@ class State(Vector):
                 State(
                     rdd,
                     shape,
+                    coin,
                     mesh,
-                    num_particles))
+                    num_particles,
+                    interaction))
 
         initial_state = base_states[0]
 

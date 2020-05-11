@@ -2,9 +2,9 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin2d.hadamard2d import Hadamard2D
+from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
-from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import LatticeDiagonal
+from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
@@ -40,33 +40,33 @@ sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard2D()
-mesh = LatticeDiagonal((size, size))
+coin = Hadamard()
+mesh = Lattice((size, size))
 
 mesh_size = mesh.size[0] * mesh.size[1]
 
 # Center of the mesh
-positions = (int((mesh.size[0] - 1) / 2) *
-             mesh.size[1] + int((mesh.size[1] - 1) / 2), )
+positions = [int((mesh.size[0] - 1) / 2) *
+             mesh.size[1] + int((mesh.size[1] - 1) / 2)]
 
 # Options of initial states
-# |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-amplitudes = ((((1.0 + 0.0j) / 2),
-               ((0.0 + 1.0j) / 2),
-               ((0.0 - 1.0j) / 2),
-               ((1.0 + 0.0j) / 2)), )
+# |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> - i|1,0>|x,y> + |1,1>|x,y>) / 2
+amplitudes = [[(1.0 + 0.0j) / 2,
+               (0.0 + 1.0j) / 2,
+               (0.0 - 1.0j) / 2,
+               (1.0 + 0.0j) / 2]]
 
-# |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-# amplitudes = ((((1.0 + 0.0j) / 2),
-#               ((0.0 + 1.0j) / 2),
-#               ((0.0 + 1.0j) / 2),
-#               ((-1.0 - 0.0j) / 2)), )
+# |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> + i|1,0>|x,y> - |1,1>|x,y>) / 2
+# amplitudes = [[(1.0 + 0.0j) / 2,
+#                (0.0 + 1.0j) / 2,
+#                (0.0 + 1.0j) / 2,
+#                (-1.0 - 0.0j) / 2]]
 
-# |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-# amplitudes = ((((1.0 + 0.0j) / 2),
-#               ((-1.0 - 0.0j) / 2),
-#               ((-1.0 - 0.0j) / 2),
-#               ((1.0 + 0.0j) / 2)), )
+# |i,j>|x,y> --> (|0,0>|x,y> - |0,1>|x,y> - |1,0>|x,y> + |1,1>|x,y>) / 2
+# amplitudes = [[(1.0 + 0.0j) / 2],
+#                (-1.0 - 0.0j) / 2],
+#                (-1.0 - 0.0j) / 2],
+#                (1.0 + 0.0j) / 2)]]
 
 # Building the initial state
 initial_state = State.create(
@@ -76,11 +76,11 @@ initial_state = State.create(
     amplitudes,
     representationFormat)
 
-# Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
+# Instantiating the walk
+dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
-final_state = dtqw.walk(steps, initial_state)
+final_state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()

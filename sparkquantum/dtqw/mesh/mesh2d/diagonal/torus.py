@@ -6,10 +6,10 @@ from sparkquantum.dtqw.mesh.mesh2d.diagonal.diagonal import Diagonal
 from sparkquantum.dtqw.operator import Operator
 from sparkquantum.utils.utils import Utils
 
-__all__ = ['TorusDiagonal']
+__all__ = ['Torus']
 
 
-class TorusDiagonal(Diagonal):
+class Torus(Diagonal):
     """Class for Diagonal Torus mesh."""
 
     def __init__(self, size, broken_links=None):

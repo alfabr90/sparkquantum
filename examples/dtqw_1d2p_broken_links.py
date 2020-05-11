@@ -3,7 +3,7 @@ import cmath
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum.dtqw.coin.coin1d.hadamard1d import Hadamard1D
+from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
@@ -50,40 +50,40 @@ sparkContext.setLogLevel('ERROR')
 broken_links = RandomBrokenLinks(bl_prob)
 
 # Choosing a coin and a mesh for the walk
-coin = Hadamard1D()
+coin = Hadamard()
 mesh = Line(size, broken_links=broken_links)
 
 coin_size = coin.size
 mesh_size = mesh.size
 
+interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
+
 # Options of initial states
 if not entangled:
     # Center of the mesh
-    positions = (int((mesh_size - 1) / 2), int((mesh_size - 1) / 2))
+    positions = [int((mesh_size - 1) / 2), int((mesh_size - 1) / 2)]
 
     amplitudes = []
 
-    # |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
-    # amplitudes.append(
-    #     ((1.0 + 0.0j) / math.sqrt(2),
-    #      (0.0 - 1.0j) / math.sqrt(2)))
+    # |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
+    # amplitudes.append([(1.0 + 0.0j) / math.sqrt(2),
+    #                    (0.0 - 1.0j) / math.sqrt(2)])
 
-    # |i>|x> --> |0>|0>
-    amplitudes.append(((1.0 + 0.0j), ))
+    # |i>|x> --> |0>|x>
+    amplitudes.append([(1.0 + 0.0j)])
 
-    # |i>|x> --> |1>|0>
-    # amplitudes.append((0, (1.0 + 0.0j)))
+    # |i>|x> --> |1>|x>
+    # amplitudes.append([0, (1.0 + 0.0j)])
 
-    # |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
-    # amplitudes.append(
-    #     ((1.0 + 0.0j) / math.sqrt(2),
-    #      (0.0 - 1.0j) / math.sqrt(2)))
+    # |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
+    # amplitudes.append([(1.0 + 0.0j) / math.sqrt(2),
+    #                    (0.0 - 1.0j) / math.sqrt(2)])
 
-    # |i>|x> --> |0>|0>
-    # amplitudes.append(((1.0 + 0.0j), ))
+    # |i>|x> --> |0>|x>
+    # amplitudes.append([(1.0 + 0.0j)])
 
-    # |i>|x> --> |1>|0>
-    amplitudes.append((0, (1.0 + 0.0j)))
+    # |i>|x> --> |1>|x>
+    amplitudes.append([0, (1.0 + 0.0j)])
 
     initial_state = State.create(
         coin,
@@ -96,37 +96,23 @@ else:
     position = int((mesh_size - 1) / 2)
 
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
-        # |i1>|x1>|i2>|x2> --> (|1>|0>|0>|0> - |0>|0>|1>|0>) / sqrt(2)
-        state = (
-            ((1 * mesh_size + position) * coin_size * mesh_size +
-             0 * mesh_size + position, 1.0 / math.sqrt(2)),
-            ((0 * mesh_size + position) * coin_size * mesh_size +
-             1 * mesh_size + position, -1.0 / math.sqrt(2)),
-        )
+        # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
+        state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1.0 / math.sqrt(2)],
+                 [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, -1.0 / math.sqrt(2)]]
     elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
-        # |x1>|i1>|x2>|i2> --> (|0>|1>|0>|0> - |0>|0>|0>|1>) / sqrt(2)
-        state = (
-            ((position * coin_size + 1) * mesh_size * coin_size +
-             position * coin_size + 0, 1.0 / math.sqrt(2)),
-            ((position * coin_size + 0) * mesh_size * coin_size +
-             position * coin_size + 1, -1.0 / math.sqrt(2)),
-        )
+        # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
+        state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1.0 / math.sqrt(2)],
+                 [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, -1.0 / math.sqrt(2)]]
 
     rdd = sparkContext.parallelize(state)
-    shape = ((coin_size * mesh_size) ** num_particles, 1)
-    initial_state = State(rdd, shape, mesh, num_particles)
+    shape = [(coin_size * mesh_size) ** num_particles, 1]
+    initial_state = State(rdd, shape, coin, mesh, num_particles, interaction)
 
-interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
-
-# Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(
-    coin,
-    mesh,
-    num_particles,
-    interaction=interaction)
+# Instantiating the walk
+dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
-final_state = dtqw.walk(steps, initial_state)
+final_state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()

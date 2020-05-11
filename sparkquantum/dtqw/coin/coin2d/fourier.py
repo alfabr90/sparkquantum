@@ -2,10 +2,10 @@ import numpy as np
 
 from sparkquantum.dtqw.coin.coin2d.coin2d import Coin2D
 
-__all__ = ['Fourier2D']
+__all__ = ['Fourier']
 
 
-class Fourier2D(Coin2D):
+class Fourier(Coin2D):
     """Class that represents the two-dimensional Fourier coin."""
 
     def __init__(self):

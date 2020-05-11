@@ -7,10 +7,10 @@ from sparkquantum.dtqw.mesh.mesh2d.natural.natural import Natural
 from sparkquantum.dtqw.operator import Operator
 from sparkquantum.utils.utils import Utils
 
-__all__ = ['LatticeNatural']
+__all__ = ['Lattice']
 
 
-class LatticeNatural(Natural):
+class Lattice(Natural):
     """Class for Natural Lattice mesh."""
 
     def __init__(self, size, broken_links=None):

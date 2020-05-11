@@ -2,10 +2,10 @@ import numpy as np
 
 from sparkquantum.dtqw.coin.coin2d.coin2d import Coin2D
 
-__all__ = ['Hadamard2D']
+__all__ = ['Hadamard']
 
 
-class Hadamard2D(Coin2D):
+class Hadamard(Coin2D):
     """Class that represents the two-dimensional Hadamard coin."""
 
     def __init__(self):

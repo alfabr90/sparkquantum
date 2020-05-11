@@ -6,10 +6,10 @@ from sparkquantum.dtqw.mesh.mesh2d.diagonal.diagonal import Diagonal
 from sparkquantum.dtqw.operator import Operator
 from sparkquantum.utils.utils import Utils
 
-__all__ = ['BoxDiagonal']
+__all__ = ['Box']
 
 
-class BoxDiagonal(Diagonal):
+class Box(Diagonal):
     """Class for Diagonal Box mesh."""
 
     def __init__(self, size, broken_links=None):

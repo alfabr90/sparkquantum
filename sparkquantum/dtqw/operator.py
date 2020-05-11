@@ -126,7 +126,8 @@ class Operator(Matrix):
             lambda a, b: a + b, numPartitions=self.data.getNumPartitions()
         )
 
-        return State(rdd, shape, other.mesh, other.num_particles)
+        return State(rdd, shape, other.coin, other.mesh,
+                     other.num_particles, other.interaction)
 
     def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
         """Multiply this operator with another one or with a system state.
