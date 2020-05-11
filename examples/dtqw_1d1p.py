@@ -45,17 +45,18 @@ mesh = Line(size)
 mesh_size = mesh.size
 
 # Center of the mesh
-positions = (int((mesh_size - 1) / 2), )
+positions = [int((mesh_size - 1) / 2)]
 
 # Options of initial states
-# |i>|x> --> (|0>|0> - i|1>|0>) / sqrt(2)
-amplitudes = (((1.0 + 0.0j) / math.sqrt(2), (0.0 - 1.0j) / math.sqrt(2)), )
+# |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
+amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
+               (0.0 - 1.0j) / math.sqrt(2)]]
 
-# |i>|x> --> |0>|0>
-# amplitudes = (((1.0 + 0.0j), ), )
+# |i>|x> --> |0>|x>
+# amplitudes = [[(1.0 + 0.0j), 0]]
 
-# |i>|x> --> |1>|0>
-# amplitudes = ((0, (1.0 + 0.0j)), )
+# |i>|x> --> |1>|x>
+# amplitudes = [[0, (1.0 + 0.0j)]]
 
 # Building the initial state
 initial_state = State.create(
@@ -65,11 +66,11 @@ initial_state = State.create(
     amplitudes,
     representationFormat)
 
-# Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
+# Instantiating the walk
+dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
-final_state = dtqw.walk(steps, initial_state)
+final_state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()

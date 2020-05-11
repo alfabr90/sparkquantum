@@ -78,7 +78,7 @@ positions = [int((mesh_size - 1) / 2)]
 # Options of initial states
 # Notice that we set a tuple with only one element
 # as we are simulating a DTQW with one particle
-# |c>|p> --> (|0>|p> - i|1>|p>) / sqrt(2)
+# |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
 amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)]]
 
@@ -89,11 +89,11 @@ initial_state = State.create(
                 positions,
                 amplitudes)
 
-# Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(coin, mesh, num_particles)
+# Instantiating the walk
+dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
-final_state = dtqw.walk(steps, initial_state)
+final_state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()

@@ -5,12 +5,9 @@ from glob import glob
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.dtqw.coin.coin import is_coin
-from sparkquantum.dtqw.interaction.interaction import is_interaction
-from sparkquantum.dtqw.mesh.mesh import is_mesh
-from sparkquantum.dtqw.operator import Operator, is_operator
+from sparkquantum.dtqw.operator import Operator
 from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
-from sparkquantum.dtqw.state import State
+from sparkquantum.dtqw.state import State, is_state
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['DiscreteTimeQuantumWalk']
@@ -19,27 +16,28 @@ __all__ = ['DiscreteTimeQuantumWalk']
 class DiscreteTimeQuantumWalk:
     """Build the necessary operators and perform a discrete time quantum walk."""
 
-    def __init__(self, coin, mesh, num_particles, interaction=None):
+    def __init__(self, initial_state,
+                 storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build a discrete time quantum walk object.
 
         Parameters
         ----------
-        coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
-            The coin for the walk.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            The mesh where the particles will walk over.
-        num_particles : int
-            The number of particles present in the walk.
-        interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
-            A particles interaction object.
+        initial_state : :py:class:`sparkquantum.dtqw.state.State`
+            The initial state of the system.
+        storage_level : :py:class:`pyspark.StorageLevel`, optional
+            The desired storage level when materializing the operators' RDD.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         """
         self._spark_context = SparkContext.getOrCreate()
-        self._coin = coin
-        self._mesh = mesh
-        self._num_particles = num_particles
+        self._initial_state = initial_state
+        self._coin = self._initial_state.coin
+        self._mesh = self._initial_state.mesh
+        self._num_particles = self._initial_state.num_particles
 
-        self._interaction = interaction
+        self._interaction = self._initial_state.interaction
+
+        self._storage_level = storage_level
 
         self._coin_operator = None
         self._shift_operator = None
@@ -50,30 +48,11 @@ class DiscreteTimeQuantumWalk:
             self._spark_context, self.__class__.__name__)
         self._profiler = QuantumWalkProfiler()
 
-        if self._num_particles < 1:
+        if not is_state(self._initial_state):
             self._logger.error(
-                "invalid number of particles. It must be greater than or equal to 1")
-            raise ValueError(
-                "invalid number of particles. It must be greater than or equal to 1")
-
-        if not is_coin(self._coin):
-            self._logger.error(
-                "'Coin' instance expected, not '{}'".format(type(self._coin)))
+                "'State' instance expected, not '{}'".format(type(self._coin)))
             raise TypeError(
-                "'Coin' instance expected, not '{}'".format(type(self._coin)))
-
-        if not is_mesh(self._mesh):
-            self._logger.error(
-                "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
-            raise TypeError(
-                "'Mesh' instance expected, not '{}'".format(type(self._mesh)))
-
-        if self._num_particles > 1 and self._interaction is not None and not is_interaction(
-                self._interaction):
-            self._logger.error(
-                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
-            raise TypeError(
-                "'Interaction' instance expected, not '{}'".format(type(self._interaction)))
+                "'State' instance expected, not '{}'".format(type(self._coin)))
 
     @property
     def spark_context(self):
@@ -81,24 +60,9 @@ class DiscreteTimeQuantumWalk:
         return self._spark_context
 
     @property
-    def coin(self):
-        """:py:class:`sparkquantum.dtqw.coin.coin.Coin`"""
-        return self._coin
-
-    @property
-    def mesh(self):
-        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
-        return self._mesh
-
-    @property
-    def num_particles(self):
-        """int"""
-        return self._num_particles
-
-    @property
-    def interaction(self):
-        """:py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`"""
-        return self._interaction
+    def initial_state(self):
+        """:py:class:`sparkquantum.dtqw.state.State`"""
+        return self._initial_state
 
     @property
     def coin_operator(self):
@@ -433,13 +397,14 @@ class DiscreteTimeQuantumWalk:
 
                 wo = Operator(
                     rdd, shape, coord_format
-                ).persist(storage_level)
+                ).persist(self._storage_level)
 
                 if Utils.get_conf(
                         self._spark_context, 'quantum.dtqw.walkOperator.checkpoint') == 'True':
                     wo = wo.checkpoint()
 
-                self._walk_operators.append(wo.materialize(storage_level))
+                self._walk_operators.append(
+                    wo.materialize(self._storage_level))
 
                 self._profile_operator(
                     'walkOperatorParticle{}'.format(p + 1),
@@ -537,19 +502,13 @@ class DiscreteTimeQuantumWalk:
 
         return configs
 
-    def walk(self, steps, initial_state,
-             storage_level=StorageLevel.MEMORY_AND_DISK):
+    def walk(self, steps):
         """Perform a walk.
 
         Parameters
         ----------
         steps : int
             The number of steps of the walk.
-        initial_state : :py:class:`sparkquantum.dtqw.state.State`
-            The initial state of the system.
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD.
-            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
@@ -581,7 +540,7 @@ class DiscreteTimeQuantumWalk:
                 "invalid number of steps for the chosen mesh")
             raise ValueError("invalid number of steps for the chosen mesh")
 
-        result = initial_state.materialize(storage_level)
+        result = self._initial_state.materialize(self._storage_level)
 
         app_id = self._spark_context.applicationId
 
@@ -610,11 +569,11 @@ class DiscreteTimeQuantumWalk:
         # random broken links
         if not self._mesh.broken_links or not self._mesh.broken_links.is_random():
             self._create_walk_operators(
-                Utils.MatrixCoordinateMultiplier, storage_level)
+                Utils.MatrixCoordinateMultiplier, self._storage_level)
 
         if self._num_particles > 1 and self._interaction is not None and self._interaction_operator is None:
             self._create_interaction_operator(
-                Utils.MatrixCoordinateMultiplier, storage_level)
+                Utils.MatrixCoordinateMultiplier, self._storage_level)
 
         for i in range(1, steps + 1, 1):
             # When there is a broken links probability, the walk operators will
@@ -623,7 +582,7 @@ class DiscreteTimeQuantumWalk:
                 self._destroy_shift_operator()
                 self._destroy_walk_operators()
                 self._create_walk_operators(
-                    Utils.MatrixCoordinateMultiplier, storage_level)
+                    Utils.MatrixCoordinateMultiplier, self._storage_level)
 
             t_tmp = datetime.now()
 
@@ -652,7 +611,7 @@ class DiscreteTimeQuantumWalk:
                 if num_partitions:
                     result_tmp.define_partitioner(num_partitions)
 
-            result_tmp.materialize(storage_level)
+            result_tmp.materialize(self._storage_level)
             result.unpersist()
 
             if configs['checkpointing_frequency'] >= 0 and i % configs['checkpointing_frequency'] == 0:

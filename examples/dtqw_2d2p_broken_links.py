@@ -57,49 +57,51 @@ mesh = Lattice((size, size), broken_links=broken_links)
 coin_size = coin.size
 mesh_size = mesh.size[0] * mesh.size[1]
 
+interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
+
 # Options of initial states
 if not entangled:
     # Center of the mesh
-    positions = (int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2),
-                 int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2))
+    positions = [int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2),
+                 int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2)]
 
     amplitudes = []
 
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-    amplitudes.append((((1.0 + 0.0j) / 2),
-                       ((0.0 + 1.0j) / 2),
-                       ((0.0 - 1.0j) / 2),
-                       ((1.0 + 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> - i|1,0>|x,y> + |1,1>|x,y>) / 2
+    amplitudes.append([(1.0 + 0.0j) / 2,
+                       (0.0 + 1.0j) / 2,
+                       (0.0 - 1.0j) / 2,
+                       (1.0 + 0.0j) / 2])
 
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-    # amplitudes.append((((1.0 + 0.0j) / 2),
-    #               ((0.0 + 1.0j) / 2),
-    #               ((0.0 + 1.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> + i|1,0>|x,y> - |1,1>|x,y>) / 2
+    # amplitudes.append([(1.0 + 0.0j) / 2,
+    #                    (0.0 + 1.0j) / 2,
+    #                    (0.0 + 1.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2])
 
-    # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-    # amplitudes.append((((1.0 + 0.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2),
-    #               ((1.0 + 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> - |0,1>|x,y> - |1,0>|x,y> + |1,1>|x,y>) / 2
+    # amplitudes.append([(1.0 + 0.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2,
+    #                    (1.0 + 0.0j) / 2])
 
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> - i|1,0>|0,0> + |1,1>|0,0>) / 2
-    amplitudes.append((((1.0 + 0.0j) / 2),
-                       ((0.0 + 1.0j) / 2),
-                       ((0.0 - 1.0j) / 2),
-                       ((1.0 + 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> - i|1,0>|x,y> + |1,1>|x,y>) / 2
+    amplitudes.append([(1.0 + 0.0j) / 2,
+                       (0.0 + 1.0j) / 2,
+                       (0.0 - 1.0j) / 2,
+                       (1.0 + 0.0j) / 2])
 
-    # |i,j>|x,y> --> (|0,0>|0,0> + i|0,1>|0,0> + i|1,0>|0,0> - |1,1>|0,0>) / 2
-    # amplitudes.append((((1.0 + 0.0j) / 2),
-    #               ((0.0 + 1.0j) / 2),
-    #               ((0.0 + 1.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> + i|1,0>|x,y> - |1,1>|x,y>) / 2
+    # amplitudes.append([(1.0 + 0.0j) / 2,
+    #                    (0.0 + 1.0j) / 2,
+    #                    (0.0 + 1.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2])
 
-    # |i,j>|x,y> --> (|0,0>|0,0> - |0,1>|0,0> - |1,0>|0,0> + |1,1>|0,0>) / 2
-    # amplitudes.append((((1.0 + 0.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2),
-    #               ((-1.0 - 0.0j) / 2),
-    #               ((1.0 + 0.0j) / 2)))
+    # |i,j>|x,y> --> (|0,0>|x,y> - |0,1>|x,y> - |1,0>|x,y> + |1,1>|x,y>) / 2
+    # amplitudes.append([(1.0 + 0.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2,
+    #                    (-1.0 - 0.0j) / 2,
+    #                    (1.0 + 0.0j) / 2])
 
     initial_state = State.create(
         coin,
@@ -113,37 +115,23 @@ else:
         mesh.size[1] + int((mesh.size[1] - 1) / 2)
 
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
-        # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|0,0>|0,0>|0,0> - |0,0>|0,0>|1,1>|0,0>) / sqrt(2)
-        state = (
-            ((3 * mesh_size + position) * coin_size * mesh_size +
-             (0 * mesh_size + position), 1.0 / math.sqrt(2)),
-            ((0 * mesh_size + position) * coin_size * mesh_size +
-             (3 * mesh_size + position), -1.0 / math.sqrt(2))
-        )
+        # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
+        state = [[(3 * mesh_size + position) * coin_size * mesh_size + (0 * mesh_size + position), 1.0 / math.sqrt(2)],
+                 [(0 * mesh_size + position) * coin_size * mesh_size + (3 * mesh_size + position), -1.0 / math.sqrt(2)]]
     elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
-        # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|0,0>|1,1>|0,0>|0,0> - |0,0>|0,0>|0,0>|1,1>) / sqrt(2)
-        state = (
-            ((position * coin_size + 3) * mesh_size * coin_size +
-             (position * coin_size + 0), 1.0 / math.sqrt(2)),
-            ((position * coin_size + 0) * mesh_size * coin_size +
-             (position * coin_size + 3), -1.0 / math.sqrt(2))
-        )
+        # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|x1,y1>|1,1>|x2,y2>|0,0> - |x1,y1>|0,0>|x2,y2>|1,1>) / sqrt(2)
+        state = [[(position * coin_size + 3) * mesh_size * coin_size + (position * coin_size + 0), 1.0 / math.sqrt(2)],
+                 [(position * coin_size + 0) * mesh_size * coin_size + (position * coin_size + 3), -1.0 / math.sqrt(2)]]
 
     rdd = sparkContext.parallelize(state)
-    shape = ((coin_size * mesh_size) ** num_particles, 1)
-    initial_state = State(rdd, shape, mesh, num_particles)
+    shape = [(coin_size * mesh_size) ** num_particles, 1]
+    initial_state = State(rdd, shape, coin, mesh, num_particles, interaction)
 
-interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
-
-# Instatiating the walk
-dtqw = DiscreteTimeQuantumWalk(
-    coin,
-    mesh,
-    num_particles,
-    interaction=interaction)
+# Instantiating the walk
+dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
-final_state = dtqw.walk(steps, initial_state)
+final_state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its PDF
 gauge = PositionGauge()
@@ -165,4 +153,5 @@ joint.destroy()
 collision.destroy()
 for p in range(len(marginal)):
     marginal[p].destroy()
+
 sparkContext.stop()
