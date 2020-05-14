@@ -1,45 +1,90 @@
 # sparkquantum
 
-The idea of this project (perhaps it's still needed a better name for it) is to provide to the community a quantum algorithms simulator using [Apache Spark](https://spark.apache.org/). As they evolve, some quantum algorithms simulations acquire characteristics of a Big Data application due to the exponential grow suffered by their data structures. Thus, employing a framework like Apache Spark is a good approach, making it possible to execute larger simulations in high-performance computing (HPC) environments than when using single-processors, general purpose computers, allowing such data to be generated and processed at a reduced time in a parallel/distributed way. For now, the user can only simulate discrete time quantum walks (DTQW), but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
+The idea of this project (perhaps it's still needed a better name for it) is to provide to the community a quantum algorithms simulator written in [Python](https://www.python.org/) using [Apache Spark](https://spark.apache.org/).
+
+As they evolve, some quantum algorithms simulations acquire characteristics of a Big Data application due to the exponential grow suffered by their data structures. Thus, employing a framework like Apache Spark is a good approach, making it possible to execute larger simulations in high-performance computing (HPC) environments than when using single-processors, general purpose computers, allowing such data to be generated and processed at a reduced time in a parallel/distributed way.
 
 ## Requirements
 
 To run the simulations, the [numpy](http://www.numpy.org/) package must be installed in the user's environment. Also, to plot the probability distribution functions, the user must install the [matplotlib](https://matplotlib.org/) package.
 
-The _pyspark_ package is also required, but instead of installing it in the user's environment (which is an alternative), he/she may configure and launch Spark in such way that Python can access the package provided in Spark's directory.
+The [pyspark](https://pypi.org/project/pyspark/) package is also required, but instead of installing it in the user's environment (which is an alternative), he/she may configure and launch Spark in such way that Python can access the package provided in Spark's directory.
 
-## Discrete Time Quantum Walk
+## How to Use It
 
-The `dtqw` module of the simulator allows the user to simulate one and two-dimensional DTQW composed by _n_ particles, with or without mesh percolations (broken links). By default, the following coins and meshes are already implemented:
+In contrast to other simulators, this one expects a programmatic way to input the initial conditions of the simulations, but its use is still easy and simple, requiring few steps to start using it.
 
-- For one-dimensional walks:
-  - Coin:
-    - Hadamard
-  - Mesh:
-    - Line: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation;
-    - Segment: a line-based mesh with reflective sites on each border. The particles can start their walk at any site of the mesh;
-    - Cycle: a line-based mesh with cyclic sites on each border. The particles can start their walk at any site of the mesh
-- For two-dimensional walks:
-  - Coin:
-    - Hadamard
-    - Grover
-    - Fourier
-  - Mesh:
-    - Lattice: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the Line's two-dimension counterpart;
-    - Box: a lattice-based mesh with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Segment's two-dimension counterpart;
-    - Torus: a lattice-based mesh with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Cycle's two-dimension counterpart
+For now, the user can only simulate discrete time quantum walks (DTQW), but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
 
-TODO: explain how the user can implement custom coins and meshes
+### Discrete Time Quantum Walk
 
-### Mesh Percolations
+As DTQW is characterized as an iterative algorithm, this simulator considers each step as a matrix-vector multiplication - the matrix represents the unitary evolution operator and the vector represents the current state of the system.
 
-The user can simulate DTQWs with some mesh percolations. The already implemented variations are "permanent" and "random". For the former, the user must instantiate its corresponding class (`PermanentBrokenLinks`) passing in a list with the number of the edges that are broken. The second one is represented by the `RandomBrokenLinks` class, which needs to know the probability value that will be used to generate the broken edges of the mesh in a random fashion.
+The `dtqw` module of the simulator allows the user to simulate DTQW composed by _n_ particles over any kind of mesh (see the list of available meshes already implemented), with or without mesh percolations (broken links), and, in the end, measure the final quantum state so that a probability distribution function (PDF) of the particles' possible positions can be obtained and plotted.
 
-TODO: explain how the user can use permanent broken links and implement custom mesh percolations
+#### A Simple Example
 
-### Example
+In order to simulate, for instance, a particle walking over a line, the user must, first of all, choose a coin:
 
-Here, a simple example of how to simulate a DTQW with just one particle over a line mesh:
+```python
+coin = Hadamard()
+```
+
+and a mesh:
+
+```python
+mesh = Line(steps)
+```
+
+Particularly for a `Line` mesh, the number of steps of the walk can be passed in as a parameter. This class is responsible to build a line mesh with size comprehending a central site where the particle **must**, initially, be located at, and the number of steps to the left and to the right of that central site. This avoids the particles walking besides the boundaries of the mesh.
+
+Next, the user must provide the initial position of the particle:
+
+```python
+positions = [int((mesh.size - 1) / 2)]
+```
+
+Remember that, for line meshes, its center **must** be the initial position of the particle. Besides, as the simulator allows DTQW with _n_ particles, the `positions` variable must be an array-like structure, similarly to the following `amplitudes` variable, containing the amplitudes of the initial quantum state:
+
+```python
+amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
+               (0.0 - 1.0j) / math.sqrt(2)]]
+```
+
+In this example, the above amplitude and position values correspond to the initial quantum state, in Dirac's notation: `|c>|p> --> (|0> - i|1>)|p> / sqrt(2) = (|0>|p> - i|1>|p>) / sqrt(2)`, where `c` is the coin state and `p` is the position state.
+
+Thus, the initial state can be built using the static `State.create` method with all the previous data:
+
+```python
+initial_state = State.create(
+                coin,
+                mesh,
+                positions,
+                amplitudes)
+```
+
+To perform the walk, the user must instantiate a `DiscreteTimeQuantumWalk` object with the recently built quantum state:
+
+```python
+dtqw = DiscreteTimeQuantumWalk(initial_state)
+```
+
+and call its `walk` method, informing the desired number of steps:
+
+```python
+final_state = dtqw.walk(steps)
+```
+
+Finally, the user can measure the final quantum state, obtaining the PDF of the possible particle's positions and plot it:
+
+```python
+gauge = PositionGauge()
+
+joint = gauge.measure(final_state)
+joint.plot('./joint_1d1p')
+```
+
+Below, the complete Python script of the previous example with some Spark related commands:
 
 ```python
 import math
@@ -78,7 +123,7 @@ positions = [int((mesh_size - 1) / 2)]
 # Options of initial states
 # Notice that we set a tuple with only one element
 # as we are simulating a DTQW with one particle
-# |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
+# |c>|p> --> (|0>|p> - i|1>|p>) / sqrt(2)
 amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)]]
 
@@ -89,7 +134,7 @@ initial_state = State.create(
                 positions,
                 amplitudes)
 
-# Instantiating the walk
+# Instatiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk
@@ -112,6 +157,117 @@ sparkContext.stop()
 ```
 
 For more detailed examples (e.g., of how to use profiling and mesh percolations), the user may refer to the files in the `examples` directory.
+
+#### Coins and Meshes
+
+By default, the following coins and meshes have already been implemented:
+
+- For one-dimensional walks:
+  - Coin:
+    - `Hadamard`
+  - Mesh:
+    - `Line`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation;
+    - `Segment`: a line-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each border. The particles can start their walk at any site of the mesh;
+    - `Cycle`: a line-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each border. The particles can start their walk at any site of the mesh
+- For two-dimensional walks:
+  - Coin:
+    - `Hadamard`
+    - `Grover`
+    - `Fourier`
+  - Mesh:
+    - `Lattice`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the Line's two-dimension counterpart;
+    - `Box`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Segment's two-dimension counterpart;
+    - `Torus`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Cycle's two-dimension counterpart
+
+#### Mesh Percolations
+
+The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`RandomBrokenLinks`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
+
+```python
+broken_links = RandomBrokenLinks(0.05)
+```
+
+and assign it to the chosen mesh, as follows:
+
+```python
+mesh = Line(steps, broken_links)
+```
+
+The second one is represented by the `PermanentBrokenLinks` class. Its usage differs from the first variation only in the parameter it receives, which is a list with the number of each edge that is broken:
+
+```python
+broken_links = PermanentBrokenLinks([5, 55])
+```
+
+In order to correctly inform the number of the edges, the user must know how the simulator numbers them: starting with the one-dimensional meshes, the edges are incrementally numbered following a left-to-right direction, starting with the leftmost edge. The last edge has the same number of the first one, as if it was a cycled mesh, to consider the border extrapolation:
+
+```
+— o — o — o — o — o —
+0   1   2   3   4   0
+          x
+```
+
+For two-dimensional meshes, the previous principle is also used, although some adaptations must be performed. When considering the diagonal mesh, as the particle moves only diagonally, the number of sites that can be occupied by the particle is inferior than the sites of the mathematical mesh. Also, notice that the number of edges traversed by the particle equals the number of positions of the grid:
+
+```
+\     / \     / \     /
+ 0   1   2   3   4   0
+  \ /     \ /     \ /
+   o       o       o
+  / \     / \     / \
+20  21  22   23  24  20
+/     \ /     \ /     \
+       o       o
+\     / \     / \     /
+15  16  17   18  19  15
+  \ /     \ /     \ /
+   o       o       o     y
+  / \     / \     / \
+10  11  12   13  14  10
+/     \ /     \ /     \
+       o       o
+\     / \     / \     /
+ 5   6   7   8   9   5
+  \ /     \ /     \ /
+   o       o       o
+  / \     / \     / \
+ 0   1   2   3   4   0
+/     \ /     \ /     \
+           x
+```
+
+When a natural mesh is considered, all the possible positions that the particle can be located at coincide with the mathematical grid, resulting in a higher number of positions in relation to the previous case, and being the double of the number of edges traversed by the particle. The edge numbering is done for both directions separately, starting with the horizontal (_x_ coordinate) and then, with the vertical (_y_ coordinate):
+
+```
+       |        |        |        |        |
+      25       30       35       40       45
+       |        |        |        |        |
+— 20 — o — 21 — o — 22 — o — 23 — o — 24 — o — 20 —
+       |        |        |        |        |
+      29       34       39       44       49
+       |        |        |        |        |
+— 25 — o — 26 — o — 27 — o — 28 — o — 29 — o — 15 —
+       |        |        |        |        |
+      28       33       38       43       48
+       |        |        |        |        |
+— 10 — o — 11 — o — 12 — o — 13 — o — 14 — o — 10 — y
+       |        |        |        |        |
+      27       32       37       42       47
+       |        |        |        |        |
+— 05 — o — 06 — o — 07 — o — 08 — o — 09 — o — 05 —
+       |        |        |        |        |
+      26       31       36       41       46
+       |        |        |        |        |
+— 00 — o — 01 — o — 02 — o — 03 — o — 04 — o — 0 —
+       |        |        |        |        |
+      25       30       35       40       45
+       |        |        |        |        |
+                         x
+```
+
+#### Custom Elements
+
+TODO: explain how the user can implement custom coins, meshes and custom mesh percolations.
 
 ## Configuration Parameters
 
