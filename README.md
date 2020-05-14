@@ -174,10 +174,10 @@ By default, the following coins and meshes have already been implemented:
     - `Hadamard`
     - `Grover`
     - `Fourier`
-  - Mesh:
-    - `Lattice`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the Line's two-dimension counterpart;
-    - `Box`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Segment's two-dimension counterpart;
-    - `Torus`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the Cycle's two-dimension counterpart
+  - Mesh (each one with diagonal and natural variants):
+    - `Lattice`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the `Line`'s two-dimension counterpart;
+    - `Box`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the `Segment`'s two-dimension counterpart;
+    - `Torus`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the `Cycle`'s two-dimension counterpart
 
 #### Mesh Percolations
 
