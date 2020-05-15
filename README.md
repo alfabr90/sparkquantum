@@ -213,23 +213,23 @@ For two-dimensional meshes, the previous principle is also used, although some a
 \     / \     / \     /
  0   1   2   3   4   0
   \ /     \ /     \ /
-   o       o       o
+   o   ∙   o   ∙   o
   / \     / \     / \
 20  21  22   23  24  20
 /     \ /     \ /     \
-       o       o
+   ∙   o   ∙   o   ∙
 \     / \     / \     /
 15  16  17   18  19  15
   \ /     \ /     \ /
-   o       o       o     y
+   o   ∙   o   ∙   o     y
   / \     / \     / \
 10  11  12   13  14  10
 /     \ /     \ /     \
-       o       o
+   ∙   o   ∙   o   ∙
 \     / \     / \     /
  5   6   7   8   9   5
   \ /     \ /     \ /
-   o       o       o
+   o   ∙   o   ∙   o
   / \     / \     / \
  0   1   2   3   4   0
 /     \ /     \ /     \
