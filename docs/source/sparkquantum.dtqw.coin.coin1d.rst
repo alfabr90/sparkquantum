@@ -12,10 +12,10 @@ sparkquantum.dtqw.coin.coin1d.coin1d module
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.dtqw.coin.coin1d.hadamard1d module
------------------------------------------------
+sparkquantum.dtqw.coin.coin1d.hadamard module
+---------------------------------------------
 
-.. automodule:: sparkquantum.dtqw.coin.coin1d.hadamard1d
+.. automodule:: sparkquantum.dtqw.coin.coin1d.hadamard
    :members:
    :undoc-members:
    :show-inheritance:
