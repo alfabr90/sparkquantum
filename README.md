@@ -16,6 +16,8 @@ In contrast to other simulators, this one expects a programmatic way to input th
 
 For now, the user can only simulate discrete time quantum walks (DTQW), but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
 
+To check all source code documentation (Python docstrings), visit this project's page in [Read the Docs](https://sparkquantum.readthedocs.io/en/latest/).
+
 ### Discrete Time Quantum Walk
 
 As DTQW is characterized as an iterative algorithm, this simulator considers each step as a matrix-vector multiplication - the matrix represents the unitary evolution operator and the vector represents the current state of the system.
