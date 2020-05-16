@@ -566,8 +566,8 @@ class DiscreteTimeQuantumWalk:
             "starting a {} for {} steps...".format(self, steps))
 
         # Building walk operators once if not simulating decoherence with
-        # random broken links
-        if not self._mesh.broken_links or not self._mesh.broken_links.is_constant():
+        # constant broken links
+        if not self._mesh.broken_links or self._mesh.broken_links.is_constant():
             self._create_walk_operators(
                 Utils.MatrixCoordinateMultiplier, self._storage_level)
 
@@ -576,9 +576,9 @@ class DiscreteTimeQuantumWalk:
                 Utils.MatrixCoordinateMultiplier, self._storage_level)
 
         for i in range(1, steps + 1, 1):
-            # When there is a broken links probability, the walk operators will
-            # be built in each step of the walk
-            if self._mesh.broken_links and self._mesh.broken_links.is_constant():
+            # When there is a non-constant broken links (e.g., random),
+            # the walk operators will be built in each step of the walk
+            if self._mesh.broken_links and not self._mesh.broken_links.is_constant():
                 self._destroy_shift_operator()
                 self._destroy_walk_operators()
                 self._create_walk_operators(
