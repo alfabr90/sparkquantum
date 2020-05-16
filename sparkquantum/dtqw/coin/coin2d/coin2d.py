@@ -68,7 +68,7 @@ class Coin2D(Coin):
                 "expected 'Mesh' instance, not '{}'".format(
                     type(mesh)))
 
-        if not mesh.is_2d():
+        if mesh.dimension != 2:
             self._logger.error(
                 "non correspondent coin and mesh dimensions")
             raise ValueError("non correspondent coin and mesh dimensions")

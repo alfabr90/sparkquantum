@@ -74,7 +74,7 @@ class CollisionPhaseInteraction(Interaction):
         repr_format = int(Utils.get_conf(self._spark_context,
                                          'quantum.dtqw.state.representationFormat'))
 
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ndim = self._mesh.dimension
             coin_size = self._mesh.coin_size
             size = self._mesh.size
@@ -115,7 +115,7 @@ class CollisionPhaseInteraction(Interaction):
                 self._logger.error(
                     "invalid representation format")
                 raise ValueError("invalid representation format")
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ndim = self._mesh.dimension
             coin_size = self._mesh.coin_size
             size_x, size_y = self._mesh.size

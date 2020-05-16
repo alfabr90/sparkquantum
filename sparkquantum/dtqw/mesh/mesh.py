@@ -118,28 +118,6 @@ class Mesh:
         """
         raise NotImplementedError
 
-    def is_1d(self):
-        """Check if this is a one-dimensional mesh.
-
-        Returns
-        -------
-        bool
-            True if this mesh is one-dimensional, False otherwise.
-
-        """
-        return False
-
-    def is_2d(self):
-        """Check if this is a two-dimensional mesh.
-
-        Returns
-        -------
-        bool
-            True if this mesh is two-dimensional, False otherwise.
-
-        """
-        return False
-
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
 

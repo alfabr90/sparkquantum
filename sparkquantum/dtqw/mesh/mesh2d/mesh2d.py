@@ -73,17 +73,6 @@ class Mesh2D(Mesh):
             indexing='ij'
         )
 
-    def is_2d(self):
-        """Check if this is a two-dimensional mesh.
-
-        Returns
-        -------
-        bool
-            True if this mesh is two-dimensional, False otherwise.
-
-        """
-        return True
-
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
 
