@@ -51,9 +51,9 @@ class CollisionPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = 1
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = 2
         else:
             self._logger.error("mesh dimension not implemented")
@@ -83,9 +83,9 @@ class CollisionPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = 1
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = 2
         else:
             self._logger.error("mesh dimension not implemented")

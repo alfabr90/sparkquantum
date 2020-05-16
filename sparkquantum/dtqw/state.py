@@ -183,7 +183,7 @@ class State(Vector):
             repr_format = int(Utils.get_conf(
                 self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
-            if self._mesh.is_1d():
+            if self._mesh.dimension == 1:
                 ndim = self._mesh.dimension
                 coin_size = self._mesh.coin_size
                 size = self._mesh.size
@@ -226,7 +226,7 @@ class State(Vector):
                 else:
                     self._logger.error("invalid representation format")
                     raise ValueError("invalid representation format")
-            elif self._mesh.is_2d():
+            elif self._mesh.dimension == 2:
                 ndim = self._mesh.dimension
                 coin_size = self._mesh.coin_size
                 size_x, size_y = self._mesh.size
@@ -400,9 +400,9 @@ class State(Vector):
 
         coin_size = coin.size
 
-        if mesh.is_1d():
+        if mesh.dimension == 1:
             mesh_size = mesh.size
-        elif mesh.is_2d():
+        elif mesh.dimension == 2:
             mesh_size = mesh.size[0] * mesh.size[1]
         else:
             logger.error("mesh dimension not implemented")

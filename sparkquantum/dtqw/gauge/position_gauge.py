@@ -52,7 +52,7 @@ class PositionGauge(Gauge):
         repr_format = int(Utils.get_conf(self._spark_context,
                                          'quantum.dtqw.state.representationFormat'))
 
-        if state.mesh.is_1d():
+        if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
             size = state.mesh.size
@@ -99,7 +99,7 @@ class PositionGauge(Gauge):
                 a.append(m[1])
 
                 return tuple(a)
-        elif state.mesh.is_2d():
+        elif state.mesh.dimension == 2:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
             size_x, size_y = state.mesh.size
@@ -239,7 +239,7 @@ class PositionGauge(Gauge):
             raise TypeError("'PDF' instance expected, not '{}'".format(
                 type(system_measurement)))
 
-        if state.mesh.is_1d():
+        if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
             size = state.mesh.size
             num_particles = state.num_particles
@@ -255,7 +255,7 @@ class PositionGauge(Gauge):
 
             def __map(m):
                 return m[0], m[ind]
-        elif state.mesh.is_2d():
+        elif state.mesh.dimension == 2:
             ndim = state.mesh.dimension
             size_x, size_y = state.mesh.size
             num_particles = state.num_particles
@@ -339,7 +339,7 @@ class PositionGauge(Gauge):
         repr_format = int(Utils.get_conf(self._spark_context,
                                          'quantum.dtqw.state.representationFormat'))
 
-        if state.mesh.is_1d():
+        if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
             size = state.mesh.size
@@ -365,7 +365,7 @@ class PositionGauge(Gauge):
 
             def __unmap(m):
                 return m
-        elif state.mesh.is_2d():
+        elif state.mesh.dimension == 2:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
             size_x, size_y = state.mesh.size
@@ -433,7 +433,13 @@ class PositionGauge(Gauge):
             self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
-        self._profile_pdf('partialMeasurementParticle{}'.format(particle + 1), 'partial measurement for particle {}'.format(particle + 1), pdf, initial_time)
+        self._profile_pdf(
+            'partialMeasurementParticle{}'.format(
+                particle + 1),
+            'partial measurement for particle {}'.format(
+                particle + 1),
+            pdf,
+            initial_time)
 
         return pdf
 

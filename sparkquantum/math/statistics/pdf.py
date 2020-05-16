@@ -124,9 +124,9 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = 1
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = 2
         else:
             self._logger.error("mesh dimension not implemented")
@@ -153,9 +153,9 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = 1
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = 2
         else:
             self._logger.error("mesh dimension not implemented")
@@ -197,7 +197,7 @@ class PDF(Base):
 
         axis = self._mesh.axis()
 
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             pdf = np.zeros(self._shape, dtype=float)
 
             for i in self.data.collect():
@@ -220,7 +220,7 @@ class PDF(Base):
 
             if title:
                 plt.title(title)
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             pdf = np.zeros(self._shape, dtype=float)
 
             for i in self.data.collect():
@@ -281,7 +281,7 @@ class PDF(Base):
             Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
-        if not self._mesh.is_2d():
+        if self._mesh.dimension != 2:
             self._logger.warning(
                 "it is only possible to plot the contour function of two-dimensional meshes")
             return None

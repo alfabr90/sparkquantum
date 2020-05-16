@@ -54,9 +54,9 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = self._num_particles
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = self._num_particles * 2
         else:
             self._logger.error("mesh dimension not implemented")
@@ -86,9 +86,9 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = self._num_particles
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ind = 2 * self._num_particles
         else:
             self._logger.error("mesh dimension not implemented")
@@ -120,11 +120,11 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ndim = 1
             ind = ndim * self._num_particles
             mesh_size = (int(self._mesh.size / 2), 1)
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ndim = 2
             ind = ndim * self._num_particles
             mesh_size = (
@@ -171,11 +171,11 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ndim = 1
             ind = ndim * self._num_particles
             mesh_size = (int(self._mesh.size / 2), 1)
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ndim = 2
             ind = ndim * self._num_particles
             mesh_size = (
@@ -220,9 +220,9 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = self._num_particles
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ndim = 2
             ind = ndim * self._num_particles
         else:
@@ -250,9 +250,9 @@ class JointPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.is_1d():
+        if self._mesh.dimension == 1:
             ind = self._num_particles
-        elif self._mesh.is_2d():
+        elif self._mesh.dimension == 2:
             ndim = 2
             ind = ndim * self._num_particles
         else:
@@ -281,21 +281,21 @@ class JointPDF(PDF):
             Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
-        if self._mesh.is_1d() and self._num_particles > 2:
+        if self._mesh.dimension == 1 and self._num_particles > 2:
             self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of one and two particles"
-                                     )
+                                 )
             return None
 
-        if self._mesh.is_2d() and self._num_particles > 1:
+        if self._mesh.dimension == 2 and self._num_particles > 1:
             self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of just one particle"
-                                     )
+                                 )
             return None
 
-        if not (self._mesh.is_1d() and self._num_particles == 2):
+        if not (self._mesh.dimension == 1 and self._num_particles == 2):
             super().plot(filename, title=title, labels=labels, **kwargs)
         else:
             self._logger.info("starting plot of probabilities...")
@@ -350,8 +350,8 @@ class JointPDF(PDF):
             plt.clf()
 
             self._logger.info(
-                    "plot in {}s".format(
-                        (datetime.now() - t1).total_seconds()))
+                "plot in {}s".format(
+                    (datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
         """Plot the contour function of the probabilities over the mesh.
@@ -368,21 +368,21 @@ class JointPDF(PDF):
             Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
-        if self._mesh.is_1d() and self._num_particles != 2:
+        if self._mesh.dimension == 1 and self._num_particles != 2:
             self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of two particles"
-                                     )
+                                 )
             return None
 
-        if self._mesh.is_2d() and self._num_particles > 1:
+        if self._mesh.dimension == 2 and self._num_particles > 1:
             self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of just one particle"
-                                     )
+                                 )
             return None
 
-        if not (self._mesh.is_1d() and self._num_particles == 2):
+        if not (self._mesh.dimension == 1 and self._num_particles == 2):
             super().plot_contour(filename, title=title, labels=labels, **kwargs)
         else:
             self._logger.info("starting contour plot of probabilities...")
@@ -431,5 +431,5 @@ class JointPDF(PDF):
             plt.clf()
 
             self._logger.info(
-                    "contour plot in {}s".format(
-                        (datetime.now() - t1).total_seconds()))
+                "contour plot in {}s".format(
+                    (datetime.now() - t1).total_seconds()))

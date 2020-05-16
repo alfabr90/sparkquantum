@@ -73,18 +73,6 @@ class Mesh1D(Mesh):
         """
         return range(self._size)
 
-    def is_1d(self):
-        """
-        Check if this is a one-dimensional mesh.
-
-        Returns
-        -------
-        bool
-            True if this mesh is one-dimensional, False otherwise.
-
-        """
-        return True
-
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
 
