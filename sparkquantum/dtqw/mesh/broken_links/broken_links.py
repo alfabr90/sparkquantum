@@ -28,27 +28,16 @@ class BrokenLinks():
         """
         return 'Broken Links Generator'
 
-    def is_random(self):
-        """Check if this is a random broken links generator.
+    def is_constant(self):
+        """Check if the broken links are constant, i.e., does not change according to any kind of variable.
 
-        Returns
+        Raises
         -------
-        bool
-            True if this is a random broken links generator, False otherwise.
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
 
         """
-        return False
-
-    def is_permanent(self):
-        """Check if this is a permanent broken links generator.
-
-        Returns
-        -------
-        bool
-            True if this is a permanent broken links generator, False otherwise.
-
-        """
-        return False
+        raise NotImplementedError
 
     def generate(self, num_edges):
         """

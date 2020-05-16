@@ -48,13 +48,13 @@ class PermanentBrokenLinks(BrokenLinks):
 
         return 'Permanent Broken Links Generator with {}'.format(broken_links)
 
-    def is_permanent(self):
-        """Check if this is a permanent broken links generator.
+    def is_constant(self):
+        """Check if the broken links are constant, i.e., does not change according to any kind of variable.
 
         Returns
         -------
         bool
-            True if this is a permanent broken links generator, False otherwise.
+            True if the broken links are constant, False otherwise.
 
         """
         return True
