@@ -21,7 +21,7 @@ class RandomBrokenLinks(BrokenLinks):
         super().__init__()
 
         if probability <= 0:
-            # self._logger.error("probability of broken links must be positive")
+            self._logger.error("probability of broken links must be positive")
             raise ValueError("probability of broken links must be positive")
 
         self._probability = probability
@@ -84,4 +84,5 @@ class RandomBrokenLinks(BrokenLinks):
         elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
             return Utils.broadcast(self._spark_context, rdd.collectAsMap())
         else:
+            self._logger.error("invalid broken links generation mode")
             raise ValueError("invalid broken links generation mode")
