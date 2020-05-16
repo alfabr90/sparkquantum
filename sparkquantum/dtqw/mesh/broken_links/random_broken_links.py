@@ -21,7 +21,7 @@ class RandomBrokenLinks(BrokenLinks):
         super().__init__()
 
         if probability <= 0:
-            # self._logger.error("probability of broken links must be positive")
+            self._logger.error("probability of broken links must be positive")
             raise ValueError("probability of broken links must be positive")
 
         self._probability = probability
@@ -34,16 +34,16 @@ class RandomBrokenLinks(BrokenLinks):
         return 'Random Broken Links Generator with probability value of {}'.format(
             self._probability)
 
-    def is_random(self):
-        """Check if this is a random broken links generator.
+    def is_constant(self):
+        """Check if the broken links are constant, i.e., does not change according to any kind of variable.
 
         Returns
         -------
         bool
-            True if this is a random broken links generator, False otherwise.
+            True if the broken links are constant, False otherwise.
 
         """
-        return True
+        return False
 
     def generate(self, num_edges):
         """Generate broken links for the mesh based on its probability to have a broken link.
@@ -84,4 +84,5 @@ class RandomBrokenLinks(BrokenLinks):
         elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
             return Utils.broadcast(self._spark_context, rdd.collectAsMap())
         else:
+            self._logger.error("invalid broken links generation mode")
             raise ValueError("invalid broken links generation mode")

@@ -21,10 +21,15 @@ class PermanentBrokenLinks(BrokenLinks):
         super().__init__()
 
         if not (isinstance(edges, range) or isinstance(edges, (list, tuple))):
-            raise ValueError("invalid edges format")
+            self._logger.error(
+                "'list' or 'tuple' expected, not '{}'".format(
+                    type(edges)))
+            raise TypeError(
+                "'list' or 'tuple' expected, not '{}'".format(
+                    type(edges)))
 
         if not len(edges):
-            # self._logger.error("probability of broken links must be positive")
+            self._logger.error("there must be at least one broken edge")
             raise ValueError("there must be at least one broken edge")
 
         self._edges = edges
@@ -43,13 +48,13 @@ class PermanentBrokenLinks(BrokenLinks):
 
         return 'Permanent Broken Links Generator with {}'.format(broken_links)
 
-    def is_permanent(self):
-        """Check if this is a permanent broken links generator.
+    def is_constant(self):
+        """Check if the broken links are constant, i.e., does not change according to any kind of variable.
 
         Returns
         -------
         bool
-            True if this is a permanent broken links generator, False otherwise.
+            True if the broken links are constant, False otherwise.
 
         """
         return True
@@ -77,22 +82,24 @@ class PermanentBrokenLinks(BrokenLinks):
         """
         if isinstance(self._edges, range):
             if self._edges.start < 0 or self._edges.stop > num_edges:
+                self._logger.error(
+                    "invalid edges for broken links. This mesh supports edges from {} to {}".format(
+                        0, num_edges))
                 raise ValueError(
                     "invalid edges for broken links. This mesh supports edges from {} to {}".format(
-                        0, num_edges
-                    )
-                )
+                        0, num_edges))
 
             rdd = self._spark_context.range(
                 self._edges
             )
         elif isinstance(self._edges, (list, tuple)):
             if min(self._edges) < 0 or max(self._edges) >= num_edges:
+                self._logger.error(
+                    "invalid edges for broken links. This mesh supports edges from {} to {}".format(
+                        0, num_edges))
                 raise ValueError(
                     "invalid edges for broken links. This mesh supports edges from {} to {}".format(
-                        0, num_edges
-                    )
-                )
+                        0, num_edges))
 
             rdd = self._spark_context.parallelize(
                 self._edges
@@ -111,4 +118,5 @@ class PermanentBrokenLinks(BrokenLinks):
         elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
             return Utils.broadcast(self._spark_context, rdd.collectAsMap())
         else:
+            self._logger.error("invalid broken links generation mode")
             raise ValueError("invalid broken links generation mode")
