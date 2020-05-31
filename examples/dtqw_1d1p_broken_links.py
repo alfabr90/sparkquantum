@@ -51,7 +51,7 @@ mesh = Line(size, broken_links=broken_links)
 mesh_size = mesh.size
 
 # Center of the mesh
-positions = [int((mesh_size - 1) / 2)]
+positions = [mesh.center()]
 
 # Options of initial states
 # |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
@@ -70,7 +70,7 @@ initial_state = State.create(
     mesh,
     positions,
     amplitudes,
-    representationFormat)
+    representationFormat=representationFormat)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)

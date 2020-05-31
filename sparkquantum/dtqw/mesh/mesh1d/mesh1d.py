@@ -26,18 +26,12 @@ class Mesh1D(Mesh):
         self._dimension = 1
 
     def _validate(self, size):
-        if not isinstance(size, int):
-            return False
-        elif size <= 0:
-            return False
-
-        return True
-
-    def _define_size(self, size):
-        if not self._validate(size):
+        if not isinstance(size, int) or size <= 0:
             self._logger.error("invalid size")
             raise ValueError("invalid size")
 
+    def _define_size(self, size):
+        self._validate(size)
         return size
 
     def _define_num_edges(self, size):
@@ -61,6 +55,17 @@ class Mesh1D(Mesh):
 
         """
         return 'One-dimensional Mesh {}'.format(self.__strcomp__())
+
+    def center(self):
+        """Return the site number of the center of this mesh.
+
+        Returns
+        -------
+        int
+            The center site number.
+
+        """
+        return int((self._size - 1) / 2)
 
     def axis(self):
         """Build a generator with the size of this mesh.

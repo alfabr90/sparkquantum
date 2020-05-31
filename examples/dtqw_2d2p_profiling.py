@@ -66,8 +66,7 @@ interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
 # Options of initial states
 if not entangled:
     # Center of the mesh
-    positions = [int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2),
-                 int((mesh.size[0] - 1) / 2) * mesh.size[1] + int((mesh.size[1] - 1) / 2)]
+    positions = [mesh.center(), mesh.center()]
 
     amplitudes = []
 
@@ -112,11 +111,11 @@ if not entangled:
         mesh,
         positions,
         amplitudes,
-        representationFormat)
+        interaction,
+        representationFormat=representationFormat)
 else:
     # Center of the mesh
-    position = int((mesh.size[0] - 1) / 2) * \
-        mesh.size[1] + int((mesh.size[1] - 1) / 2)
+    position = mesh.center()
 
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
@@ -129,7 +128,13 @@ else:
 
     rdd = sparkContext.parallelize(state)
     shape = [(coin_size * mesh_size) ** num_particles, 1]
-    initial_state = State(rdd, shape, coin, mesh, num_particles, interaction)
+    initial_state = State(
+        rdd,
+        shape,
+        coin,
+        mesh,
+        num_particles,
+        interaction)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)

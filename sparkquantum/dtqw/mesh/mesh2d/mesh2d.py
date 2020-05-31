@@ -31,17 +31,14 @@ class Mesh2D(Mesh):
     def _validate(self, size):
         if isinstance(size, (list, tuple)):
             if len(size) != 2:
-                return False
+                self._logger.error("invalid size")
+                raise ValueError("invalid size")
         else:
-            return False
-
-        return True
-
-    def _define_size(self, size):
-        if not self._validate(size):
             self._logger.error("invalid size")
             raise ValueError("invalid size")
 
+    def _define_size(self, size):
+        self._validate(size)
         return size
 
     def _define_num_edges(self, size):
@@ -57,6 +54,39 @@ class Mesh2D(Mesh):
 
         """
         return 'Two-dimensional Mesh {}'.format(self.__strcomp__())
+
+    def center_x(self):
+        """Return the site number of the center of this mesh for the `x` coordinate.
+
+        Returns
+        -------
+        int
+            The center site number for the `x` coordinate.
+
+        """
+        return int((self._size[0] - 1) / 2)
+
+    def center_y(self):
+        """Return the site number of the center of this mesh for the `y` coordinate.
+
+        Returns
+        -------
+        int
+            The center site number for the `y` coordinate.
+
+        """
+        return int((self._size[1] - 1) / 2)
+
+    def center(self):
+        """Return the site number of the center of this mesh.
+
+        Returns
+        -------
+        int
+            The center site number.
+
+        """
+        return self.center_x() * self._size[1] + self.center_y()
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.

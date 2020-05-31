@@ -336,7 +336,8 @@ class State(Vector):
 
         rdd, new_shape = self._kron(other)
 
-        return State(rdd, new_shape, self._mesh, self._num_particles)
+        return State(rdd, new_shape, self._coin,
+                     self._mesh, self._num_particles)
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,

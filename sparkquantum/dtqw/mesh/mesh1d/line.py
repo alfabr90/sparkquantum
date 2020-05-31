@@ -37,14 +37,11 @@ class Line(Mesh1D):
         return 'Line {}'.format(self.__strcomp__())
 
     def _define_size(self, size):
-        if not self._validate(size):
-            self._logger.error("invalid mesh size")
-            raise ValueError("invalid mesh size")
-
+        self._validate(size)
         return 2 * size + 1
 
     def axis(self):
-        """Build a generator with the size of this mesh.
+        """Build a range with the axis of this mesh.
 
         Returns
         -------
@@ -52,8 +49,7 @@ class Line(Mesh1D):
             The range with the size of this mesh.
 
         """
-        return range(- int((self._size - 1) / 2),
-                     int((self._size - 1) / 2) + 1)
+        return range(- self.center(), self.center() + 1)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -69,7 +65,7 @@ class Line(Mesh1D):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return steps <= int((self._size - 1) / 2)
+        return steps <= self.center()
 
     def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
         """Build the shift operator for the walk.
