@@ -66,7 +66,7 @@ interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
 # Options of initial states
 if not entangled:
     # Center of the mesh
-    positions = [int((mesh_size - 1) / 2), int((mesh_size - 1) / 2)]
+    positions = [mesh.center(), mesh.center()]
 
     amplitudes = []
 
@@ -75,7 +75,7 @@ if not entangled:
     #                    (0.0 - 1.0j) / math.sqrt(2)])
 
     # |i>|x> --> |0>|x>
-    amplitudes.append([(1.0 + 0.0j)])
+    amplitudes.append([(1.0 + 0.0j), 0])
 
     # |i>|x> --> |1>|x>
     # amplitudes.append([0, (1.0 + 0.0j)])
@@ -85,7 +85,7 @@ if not entangled:
     #                    (0.0 - 1.0j) / math.sqrt(2)])
 
     # |i>|x> --> |0>|x>
-    # amplitudes.append([(1.0 + 0.0j)])
+    # amplitudes.append([(1.0 + 0.0j), 0])
 
     # |i>|x> --> |1>|x>
     amplitudes.append([0, (1.0 + 0.0j)])
@@ -95,23 +95,38 @@ if not entangled:
         mesh,
         positions,
         amplitudes,
-        representationFormat)
+        interaction,
+        representationFormat=representationFormat)
 else:
     # Center of the mesh
-    position = int((mesh_size - 1) / 2)
+    position = mesh.center()
 
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
         state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1.0 / math.sqrt(2)],
                  [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, -1.0 / math.sqrt(2)]]
+
+        # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> + |0>|x1>|1>|x2>) / sqrt(2)
+        # state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1.0 / math.sqrt(2)],
+        #          [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1.0 / math.sqrt(2)]]
     elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
         state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1.0 / math.sqrt(2)],
                  [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, -1.0 / math.sqrt(2)]]
 
+        # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> + |x1>|0>|x2>|1>) / sqrt(2)
+        # state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1.0 / math.sqrt(2)],
+        #          [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, 1.0 / math.sqrt(2)]]
+
     rdd = sparkContext.parallelize(state)
     shape = [(coin_size * mesh_size) ** num_particles, 1]
-    initial_state = State(rdd, shape, coin, mesh, num_particles, interaction)
+    initial_state = State(
+        rdd,
+        shape,
+        coin,
+        mesh,
+        num_particles,
+        interaction)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)

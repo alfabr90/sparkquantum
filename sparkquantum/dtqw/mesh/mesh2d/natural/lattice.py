@@ -27,10 +27,7 @@ class Lattice(Natural):
         super().__init__(size, broken_links=broken_links)
 
     def _define_size(self, size):
-        if not self._validate(size):
-            self._logger.error("invalid mesh size")
-            raise ValueError("invalid mesh size")
-
+        self._validate(size)
         return 2 * size[0] + 1, 2 * size[0] + 1
 
     def __str__(self):
@@ -53,11 +50,12 @@ class Lattice(Natural):
             The meshgrid with the sizes of this mesh.
 
         """
+        center_x = self.center_x()
+        center_y = self.center_y()
+
         return np.meshgrid(
-            range(- int((self._size[0] - 1) / 2),
-                  int((self._size[0] - 1) / 2) + 1),
-            range(- int((self._size[1] - 1) / 2),
-                  int((self._size[1] - 1) / 2) + 1),
+            range(- center_x, center_x + 1),
+            range(- center_y, center_y + 1),
             indexing='ij'
         )
 
@@ -75,8 +73,7 @@ class Lattice(Natural):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return steps <= int(
-            (self._size[0] - 1) / 2) and steps <= int((self._size[1] - 1) / 2)
+        return steps <= self.center_x() and steps <= self.center_y()
 
     def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
         """Build the shift operator for the walk.

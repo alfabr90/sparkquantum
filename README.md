@@ -43,7 +43,7 @@ Particularly for a `Line` mesh, the number of steps of the walk can be passed in
 Next, the user must provide the initial position of the particle:
 
 ```python
-positions = [int((mesh.size - 1) / 2)]
+positions = [mesh.center()]
 ```
 
 Remember that, for line meshes, its center **must** be the initial position of the particle. Besides, as the simulator allows DTQW with _n_ particles, the `positions` variable must be an array-like structure, similarly to the following `amplitudes` variable, containing the amplitudes of the initial quantum state:
@@ -53,7 +53,11 @@ amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)]]
 ```
 
-In this example, the above amplitude and position values correspond to the initial quantum state, in Dirac's notation: `|c>|p> --> (|0> - i|1>)|p> / sqrt(2) = (|0>|p> - i|1>|p>) / sqrt(2)`, where `c` is the coin state and `p` is the position state.
+In this example, the above amplitude and position values correspond to the initial quantum state, in Dirac's notation:
+
+`|c>|p> --> (|0> - i|1>)|p> / sqrt(2) = (|0>|p> - i|1>|p>) / sqrt(2)`,
+
+where `c` is the coin state and `p` is the position state.
 
 Thus, the initial state can be built using the static `State.create` method with all the previous data:
 
@@ -118,12 +122,12 @@ mesh = Line(size)
 mesh_size = mesh.size
 
 # Center of the mesh
-# Notice that we set a tuple with only one element
+# Notice that we set a list with only one element
 # as we are simulating a DTQW with one particle
-positions = [int((mesh_size - 1) / 2)]
+positions = [mesh.center()]
 
 # Options of initial states
-# Notice that we set a tuple with only one element
+# Notice that we set a list with only one element
 # as we are simulating a DTQW with one particle
 # |c>|p> --> (|0>|p> - i|1>|p>) / sqrt(2)
 amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
@@ -136,7 +140,7 @@ initial_state = State.create(
                 positions,
                 amplitudes)
 
-# Instatiating the walk
+# Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)
 
 # Performing the walk

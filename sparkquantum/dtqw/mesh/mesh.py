@@ -107,6 +107,17 @@ class Mesh:
     def _define_num_edges(self, size):
         raise NotImplementedError
 
+    def center(self):
+        """Return the site number of the center of this mesh.
+
+        Raises
+        -------
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
+
+        """
+        raise NotImplementedError
+
     def axis(self):
         """Build a generator (or meshgrid) with the size(s) of this mesh.
 

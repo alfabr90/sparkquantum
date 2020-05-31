@@ -52,8 +52,7 @@ mesh = Lattice((size, size), broken_links=broken_links)
 mesh_size = mesh.size[0] * mesh.size[1]
 
 # Center of the mesh
-positions = [int((mesh.size[0] - 1) / 2) *
-             mesh.size[1] + int((mesh.size[1] - 1) / 2)]
+positions = [mesh.center()]
 
 # Options of initial states
 # |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> - i|1,0>|x,y> + |1,1>|x,y>) / 2
@@ -69,10 +68,10 @@ amplitudes = [[(1.0 + 0.0j) / 2,
 #                (-1.0 - 0.0j) / 2]]
 
 # |i,j>|x,y> --> (|0,0>|x,y> - |0,1>|x,y> - |1,0>|x,y> + |1,1>|x,y>) / 2
-# amplitudes = [[(1.0 + 0.0j) / 2],
-#                (-1.0 - 0.0j) / 2],
-#                (-1.0 - 0.0j) / 2],
-#                (1.0 + 0.0j) / 2)]]
+# amplitudes = [[(1.0 + 0.0j) / 2,
+#                (-1.0 - 0.0j) / 2,
+#                (-1.0 - 0.0j) / 2,
+#                (1.0 + 0.0j) / 2]]
 
 # Building the initial state
 initial_state = State.create(
@@ -80,7 +79,7 @@ initial_state = State.create(
     mesh,
     positions,
     amplitudes,
-    representationFormat)
+    representationFormat=representationFormat)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)
