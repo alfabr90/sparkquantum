@@ -4,6 +4,8 @@ import math
 import sys
 import tempfile as tf
 
+from pyspark import RDD
+
 __all__ = ['Utils']
 
 
@@ -44,7 +46,7 @@ class Utils():
     """
     StateDumpingFormatIndex = 0
     """
-    Indicate that the quantum system will be dumped to disk with the format ``(i,value)``.
+    Indicate that the quantum system will be dumped to disk with the format ``(i,1,value)``.
     """
     StateDumpingFormatCoordinate = 1
     """
@@ -175,17 +177,22 @@ class Utils():
         return c
 
     @staticmethod
-    def change_coordinate(rdd, old_coord, new_coord=MatrixCoordinateDefault):
+    def change_coordinate(rdd, old_coordinate, new_coordinate):
         """Change the coordinate format of a :py:class:`sparkquantum.math.Matrix` object's RDD.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is returned. The only exception is when
+        `old_coordinate` is equal to `new_coordinate`.
 
         Parameters
         ----------
         rdd : :py:class:`pyspark.RDD`
             The :py:class:`sparkquantum.math.Matrix` object's RDD to have its coordinate format changed.
-        old_coord : int
-            The original coordinate format of the :py:class:`sparkquantum.math.Matrix` object's RDD.
-        new_coord : int
-            The new coordinate format. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        old_coordinate : int
+            The original coordinate format.
+        new_coordinate : int
+            The new coordinate format.
 
         Returns
         -------
@@ -193,10 +200,14 @@ class Utils():
             A new :py:class:`pyspark.RDD` with the coordinate format changed.
 
         """
-        if old_coord == Utils.MatrixCoordinateMultiplier:
-            if new_coord == Utils.MatrixCoordinateMultiplier:
+        if not isinstance(rdd, RDD):
+            raise TypeError("'RDD' instance expected, not '{}'".format(
+                type(rdd)))
+
+        if old_coordinate == Utils.MatrixCoordinateMultiplier:
+            if new_coordinate == Utils.MatrixCoordinateMultiplier:
                 return rdd
-            elif new_coord == Utils.MatrixCoordinateMultiplicand:
+            elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
                 return rdd.map(
                     lambda m: (m[1][0], (m[0], m[1][1]))
                 )
@@ -204,32 +215,78 @@ class Utils():
                 return rdd.map(
                     lambda m: (m[1][0], m[0], m[1][1])
                 )
-        elif old_coord == Utils.MatrixCoordinateMultiplicand:
-            if new_coord == Utils.MatrixCoordinateMultiplier:
+        elif old_coordinate == Utils.MatrixCoordinateMultiplicand:
+            if new_coordinate == Utils.MatrixCoordinateMultiplier:
                 return rdd.map(
                     lambda m: (m[1][0], (m[0], m[1][1]))
                 )
-            elif new_coord == Utils.MatrixCoordinateMultiplicand:
+            elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
                 return rdd
             else:  # Utils.MatrixCoordinateDefault
                 return rdd.map(
                     lambda m: (m[0], m[1][0], m[1][1])
                 )
-        else:  # Utils.MatrixCoordinateDefault
-            if new_coord == Utils.MatrixCoordinateMultiplier:
+        elif old_coordinate == Utils.MatrixCoordinateDefault:
+            if new_coordinate == Utils.MatrixCoordinateMultiplier:
                 return rdd.map(
                     lambda m: (m[1], (m[0], m[2]))
                 )
-            elif new_coord == Utils.MatrixCoordinateMultiplicand:
+            elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
                 return rdd.map(
                     lambda m: (m[0], (m[1], m[2]))
                 )
             else:  # Utils.MatrixCoordinateDefault
                 return rdd
+        else:
+            raise ValueError("invalid coordinate format")
+
+    @staticmethod
+    def remove_zeros(rdd, data_type, coordinate_format):
+        """Remove zero'd elements of a :py:class:`sparkquantum.math.Matrix` object's RDD.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is returned.
+
+        Parameters
+        ----------
+        rdd : :py:class:`pyspark.RDD`
+            The :py:class:`sparkquantum.math.Matrix` object's RDD to have its zero'd elements removed.
+        data_type : type
+            The Python type of all values in the RDD.
+        coordinate_format : int
+            The coordinate format of the :py:class:`sparkquantum.math.Matrix` object's RDD.
+
+        Returns
+        -------
+        :py:class:`pyspark.RDD`
+            A new :py:class:`pyspark.RDD` with the zero'd elements removed.
+
+        """
+        if not isinstance(rdd, RDD):
+            raise TypeError("'RDD' instance expected, not '{}'".format(
+                type(rdd)))
+
+        rdd = Utils.change_coordinate(
+            rdd,
+            coordinate_format,
+            Utils.MatrixCoordinateDefault)
+
+        zero = data_type()
+
+        rdd = rdd.filter(
+            lambda m: m[2] != zero
+        )
+
+        return Utils.change_coordinate(
+            rdd,
+            Utils.MatrixCoordinateDefault,
+            coordinate_format)
 
     @staticmethod
     def get_precedent_type(type1, type2):
-        """Compare and return the most precedent type between two types.
+        """Compare and return the most precedent type between two numeric
+        types, i.e., int, float or complex.
 
         Parameters
         ----------
@@ -241,7 +298,7 @@ class Utils():
         Returns
         -------
         type
-            The type with most precedent order.
+            The numeric type with most precedent order.
 
         """
         if type1 == complex or type2 == complex:

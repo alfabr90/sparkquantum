@@ -74,8 +74,8 @@ class Coin:
         """
         return False
 
-    def create_operator(self, mesh, coord_format=Utils.MatrixCoordinateDefault,
-                        storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(
+            self, mesh, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the coin operator.
 
         Raises

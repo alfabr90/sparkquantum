@@ -34,17 +34,13 @@ class Coin2D(Coin):
     def __str__(self):
         return 'Two-dimensional Coin'
 
-    def create_operator(
-            self, mesh, coord_format=Utils.MatrixCoordinateDefault):
+    def create_operator(self, mesh):
         """Build the coin operator for the walk.
 
         Parameters
         ----------
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             A :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh` instance.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -82,22 +78,25 @@ class Coin2D(Coin):
             mesh_size)
         data = Utils.broadcast(self._spark_context, self._data)
 
+        num_elements = self._size ** 2 * mesh_size
+
         repr_format = int(
             Utils.get_conf(
                 self._spark_context,
                 'quantum.dtqw.state.representationFormat'))
 
         if repr_format == Utils.StateRepresentationFormatCoinPosition:
-            # The coin operator is built by applying a tensor product between the chosen coin and
-            # an identity matrix with the dimensions of the chosen mesh.
+            # The coin operator is built by applying a tensor product between
+            # the chosen coin and an identity matrix with the dimensions of
+            # the chosen mesh.
             def __map(xy):
                 for i in range(data.value.shape[0]):
                     for j in range(data.value.shape[1]):
                         yield (i * mesh_size + xy, j * mesh_size + xy, data.value[i][j])
         elif repr_format == Utils.StateRepresentationFormatPositionCoin:
             # The coin operator is built by applying a tensor product between
-            # an identity matrix with the dimensions of the chosen mesh and the
-            # chosen coin.
+            # an identity matrix with the dimensions of the chosen mesh and
+            # the chosen coin.
             def __map(xy):
                 for i in range(data.value.shape[0]):
                     for j in range(data.value.shape[1]):
@@ -112,19 +111,4 @@ class Coin2D(Coin):
             __map
         )
 
-        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
-            )
-
-            expected_elems = len(self._data) * mesh_size
-            expected_size = Utils.get_size_of_type(complex) * expected_elems
-            num_partitions = Utils.get_num_partitions(
-                self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
-
-        return Operator(rdd, shape, coord_format=coord_format)
+        return Operator(rdd, shape, num_elements=num_elements)

@@ -52,12 +52,8 @@ class CollisionPhaseInteraction(Interaction):
         return 'Collision Phase Interaction with phase value of {}'.format(
             self._collision_phase)
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
+    def create_operator(self):
         """Build the interaction operator.
-
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Raises
         ------
@@ -82,6 +78,8 @@ class CollisionPhaseInteraction(Interaction):
 
             rdd_range = cs_size ** num_particles
             shape = (rdd_range, rdd_range)
+
+            num_elements = shape[0]
 
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
@@ -125,6 +123,8 @@ class CollisionPhaseInteraction(Interaction):
 
             rdd_range = cs_size_xy ** num_particles
             shape = (rdd_range, rdd_range)
+
+            num_elements = shape[0]
 
             if repr_format == Utils.StateRepresentationFormatCoinPosition:
                 def __map(m):
@@ -178,19 +178,4 @@ class CollisionPhaseInteraction(Interaction):
             __map
         )
 
-        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
-            )
-
-            expected_elems = rdd_range
-            expected_size = Utils.get_size_of_type(complex) * expected_elems
-            num_partitions = Utils.get_num_partitions(
-                self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
-
-        return Operator(rdd, shape, coord_format=coord_format)
+        return Operator(rdd, shape, num_elements=num_elements)

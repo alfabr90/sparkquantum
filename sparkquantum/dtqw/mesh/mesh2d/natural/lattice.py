@@ -75,14 +75,8 @@ class Lattice(Natural):
         """
         return steps <= self.center_x() and steps <= self.center_y()
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault):
+    def create_operator(self):
         """Build the shift operator for the walk.
-
-        Parameters
-        ----------
-        coord_format : bool, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -103,6 +97,8 @@ class Lattice(Natural):
         size_xy = size[0] * size[1]
         shape = (coin_size * size_xy, coin_size * size_xy)
         broken_links = None
+
+        num_elements = shape[0]
 
         repr_format = int(
             Utils.get_conf(
@@ -313,19 +309,4 @@ class Lattice(Natural):
                 __map
             )
 
-        if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = Utils.change_coordinate(
-                rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
-            )
-
-            expected_elems = coin_size * size_xy
-            expected_size = Utils.get_size_of_type(int) * expected_elems
-            num_partitions = Utils.get_num_partitions(
-                self._spark_context, expected_size)
-
-            if num_partitions:
-                rdd = rdd.partitionBy(
-                    numPartitions=num_partitions
-                )
-
-        return Operator(rdd, shape, int, coord_format)
+        return Operator(rdd, shape, data_type=int, num_elements=num_elements)

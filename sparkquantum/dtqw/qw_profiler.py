@@ -27,17 +27,18 @@ class QuantumWalkProfiler(Profiler):
 
     @staticmethod
     def _default_operator():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0}
+        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
+                'size': 0, 'numElements': 0}
 
     @staticmethod
     def _default_state():
         return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
-                'numElements': 0, 'numNonzeroElements': 0}
+                'size': 0, 'numElements': 0}
 
     @staticmethod
     def _default_pdf():
         return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
-                'numElements': 0, 'numNonzeroElements': 0}
+                'size': 0, 'numElements': 0}
 
     def __str__(self):
         return 'Quantum Walk Profiler configured to request data from {}'.format(
@@ -115,8 +116,8 @@ class QuantumWalkProfiler(Profiler):
                         self._operators[name][-1][k] = v
 
             self._operators[name][-1]['buildingTime'] = time
+            self._operators[name][-1]['size'] = operator.size
             self._operators[name][-1]['numElements'] = operator.num_elements
-            self._operators[name][-1]['numNonzeroElements'] = operator.num_nonzero_elements
 
             return self._operators[name][-1]
 
@@ -168,8 +169,8 @@ class QuantumWalkProfiler(Profiler):
                         self._states[name][-1][k] = v
 
             self._states[name][-1]['buildingTime'] = time
+            self._states[name][-1]['size'] = state.size
             self._states[name][-1]['numElements'] = state.num_elements
-            self._states[name][-1]['numNonzeroElements'] = state.num_nonzero_elements
 
             return self._states[name][-1]
 
@@ -220,8 +221,8 @@ class QuantumWalkProfiler(Profiler):
                         self._pdfs[name][-1][k] = v
 
             self._pdfs[name][-1]['buildingTime'] = time
+            self._pdfs[name][-1]['size'] = pdf.size
             self._pdfs[name][-1]['numElements'] = pdf.num_elements
-            self._pdfs[name][-1]['numNonzeroElements'] = pdf.num_nonzero_elements
 
             return self._pdfs[name][-1]
 

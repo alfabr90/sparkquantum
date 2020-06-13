@@ -1,22 +1,22 @@
-from datetime import datetime
 import math
+from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.mesh.mesh import is_mesh
-from sparkquantum.math.vector import Vector
+from sparkquantum.math.matrix import Matrix
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['State', 'is_state']
 
 
-class State(Vector):
+class State(Matrix):
     """Class for the system state."""
 
-    def __init__(self, rdd, shape, coin, mesh,
-                 num_particles, interaction=None):
+    def __init__(self, rdd, shape, coin, mesh, num_particles, interaction=None,
+                 data_type=complex, coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
         """Build a state object.
 
         Parameters
@@ -24,7 +24,7 @@ class State(Vector):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this state object. Must be a two-dimensional tuple.
+            The shape of this object. Must be a two-dimensional tuple.
         coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
             The coin for the walk.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
@@ -33,9 +33,21 @@ class State(Vector):
             The number of particles present in the walk.
         interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
             A particles interaction object.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is complex.
+        coordinate_format : int, optional
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, shape, data_type=complex)
+        super().__init__(
+            rdd,
+            shape,
+            data_type=data_type,
+            coordinate_format=coordinate_format,
+            num_elements=num_elements)
 
         self._coin = coin
         self._mesh = mesh
@@ -89,13 +101,6 @@ class State(Vector):
         """:py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`"""
         return self._interaction
 
-    def __del__(self):
-        # In cases where multiple simulations are performed,
-        # the same Python's logger object is used for the same class name.
-        # Removing all its handlers, the object is reset.
-        for h in self._logger.handlers:
-            self._logger.removeHandler(h)
-
     def __str__(self):
         if self._num_particles == 1:
             particles = 'one particle'
@@ -106,7 +111,7 @@ class State(Vector):
             self._shape, particles, self._mesh)
 
     def dump(self, path, glue=None, codec=None,
-             filename='', dumping_format=None):
+             filename=None, dumping_format=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
@@ -157,9 +162,17 @@ class State(Vector):
         dumping_mode = int(Utils.get_conf(
             self._spark_context, 'quantum.math.dumpingMode'))
 
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
+
         if dumping_format == Utils.StateDumpingFormatIndex:
             if dumping_mode == Utils.DumpingModeUniqueFile:
-                data = self.data.collect()
+                data = rdd.collect()
 
                 Utils.create_dir(path)
 
@@ -171,11 +184,9 @@ class State(Vector):
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
-                            f.write(glue.join([str(e) for e in d]) + "\n")
+                            f.write(d + "\n")
             elif dumping_mode == Utils.DumpingModePartFiles:
-                self.data.map(
-                    lambda m: glue.join([str(e) for e in m])
-                ).saveAsTextFile(path, codec)
+                rdd.saveAsTextFile(path, codec)
             else:
                 self._logger.error("invalid dumping mode")
                 raise ValueError("invalid dumping mode")
@@ -205,7 +216,7 @@ class State(Vector):
                             ix.append(
                                 str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size + mesh_offset))
 
-                        ix.append(str(m[1]))
+                        ix.append(str(m[2]))
 
                         return glue.join(ix)
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -220,7 +231,7 @@ class State(Vector):
                             xi.append(
                                 str(int(m[0] / (cs_size ** (num_particles - 1 - p))) % size_per_coin))
 
-                        xi.append(str(m[1]))
+                        xi.append(str(m[2]))
 
                         return glue.join(xi)
                 else:
@@ -255,7 +266,7 @@ class State(Vector):
                             ijxy.append(
                                 str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y + mesh_offset_y))
 
-                        ijxy.append(str(m[1]))
+                        ijxy.append(str(m[2]))
 
                         return glue.join(ijxy)
                 elif repr_format == Utils.StateRepresentationFormatPositionCoin:
@@ -274,7 +285,7 @@ class State(Vector):
                             xyij.append(
                                 str(int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_per_coin))
 
-                        xyij.append(str(m[1]))
+                        xyij.append(str(m[2]))
 
                         return glue.join(xyij)
                 else:
@@ -285,7 +296,7 @@ class State(Vector):
                 raise NotImplementedError("mesh dimension not implemented")
 
             if dumping_mode == Utils.DumpingModeUniqueFile:
-                data = self.data.collect()
+                data = rdd.collect()
 
                 Utils.create_dir(path)
 
@@ -297,9 +308,9 @@ class State(Vector):
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
-                            f.write(glue.join(d) + "\n")
+                            f.write(d + "\n")
             elif dumping_mode == Utils.DumpingModePartFiles:
-                self.data.map(
+                rdd.map(
                     __map
                 ).saveAsTextFile(path, codec)
             else:
@@ -334,14 +345,14 @@ class State(Vector):
             raise TypeError(
                 "'State' instance expected, not '{}'".format(type(other)))
 
-        rdd, new_shape = self._kron(other)
+        rdd, shape, data_type, num_elements = self._kron(other)
 
-        return State(rdd, new_shape, self._coin,
-                     self._mesh, self._num_particles)
+        return State(rdd, shape, self._coin, self._mesh, self._num_particles, interaction=self._interaction,
+                     data_type=data_type, coordinate_format=self._coordinate_format, num_elements=num_elements)
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,
-               representationFormat=Utils.StateRepresentationFormatCoinPosition):
+               data_type=complex, representationFormat=Utils.StateRepresentationFormatCoinPosition):
         """Create a system state.
 
         For system states with entangled particles, the state must be created
@@ -359,6 +370,8 @@ class State(Vector):
             The amplitudes for each qubit of each particle in the quantum walk.
         interaction : :py:class:`sparkquantum.dtqw.interaction.interaction.Interaction`, optional
             A particles interaction object.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is complex.
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
             Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
@@ -374,7 +387,7 @@ class State(Vector):
             If the dimension of the mesh is not valid.
 
         ValueError
-            Iif the length of `positions` and `amplitudes` are not compatible (or invalid) or
+            If the length of `positions` and `amplitudes` are not compatible (or invalid) or
             if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
 
         TypeError
@@ -435,16 +448,16 @@ class State(Vector):
         shape = (coin_size * mesh_size, 1)
 
         for p in range(num_particles):
+            num_elements = len(amplitudes[p])
+
             if representationFormat == Utils.StateRepresentationFormatCoinPosition:
                 state = (
-                    (a * mesh_size + positions[p],
-                     amplitudes[p][a]) for a in range(
-                        len(amplitudes[p])))
+                    (a * mesh_size + positions[p], 1, amplitudes[p][a]) for a in range(num_elements)
+                )
             elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
                 state = (
-                    (positions[p] * coin_size + a,
-                     amplitudes[p][a]) for a in range(
-                        len(amplitudes[p])))
+                    (positions[p] * coin_size + a, 1, amplitudes[p][a]) for a in range(num_elements)
+                )
             else:
                 logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
@@ -452,13 +465,7 @@ class State(Vector):
             rdd = spark_context.parallelize(state)
 
             base_states.append(
-                State(
-                    rdd,
-                    shape,
-                    coin,
-                    mesh,
-                    num_particles,
-                    interaction))
+                State(rdd, shape, coin, mesh, num_particles, interaction=interaction, data_type=data_type, num_elements=num_elements))
 
         initial_state = base_states[0]
 

@@ -145,13 +145,22 @@ class DiscreteTimeQuantumWalk:
                           'quantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
-    def _create_coin_operator(self, coord_format, storage_level):
+    def _create_coin_operator(self, storage_level):
         self._logger.info("building coin operator...")
 
         initial_time = datetime.now()
 
-        self._coin_operator = self._coin.create_operator(
-            self._mesh, coord_format).materialize(storage_level)
+        co = self._coin.create_operator(self._mesh).change_coordinate(
+            Utils.MatrixCoordinateMultiplicand
+        )
+
+        num_partitions = Utils.get_num_partitions(
+            self._spark_context,
+            Utils.get_size_of_type(co.data_type) * co.num_elements
+        )
+
+        self._coin_operator = co.partition_by(
+            num_partitions=num_partitions).materialize(storage_level)
 
         self._profile_operator(
             'coinOperator',
@@ -159,13 +168,22 @@ class DiscreteTimeQuantumWalk:
             self._coin_operator,
             initial_time)
 
-    def _create_shift_operator(self, coord_format, storage_level):
+    def _create_shift_operator(self, storage_level):
         self._logger.info("building shift operator...")
 
         initial_time = datetime.now()
 
-        self._shift_operator = self._mesh.create_operator(
-            coord_format).materialize(storage_level)
+        so = self._mesh.create_operator().change_coordinate(
+            Utils.MatrixCoordinateMultiplier
+        )
+
+        num_partitions = Utils.get_num_partitions(
+            self._spark_context,
+            Utils.get_size_of_type(so.data_type) * so.num_elements
+        )
+
+        self._shift_operator = so.partition_by(
+            num_partitions=num_partitions).materialize(storage_level)
 
         self._profile_operator(
             'shiftOperator',
@@ -173,13 +191,22 @@ class DiscreteTimeQuantumWalk:
             self._shift_operator,
             initial_time)
 
-    def _create_interaction_operator(self, coord_format, storage_level):
+    def _create_interaction_operator(self, storage_level):
         self._logger.info("building interaction operator...")
 
         initial_time = datetime.now()
 
-        self._interaction_operator = self._interaction.create_operator(
-            coord_format).materialize(storage_level)
+        io = self._interaction.create_operator().change_coordinate(
+            Utils.MatrixCoordinateMultiplier
+        )
+
+        num_partitions = Utils.get_num_partitions(
+            self._spark_context,
+            Utils.get_size_of_type(io.data_type) * io.num_elements
+        )
+
+        self._interaction_operator = io.partition_by(
+            num_partitions=num_partitions).materialize(storage_level)
 
         self._profile_operator(
             'interactionOperator',
@@ -187,7 +214,7 @@ class DiscreteTimeQuantumWalk:
             self._interaction_operator,
             initial_time)
 
-    def _create_walk_operators(self, coord_format, storage_level):
+    def _create_walk_operators(self, storage_level):
         """Build the walk operators for the walk.
 
         This method builds a list with n operators, where n is the number of particles of the system.
@@ -198,13 +225,8 @@ class DiscreteTimeQuantumWalk:
             Wi = I1 (X) ... (X) Ii-1 (X) Wi (X) Ii+1 (X) ... In
             Wn = I1 (X) ... (X) In-1 (X) Wn``
 
-        Regardless the number of particles, the walk operators have their ``(i,j,value)`` coordinates converted to
-        appropriate coordinates for multiplication, in this case, the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplier`.
-
         Parameters
         ----------
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the RDD.
 
@@ -222,28 +244,38 @@ class DiscreteTimeQuantumWalk:
             self._logger.info(
                 "no coin operator has been set. A new one will be built")
 
-            self._create_coin_operator(
-                Utils.MatrixCoordinateMultiplicand, storage_level)
+            self._create_coin_operator(storage_level)
 
         if self._shift_operator is None:
             self._logger.info(
                 "no shift operator has been set. A new one will be built")
 
-            self._create_shift_operator(
-                Utils.MatrixCoordinateMultiplier, storage_level)
+            self._create_shift_operator(storage_level)
+
+        evolution_operator = self._shift_operator.multiply(
+            self._coin_operator
+        )
+
+        initial_time = datetime.now()
 
         if self._num_particles == 1:
-            initial_time = datetime.now()
+            eo = evolution_operator.change_coordinate(
+                Utils.MatrixCoordinateMultiplier
+            )
 
-            evolution_operator = self._shift_operator.multiply(
-                self._coin_operator, coord_format).persist(storage_level)
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(eo.data_type) * eo.num_elements
+            )
+
+            eo = eo.partition_by(
+                num_partitions=num_partitions).persist(storage_level)
 
             if Utils.get_conf(self._spark_context,
                               'quantum.dtqw.walkOperator.checkpoint') == 'True':
-                evolution_operator = evolution_operator.checkpoint()
+                eo = eo.checkpoint()
 
-            self._walk_operators = (
-                evolution_operator.materialize(storage_level), )
+            self._walk_operators = (eo.materialize(storage_level), )
 
             self._coin_operator.unpersist()
             self._shift_operator.unpersist()
@@ -251,15 +283,6 @@ class DiscreteTimeQuantumWalk:
             self._profile_operator(
                 'walkOperator', 'walk operator', self._walk_operators[0], initial_time)
         else:
-            initial_time = datetime.now()
-
-            evolution_operator = self._shift_operator.multiply(
-                self._coin_operator, Utils.MatrixCoordinateDefault
-            ).materialize(storage_level)
-
-            self._coin_operator.unpersist()
-            self._shift_operator.unpersist()
-
             shape = evolution_operator.shape
             shape_tmp = shape
 
@@ -275,8 +298,6 @@ class DiscreteTimeQuantumWalk:
             if kron_mode == Utils.KroneckerModeBroadcast:
                 eo = Utils.broadcast(self._spark_context,
                                      evolution_operator.data.collect())
-
-                evolution_operator.unpersist()
             elif kron_mode == Utils.KroneckerModeDump:
                 path = Utils.get_temp_path(
                     Utils.get_conf(self._spark_context,
@@ -285,11 +306,12 @@ class DiscreteTimeQuantumWalk:
 
                 evolution_operator.dump(path)
 
+            self._coin_operator.unpersist()
+            self._shift_operator.unpersist()
+
             for p in range(self._num_particles):
                 self._logger.info(
                     "building walk operator for particle {}...".format(p + 1))
-
-                # shape = shape_tmp
 
                 if p == 0:
                     # The first particle's walk operator consists in applying the tensor product between the
@@ -377,34 +399,22 @@ class DiscreteTimeQuantumWalk:
                         shape = (rdd_shape[0] * shape_tmp[0],
                                  rdd_shape[1] * shape_tmp[1])
 
-                if coord_format == Utils.MatrixCoordinateMultiplier or coord_format == Utils.MatrixCoordinateMultiplicand:
-                    rdd = Utils.change_coordinate(
-                        rdd, Utils.MatrixCoordinateDefault, new_coord=coord_format
-                    )
+                num_partitions = Utils.get_num_partitions(
+                    self._spark_context,
+                    Utils.get_size_of_type(evolution_operator.data_type) *
+                    evolution_operator.num_elements *
+                    evolution_operator.shape[0] ** (self._num_particles - 1)
+                )
 
-                    expected_elems = evolution_operator.num_nonzero_elements * \
-                        evolution_operator.shape[0] ** (
-                            self._num_particles - 1)
-                    expected_size = Utils.get_size_of_type(
-                        complex) * expected_elems
-                    num_partitions = Utils.get_num_partitions(
-                        self._spark_context, expected_size)
-
-                    if num_partitions:
-                        rdd = rdd.partitionBy(
-                            numPartitions=num_partitions
-                        )
-
-                wo = Operator(
-                    rdd, shape, coord_format
-                ).persist(self._storage_level)
+                wo = Operator(rdd, shape).change_coordinate(
+                    Utils.MatrixCoordinateMultiplier
+                ).partition_by(num_partitions=num_partitions).persist(storage_level)
 
                 if Utils.get_conf(
                         self._spark_context, 'quantum.dtqw.walkOperator.checkpoint') == 'True':
                     wo = wo.checkpoint()
 
-                self._walk_operators.append(
-                    wo.materialize(self._storage_level))
+                self._walk_operators.append(wo.materialize(storage_level))
 
                 self._profile_operator(
                     'walkOperatorParticle{}'.format(p + 1),
@@ -412,11 +422,9 @@ class DiscreteTimeQuantumWalk:
                     self._walk_operators[-1],
                     initial_time)
 
-            if kron_mode == Utils.KroneckerModeBroadcast:
-                eo.unpersist()
-            elif kron_mode == Utils.KroneckerModeDump:
-                evolution_operator.unpersist()
+            eo.unpersist()
 
+            if kron_mode == Utils.KroneckerModeDump:
                 Utils.remove_path(path)
 
     def _destroy_coin_operator(self):
@@ -568,12 +576,10 @@ class DiscreteTimeQuantumWalk:
         # Building walk operators once if not simulating decoherence with
         # constant broken links
         if not self._mesh.broken_links or self._mesh.broken_links.is_constant():
-            self._create_walk_operators(
-                Utils.MatrixCoordinateMultiplier, self._storage_level)
+            self._create_walk_operators(self._storage_level)
 
         if self._num_particles > 1 and self._interaction is not None and self._interaction_operator is None:
-            self._create_interaction_operator(
-                Utils.MatrixCoordinateMultiplier, self._storage_level)
+            self._create_interaction_operator(self._storage_level)
 
         for i in range(1, steps + 1, 1):
             # When there is a non-constant broken links (e.g., random),
@@ -581,41 +587,44 @@ class DiscreteTimeQuantumWalk:
             if self._mesh.broken_links and not self._mesh.broken_links.is_constant():
                 self._destroy_shift_operator()
                 self._destroy_walk_operators()
-                self._create_walk_operators(
-                    Utils.MatrixCoordinateMultiplier, self._storage_level)
+                self._create_walk_operators(self._storage_level)
 
             t_tmp = datetime.now()
 
-            result_tmp = result
+            result_tmp = result.change_coordinate(
+                Utils.MatrixCoordinateMultiplicand
+            )
 
             if self._num_particles == 1:
                 result_tmp = self._walk_operators[0].multiply(result_tmp)
             else:
                 if self._interaction_operator is not None:
-                    result_tmp = self._interaction_operator.multiply(
-                        result_tmp)
+                    result_tmp = self._interaction_operator.multiply(result_tmp).change_coordinate(
+                        Utils.MatrixCoordinateMultiplicand
+                    )
 
                 for wo in reversed(self._walk_operators):
-                    result_tmp = wo.multiply(result_tmp)
+                    result_tmp = wo.multiply(result_tmp).change_coordinate(
+                        Utils.MatrixCoordinateMultiplicand
+                    )
 
-            # In the last step, the resulting state is not materialized
-            # because it will be repartitioned to a more appropriate
-            # number of partitions and have a partitioner defined.
-            if i == steps:
-                expected_elems = result_tmp.shape[0]
-                expected_size = Utils.get_size_of_type(
-                    result_tmp.data_type) * expected_elems
-                num_partitions = Utils.get_num_partitions(
-                    self._spark_context, expected_size)
+                result_tmp = result_tmp.change_coordinate(
+                    Utils.MatrixCoordinateDefault
+                )
 
-                if num_partitions:
-                    result_tmp.define_partitioner(num_partitions)
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(
+                    result_tmp.data_type) * result_tmp.num_elements
+            )
 
-            result_tmp.materialize(self._storage_level)
-            result.unpersist()
+            result_tmp.repartition(num_partitions).persist(self._storage_level)
 
             if configs['checkpointing_frequency'] >= 0 and i % configs['checkpointing_frequency'] == 0:
                 result_tmp.checkpoint()
+
+            result_tmp.materialize(self._storage_level)
+            result.unpersist()
 
             if configs['dumping_frequency'] >= 0 and i % configs['dumping_frequency'] == 0:
                 result_tmp.dump(
@@ -643,8 +652,6 @@ class DiscreteTimeQuantumWalk:
                         marginal[p].dump(
                             configs['dumping_path'] + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
 
-            result = result_tmp
-
             self._profiler.profile_resources(app_id)
             self._profiler.profile_executors(app_id)
 
@@ -655,7 +662,7 @@ class DiscreteTimeQuantumWalk:
 
             if info is not None:
                 self._logger.info(
-                    "step was done in {}s".format(info['buildingTime']))
+                    "step {} was done in {}s".format(i, info['buildingTime']))
                 self._logger.info(
                     "system state of step {} is consuming {} bytes in memory and {} bytes in disk".format(
                         i, info['memoryUsed'], info['diskUsed']
@@ -663,6 +670,8 @@ class DiscreteTimeQuantumWalk:
                 )
 
             self._profiler.log_rdd(app_id=app_id)
+
+            result = result_tmp
 
         self._logger.info("walk was done in {}s".format(
             (datetime.now() - t1).total_seconds()))
