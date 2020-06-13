@@ -1,5 +1,3 @@
-import numpy as np
-
 from pyspark import RDD, StorageLevel
 
 from sparkquantum.utils.utils import Utils
@@ -8,28 +6,23 @@ __all__ = ['Base']
 
 
 class Base:
-    """Top-level class for some matrix-based elements."""
+    """Top-level class for math entities."""
 
-    def __init__(self, rdd, shape, data_type=complex):
-        """Build a top-level object for some matrix-based elements. It is a container of :py:class:`pyspark.RDD`.
+    def __init__(self, rdd, num_elements=None):
+        """Build a top-level object for math entities. It is a container of :py:class:`pyspark.RDD`.
 
         Parameters
         ----------
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
-        shape : tuple
-            The shape of this matrix object. Must be a two-dimensional tuple.
-        data_type : type, optional
-            The Python type of all values in this object. Default value is complex.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
         self._spark_context = rdd.context
-        self._shape = shape
-        self._num_elements = self._shape[0] * self._shape[1]
-        self._num_nonzero_elements = 0
-        self._data_type = data_type
-
-        self.data = rdd
+        self._data = rdd
+        self._num_elements = num_elements
 
         self._logger = Utils.get_logger(
             self._spark_context, self.__class__.__name__)
@@ -42,20 +35,10 @@ class Base:
                 "'RDD' instance expected, not '{}'".format(
                     type(rdd)))
 
-        if shape is not None:
-            if not Utils.is_shape(shape):
-                self._logger.error("invalid shape")
-                raise ValueError("invalid shape")
-
     @property
     def spark_context(self):
         """:py:class:`pyspark.SparkContext`"""
         return self._spark_context
-
-    @property
-    def shape(self):
-        """tuple"""
-        return self._shape
 
     @property
     def num_elements(self):
@@ -63,14 +46,9 @@ class Base:
         return self._num_elements
 
     @property
-    def num_nonzero_elements(self):
-        """int"""
-        return self._num_nonzero_elements
-
-    @property
-    def data_type(self):
-        """type"""
-        return self._data_type
+    def data(self):
+        """:py:class:`pyspark.RDD`"""
+        return self._data
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -88,26 +66,17 @@ class Base:
             The string representation of this math base entity.
 
         """
-        return 'Base math entity with shape {}'.format(self._shape)
+        return 'Base math entity'
 
-    def sparsity(self):
-        """Calculate the sparsity of this object.
-
-        Returns
-        -------
-        float
-            The sparsity of this object.
-
-        """
-        return 1.0 - self.num_nonzero_elements / self._num_elements
-
-    def repartition(self, num_partitions):
+    def repartition(self, num_partitions, shuffle=False):
         """Change the number of partitions of this object's RDD.
 
         Parameters
         ----------
         num_partitions : int
             The target number of partitions of the RDD.
+        shuffle: boolean
+            Indicate that Spark must force a shuffle operation.
 
         Returns
         -------
@@ -115,20 +84,28 @@ class Base:
             A reference to this object.
 
         """
-        if num_partitions > self.data.getNumPartitions():
-            self.data = self.data.repartition(num_partitions)
-        elif num_partitions < self.data.getNumPartitions():
-            self.data = self.data.coalesce(num_partitions)
+        if num_partitions > self._data.getNumPartitions():
+            self._data = self._data.repartition(num_partitions)
+        elif num_partitions < self._data.getNumPartitions():
+            self._data = self._data.coalesce(num_partitions, shuffle)
 
         return self
 
-    def define_partitioner(self, num_partitions):
-        """Define the hash partitioner with the chosen number of partitions for this object's RDD.
+    def partition_by(self, num_partitions=None, partition_func=None):
+        """Set a partitioner with the chosen number of partitions for this object's RDD.
+
+        Notes
+        -----
+        When `partition_func` is None, the default partition function is used (i.e., portable_hash).
 
         Parameters
         ----------
-        num_partitions : int
-            The target number of partitions of the RDD.
+        num_partitions : int, optional
+            The chosen number of partitions for the RDD.
+            Default value is the original number of partitions of the RDD.
+        partition_func: function, optional
+            The chosen partition function.
+            Default value is None.
 
         Returns
         -------
@@ -136,9 +113,17 @@ class Base:
             A reference to this object.
 
         """
-        self.data = self.data.partitionBy(
-            numPartitions=num_partitions
-        )
+        if num_partitions is None:
+            np = self._data.getNumPartitions()
+        else:
+            np = num_partitions
+
+        if partition_func is None:
+            self._data = self._data.partitionBy(np)
+        else:
+            self._data = self._data.partitionBy(
+                np, partitionFunc=partition_func
+            )
 
         return self
 
@@ -156,16 +141,16 @@ class Base:
             A reference to this object.
 
         """
-        if self.data is not None:
-            if not self.data.is_cached:
-                self.data.persist(storage_level)
+        if self._data is not None:
+            if not self._data.is_cached:
+                self._data.persist(storage_level)
                 self._logger.info(
                     "RDD {} was persisted".format(
-                        self.data.id()))
+                        self._data.id()))
             else:
                 self._logger.info(
                     "RDD {} has already been persisted".format(
-                        self.data.id()))
+                        self._data.id()))
         else:
             self._logger.warning(
                 "there is no data to be persisted")
@@ -181,16 +166,16 @@ class Base:
             A reference to this object.
 
         """
-        if self.data is not None:
-            if self.data.is_cached:
-                self.data.unpersist()
+        if self._data is not None:
+            if self._data.is_cached:
+                self._data.unpersist()
                 self._logger.info(
                     "RDD {} was unpersisted".format(
-                        self.data.id()))
+                        self._data.id()))
             else:
                 self._logger.info(
                     "RDD {} has already been unpersisted".format(
-                        self.data.id()))
+                        self._data.id()))
         else:
             self._logger.warning(
                 "there is no data to be unpersisted")
@@ -225,11 +210,11 @@ class Base:
             A reference to this object.
 
         """
-        self.persist(storage_level)
+        self.persist(storage_level=storage_level)
 
-        self._num_nonzero_elements = self.data.count()
+        self._num_elements = self._data.count()
 
-        self._logger.info("RDD {} was materialized".format(self.data.id()))
+        self._logger.info("RDD {} was materialized".format(self._data.id()))
 
         return self
 
@@ -247,107 +232,19 @@ class Base:
             A reference to this object.
 
         """
-        if self.data.isCheckpointed():
+        if self._data.isCheckpointed():
             self._logger.info("RDD already checkpointed")
             return self
 
-        if not self.data.is_cached:
+        if not self._data.is_cached:
             self._logger.warning(
                 "it is recommended to cache the RDD before checkpointing it")
 
-        self.data.checkpoint()
+        self._data.checkpoint()
 
         self._logger.info(
             "RDD {} was checkpointed in {}".format(
-                self.data.id(),
-                self.data.getCheckpointFile()))
+                self._data.id(),
+                self._data.getCheckpointFile()))
 
         return self
-
-    def dump(self, path, glue=None, codec=None, filename=None):
-        """Dump this object's RDD to disk in a unique file or in many part-* files.
-
-        Notes
-        -----
-        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
-        This is not suitable for large working sets, as all data may not fit into driver's main memory.
-
-        Parameters
-        ----------
-        path : str
-            The path where the dumped RDD will be located at.
-        glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
-        codec : str, optional
-            Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
-        filename : str, optional
-            File name used when the dumping mode is in a single file. Default value is None.
-            In this case, a temporary named file is generated inside the informed path.
-
-        Raises
-        ------
-        ValueError
-            If the chosen 'quantum.math.dumpingMode' configuration is not valid.
-
-        """
-        if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
-
-        if codec is None:
-            codec = Utils.get_conf(
-                self._spark_context,
-                'quantum.dumpingCompressionCodec')
-
-        dumping_mode = int(
-            Utils.get_conf(
-                self._spark_context,
-                'quantum.math.dumpingMode'))
-
-        if dumping_mode == Utils.DumpingModeUniqueFile:
-            data = self.data.collect()
-
-            Utils.create_dir(path)
-
-            if not filename:
-                filename = Utils.get_temp_path(path)
-            else:
-                filename = Utils.append_slash_dir(path) + filename
-
-            if len(data):
-                with open(filename, 'a') as f:
-                    for d in data:
-                        f.write(glue.join([str(e) for e in d]) + "\n")
-        elif dumping_mode == Utils.DumpingModePartFiles:
-            self.data.map(
-                lambda m: glue.join([str(e) for e in m])
-            ).saveAsTextFile(path, codec)
-        else:
-            self._logger.error("invalid dumping mode")
-            raise ValueError("invalid dumping mode")
-
-    def numpy_array(self):
-        """Create a numpy array containing this object's RDD data.
-
-        Notes
-        -----
-        This method calls the :py:func:`pyspark.RDD.collect` method. This is not suitable for large working sets,
-        as all data may not fit into main memory.
-
-        Returns
-        -------
-        :py:class:`numpy.ndarray`
-            The numpy array.
-
-        """
-        data = self.data.collect()
-        result = np.zeros(self._shape, dtype=self._data_type)
-
-        if len(data):
-            ind = len(data[0]) - 1
-
-            for e in data:
-                result[e[0:ind]] = e[ind]
-
-        return result

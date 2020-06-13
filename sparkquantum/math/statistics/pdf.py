@@ -29,10 +29,14 @@ class PDF(Base):
             The number of particles present in the walk.
 
         """
-        super().__init__(rdd, shape, data_type=float)
+        super().__init__(rdd)
 
+        self._shape = shape
+        self._data_type = float
         self._mesh = mesh
         self._num_particles = num_particles
+
+        self._size = self._shape[0] * self._shape[1]
 
         if not is_mesh(mesh):
             self._logger.error(
@@ -49,8 +53,29 @@ class PDF(Base):
                 "invalid number of particles. It must be greater than or equal to 1")
 
     @property
+    def shape(self):
+        """tuple"""
+        return self._shape
+
+    @property
+    def data_type(self):
+        """type"""
+        return self._data_type
+
+    @property
     def mesh(self):
+        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
+
+    @property
+    def num_particles(self):
+        """int"""
+        return self._num_particles
+
+    @property
+    def size(self):
+        """int"""
+        return self._size
 
     def __str__(self):
         if self._num_particles == 1:

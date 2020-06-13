@@ -1,9 +1,9 @@
 import math
 
 import numpy as np
+from pyspark import RDD
 
 from sparkquantum.math.base import Base
-from sparkquantum.math.vector import Vector, is_vector
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Matrix', 'is_matrix']
@@ -13,7 +13,7 @@ class Matrix(Base):
     """Class for matrices."""
 
     def __init__(self, rdd, shape, data_type=complex,
-                 coord_format=Utils.MatrixCoordinateDefault):
+                 coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
         """Build a matrix object.
 
         Parameters
@@ -21,25 +21,61 @@ class Matrix(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this matrix object. Must be a two-dimensional tuple.
+            The shape of this object. Must be a two-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        coordinate_format : int, optional
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, shape, data_type=data_type)
+        super().__init__(rdd, num_elements=num_elements)
 
-        self._coordinate_format = coord_format
+        self._shape = shape
+        self._data_type = data_type
+        self._coordinate_format = coordinate_format
+
+        self._size = self._shape[0] * self._shape[1]
+
+        if not Utils.is_shape(shape):
+            self._logger.error("invalid shape")
+            raise ValueError("invalid shape")
+
+    @property
+    def shape(self):
+        """tuple"""
+        return self._shape
+
+    @property
+    def data_type(self):
+        """type"""
+        return self._data_type
 
     @property
     def coordinate_format(self):
         """int"""
         return self._coordinate_format
 
+    @property
+    def size(self):
+        """int"""
+        return self._size
+
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
+
+    def sparsity(self):
+        """Calculate the sparsity of this matrix.
+
+        Returns
+        -------
+        float
+            The sparsity of this matrix.
+
+        """
+        return 1.0 - self._num_elements / self._size
 
     def dump(self, path, glue=None, codec=None, filename=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
@@ -83,18 +119,17 @@ class Matrix(Base):
                 self._spark_context,
                 'quantum.math.dumpingMode'))
 
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[1][0]), str(m[0]), str(m[1][1])))
-            )
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[0]), str(m[1][0]), str(m[1][1])))
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = self.data.map(
-                lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
-            )
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
+
+        rdd = rdd.map(
+            lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
+        )
 
         if dumping_mode == Utils.DumpingModeUniqueFile:
             data = rdd.collect()
@@ -130,20 +165,47 @@ class Matrix(Base):
             The numpy array.
 
         """
-        data = self.data.collect()
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
+
+        rdd = self._data
+
+        data = rdd.collect()
+
         result = np.zeros(self._shape, dtype=self._data_type)
 
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            for e in data:
-                result[e[1][0], e[0]] = e[1][1]
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            for e in data:
-                result[e[0], e[1][0]] = e[1][1]
-        else:  # Utils.MatrixCoordinateDefault
-            for e in data:
-                result[e[0], e[1]] = e[2]
+        for e in data:
+            result[e[0], e[1]] = e[2]
 
         return result
+
+    def change_coordinate(self, coordinate_format):
+        """Change the coordinate format of this object.
+
+        Parameters
+        ----------
+        coordinate_format : int
+            The new coordinate format of this object.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            A reference to this object.
+
+        """
+        self._data = Utils.change_coordinate(
+            self._data,
+            old_coordinate=self._coordinate_format,
+            new_coordinate=coordinate_format)
+
+        self._coordinate_format = coordinate_format
+
+        return self
 
     def _kron(self, other):
         other_shape = other.shape
@@ -152,62 +214,54 @@ class Matrix(Base):
             other_shape[0],
             self._shape[1] *
             other_shape[1])
+
         data_type = Utils.get_precedent_type(self._data_type, other.data_type)
 
-        expected_elems = self._num_nonzero_elements * other.num_nonzero_elements
-        expected_size = Utils.get_size_of_type(data_type) * expected_elems
-        num_partitions = Utils.get_num_partitions(
-            self.data.context, expected_size)
+        rdd = self._data
+        other_rdd = other.data
 
-        rdd = self.data.map(
+        # TODO: improve
+        if self._num_elements is not None and other.num_elements is not None:
+            expected_elements = self._num_elements * other.num_elements
+
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+        else:
+            expected_elements = None
+
+            num_partitions = max(
+                rdd.getNumPartitions(),
+                other_rdd.getNumPartitions())
+
+        rdd = rdd.map(
             lambda m: (0, m)
         ).join(
-            other.data.map(
+            other_rdd.map(
                 lambda m: (0, m)
             ),
             numPartitions=num_partitions
         ).map(
             lambda m: (m[1][0], m[1][1])
+        ).map(
+            lambda m: (
+                m[0][0] * other_shape[0] + m[1][0],
+                m[0][1] * other_shape[1] + m[1][1],
+                m[0][2] * m[1][2])
         )
 
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier:
-            rdd = rdd.map(
-                lambda m: (
-                    m[0][1] * other_shape[1] + m[1][1],
-                    (m[0][0] * other_shape[0] + m[1][0],
-                     m[0][2] * m[1][2]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        elif self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = rdd.map(
-                lambda m: (
-                    m[0][0] * other_shape[0] + m[1][0],
-                    (m[0][1] * other_shape[1] + m[1][1],
-                     m[0][2] * m[1][2]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = rdd.map(
-                lambda m: (
-                    m[0][0] * other_shape[0] + m[1][0],
-                    m[0][1] * other_shape[1] + m[1][1],
-                    m[0][2] * m[1][2])
-            )
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
 
-        return rdd, new_shape
+        return rdd, new_shape, data_type, expected_elements
 
-    def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
+    def kron(self, other):
         """Perform a tensor (Kronecker) product with another matrix.
 
         Parameters
         ----------
         other : :py:class:`sparkquantum.math.Matrix`
             The other matrix.
-        coord_format : int, optional
-            Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -228,9 +282,10 @@ class Matrix(Base):
                 "'Matrix' instance expected, not '{}'".format(
                     type(other)))
 
-        rdd, new_shape = self._kron(other)
+        rdd, shape, data_type, num_elements = self._kron(other)
 
-        return Matrix(rdd, new_shape, coord_format=coord_format)
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=num_elements)
 
     def norm(self):
         """Calculate the norm of this matrix.
@@ -241,20 +296,24 @@ class Matrix(Base):
             The norm of this matrix.
 
         """
-        if self._coordinate_format == Utils.MatrixCoordinateMultiplier or self._coordinate_format == Utils.MatrixCoordinateMultiplicand:
-            n = self.data.filter(
-                lambda m: m[1][1] != complex()
-            ).map(
-                lambda m: m[1][1].real ** 2 + m[1][1].imag ** 2
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            n = self.data.filter(
-                lambda m: m[2] != complex()
-            ).map(
-                lambda m: m[2].real ** 2 + m[2].imag ** 2
-            )
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
 
-        n = n.reduce(
+        if self._data_type == complex:
+            def __map(m):
+                return m[2].real ** 2 + m[2].imag ** 2
+        else:
+            def __map(m):
+                return m[2] ** 2
+
+        n = rdd.map(
+            __map
+        ).reduce(
             lambda a, b: a + b
         )
 
@@ -280,7 +339,7 @@ class Matrix(Base):
 
         return round(self.norm(), round_precision) == 1.0
 
-    def _multiply_matrix(self, other, coord_format):
+    def _multiply_matrix(self, other):
         if self._shape[1] != other.shape[0]:
             self._logger.error(
                 "incompatible shapes {} and {}".format(
@@ -289,95 +348,83 @@ class Matrix(Base):
                 "incompatible shapes {} and {}".format(
                     self._shape, other.shape))
 
-        shape = (self._shape[0], other.shape[1])
-        num_partitions = max(
-            self.data.getNumPartitions(),
-            other.data.getNumPartitions())
+        new_shape = (self._shape[0], other.shape[1])
 
-        rdd = self.data.join(
-            other.data, numPartitions=num_partitions
+        data_type = Utils.get_precedent_type(self._data_type, other.data_type)
+
+        rdd = self._data
+        other_rdd = other.data
+
+        if self._num_elements is not None or other.num_elements is not None:
+            if self._num_elements is not None and other.num_elements is not None:
+                expected_elements = min(self._num_elements, other.num_elements)
+            elif self._num_elements is not None:
+                expected_elements = self._num_elements
+            else:
+                expected_elements = other.num_elements
+
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+        else:
+            expected_elements = None
+
+            num_partitions = max(
+                rdd.getNumPartitions(),
+                other_rdd.getNumPartitions())
+
+        rdd = rdd.join(
+            other_rdd, numPartitions=num_partitions
         ).map(
             lambda m: ((m[1][0][0], m[1][1][0]), m[1][0][1] * m[1][1][1])
         ).reduceByKey(
             lambda a, b: a + b, numPartitions=num_partitions
-        )
-
-        if coord_format == Utils.MatrixCoordinateMultiplier:
-            rdd = rdd.map(
-                lambda m: (m[0][1], (m[0][0], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        elif coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = rdd.map(
-                lambda m: (m[0][0], (m[0][1], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = rdd.map(
-                lambda m: (m[0][0], m[0][1], m[1])
-            )
-
-        return Matrix(rdd, shape, coord_format=coord_format)
-
-    def _multiply_vector(self, other):
-        if self._shape[1] != other.shape[0]:
-            self._logger.error(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
-            raise ValueError(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
-
-        shape = other.shape
-
-        rdd = self.data.join(
-            other.data, numPartitions=self.data.getNumPartitions()
         ).map(
-            lambda m: (m[1][0][0], m[1][0][1] * m[1][1])
-        ).reduceByKey(
-            lambda a, b: a + b, numPartitions=self.data.getNumPartitions()
+            lambda m: (m[0][0], m[0][1], m[1])
         )
 
-        return Vector(rdd, shape)
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
 
-    def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
-        """Multiply this matrix with another one or with a vector.
+        return rdd, new_shape, data_type, expected_elements
+
+    def multiply(self, other):
+        """Multiply this matrix by another one or by a number, i.e, int, float or complex.
+
+        Notes
+        -----
+        The coordinate format of this matrix must be :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplier`
+        and the other matrix must be :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplicand`.
+        The coordinate format of the resulting matrix is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
-            A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
-        coord_format : int, optional
-            Indicate if the matrix must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a :py:class:`sparkquantum.math.Vector`.
+        other : :py:class:`sparkquantum.math.Matrix`
+            The other matrix that will be multiplied by this matrix.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix` or :py:class:`sparkquantum.math.Vector`
-            A :py:class:`sparkquantum.math.Matrix` if multiplying another matrix, :py:class:`sparkquantum.math.Vector` otherwise.
+        :py:class:`sparkquantum.math.Matrix`
+            The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix` nor :py:class:`sparkquantum.math.Vector`.
-
+            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
         ValueError
             If this matrix's and `other`'s shapes are incompatible for multiplication.
 
         """
         if is_matrix(other):
-            return self._multiply_matrix(other, coord_format)
-        elif is_vector(other):
-            return self._multiply_vector(other)
+            rdd, shape, data_type, num_elements = self._multiply_matrix(other)
+
+            return Matrix(rdd, shape, data_type=data_type,
+                          num_elements=num_elements)
         else:
             self._logger.error(
-                "'Matrix' or 'Vector' instance expected, not '{}'".format(
-                    type(other)))
+                "'Matrix' intance, not '{}'".format(type(other)))
             raise TypeError(
-                "'Matrix' or 'Vector' instance expected, not '{}'".format(
-                    type(other)))
+                "'Matrix' intance, not '{}'".format(type(other)))
 
 
 def is_matrix(obj):

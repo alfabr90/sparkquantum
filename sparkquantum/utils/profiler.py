@@ -22,7 +22,7 @@ class Profiler:
         """Build a profiler object."""
         self._spark_context = SparkContext.getOrCreate()
 
-        self._rdd = None
+        self._data = None
         self._resources = None
         self._executors = None
 
@@ -90,7 +90,7 @@ class Profiler:
                               'quantum.profiling.baseUrl')
 
     def _start(self):
-        self._rdd = {}
+        self._data = {}
         self._resources = self._default_resources()
         self._executors = {}
 
@@ -409,15 +409,15 @@ class Profiler:
         if self._enabled:
             self._logger.info("profiling RDD for '{}'...".format(name))
 
-            if name not in self._rdd:
-                self._rdd[name] = self._default_rdd()
+            if name not in self._data:
+                self._data[name] = self._default_rdd()
 
             data = self.request_rdd(app_id, rdd_id)
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._rdd[name]:
-                        self._rdd[name][k] = v
+                    if k in self._data[name]:
+                        self._data[name][k] = v
 
     def profile_resources(self, app_id):
         """Store information about the resources consumed by the application.
@@ -501,15 +501,15 @@ class Profiler:
             A dict with the RDD resources of all elements or with just the RDD resources of the named element.
 
         """
-        if len(self._rdd):
+        if len(self._data):
             if name is None:
-                return self._rdd.copy()
+                return self._data.copy()
             else:
-                if name not in self._rdd:
+                if name not in self._data:
                     self._logger.warning(
                         "no measurement of RDD resources has been done for '{}'".format(name))
                     return {}
-                return self._rdd[name]
+                return self._data[name]
         else:
             self._logger.warning(
                 "no measurement of RDD resources has been done")
@@ -594,10 +594,10 @@ class Profiler:
         self._logger.info(
             "exporting RDD resources in {} format...".format(extension))
 
-        if len(self._rdd):
+        if len(self._data):
             rdd = []
 
-            for k, v in self._rdd.items():
+            for k, v in self._data.items():
                 tmp = v.copy()
                 tmp['rdd'] = k
                 rdd.append(tmp)

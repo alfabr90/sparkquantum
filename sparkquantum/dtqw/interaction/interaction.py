@@ -62,8 +62,7 @@ class Interaction:
         """
         return self.__class__.__name__
 
-    def create_operator(self, coord_format=Utils.MatrixCoordinateDefault,
-                        storage_level=StorageLevel.MEMORY_AND_DISK):
+    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the interaction operator.
 
         Raises

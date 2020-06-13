@@ -58,7 +58,7 @@ class PositionGauge(Gauge):
             size = state.mesh.size
             num_particles = state.num_particles
             ind = ndim * num_particles
-            expected_elems = size
+            expected_elements = size
             size_per_coin = int(coin_size / ndim)
             cs_size = size_per_coin * size
             dims = [size for p in range(ind)]
@@ -76,7 +76,7 @@ class PositionGauge(Gauge):
                         x.append(
                             int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
 
-                    return tuple(x), (abs(m[1]) ** 2).real
+                    return tuple(x), (abs(m[2]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
@@ -85,7 +85,7 @@ class PositionGauge(Gauge):
                         x.append(
                             int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size)
 
-                    return tuple(x), (abs(m[1]) ** 2).real
+                    return tuple(x), (abs(m[2]) ** 2).real
             else:
                 self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
@@ -105,7 +105,7 @@ class PositionGauge(Gauge):
             size_x, size_y = state.mesh.size
             num_particles = state.num_particles
             ind = ndim * num_particles
-            expected_elems = size_x * size_y
+            expected_elements = size_x * size_y
             size_per_coin = int(coin_size / ndim)
             cs_size_x = size_per_coin * size_x
             cs_size_y = size_per_coin * size_y
@@ -128,7 +128,7 @@ class PositionGauge(Gauge):
                         xy.append(
                             int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
 
-                    return tuple(xy), (abs(m[1]) ** 2).real
+                    return tuple(xy), (abs(m[2]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
@@ -139,7 +139,7 @@ class PositionGauge(Gauge):
                         xy.append(
                             int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y)
 
-                    return tuple(xy), (abs(m[1]) ** 2).real
+                    return tuple(xy), (abs(m[2]) ** 2).real
             else:
                 self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
@@ -158,15 +158,19 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = Utils.get_size_of_type(float) * expected_elems
+        expected_size = Utils.get_size_of_type(float) * expected_elements
         num_partitions = Utils.get_num_partitions(
             state.data.context, expected_size)
 
-        data_type = state.data_type()
+        rdd = Utils.change_coordinate(
+            Utils.remove_zeros(
+                state.data,
+                state.data_type,
+                state.coordinate_format),
+            state.coordinate_format,
+            Utils.MatrixCoordinateDefault)
 
-        rdd = state.data.filter(
-            lambda m: m[1] != data_type
-        ).map(
+        rdd = rdd.map(
             __map
         ).reduceByKey(
             lambda a, b: a + b, numPartitions=num_partitions
@@ -244,7 +248,7 @@ class PositionGauge(Gauge):
             size = state.mesh.size
             num_particles = state.num_particles
             ind = ndim * num_particles
-            expected_elems = size
+            expected_elements = size
             shape = (size, 1)
 
             def __filter(m):
@@ -260,7 +264,7 @@ class PositionGauge(Gauge):
             size_x, size_y = state.mesh.size
             num_particles = state.num_particles
             ind = ndim * num_particles
-            expected_elems = size_x * size_y
+            expected_elements = size_x * size_y
             shape = (size_x, size_y)
 
             def __filter(m):
@@ -275,7 +279,7 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = Utils.get_size_of_type(float) * expected_elems
+        expected_size = Utils.get_size_of_type(float) * expected_elements
         num_partitions = Utils.get_num_partitions(
             state.data.context, expected_size)
 
@@ -344,7 +348,7 @@ class PositionGauge(Gauge):
             coin_size = state.mesh.coin_size
             size = state.mesh.size
             num_particles = state.num_particles
-            expected_elems = size
+            expected_elements = size
             size_per_coin = int(coin_size / ndim)
             cs_size = size_per_coin * size
             shape = (size, 1)
@@ -353,12 +357,12 @@ class PositionGauge(Gauge):
                 def __map(m):
                     x = int(
                         m[0] / (cs_size ** (num_particles - 1 - particle))) % size
-                    return x, (abs(m[1]) ** 2).real
+                    return x, (abs(m[2]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = int(m[0] / (cs_size ** (num_particles -
                                                 1 - particle) * size_per_coin)) % size
-                    return x, (abs(m[1]) ** 2).real
+                    return x, (abs(m[2]) ** 2).real
             else:
                 self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
@@ -370,7 +374,7 @@ class PositionGauge(Gauge):
             coin_size = state.mesh.coin_size
             size_x, size_y = state.mesh.size
             num_particles = state.num_particles
-            expected_elems = size_x * size_y
+            expected_elements = size_x * size_y
             size_per_coin = int(coin_size / ndim)
             cs_size_x = size_per_coin * size_x
             cs_size_y = size_per_coin * size_y
@@ -385,7 +389,7 @@ class PositionGauge(Gauge):
                         int(m[0] / (cs_size_xy **
                                     (num_particles - 1 - particle))) % size_y
                     )
-                    return xy, (abs(m[1]) ** 2).real
+                    return xy, (abs(m[2]) ** 2).real
             elif repr_format == Utils.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = (
@@ -394,7 +398,7 @@ class PositionGauge(Gauge):
                         int(m[0] / (cs_size_xy ** (num_particles -
                                                    1 - particle) * coin_size)) % size_y
                     )
-                    return xy, (abs(m[1]) ** 2).real
+                    return xy, (abs(m[2]) ** 2).real
             else:
                 self._logger.error("invalid representation format")
                 raise ValueError("invalid representation format")
@@ -405,15 +409,19 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = Utils.get_size_of_type(float) * expected_elems
+        expected_size = Utils.get_size_of_type(float) * expected_elements
         num_partitions = Utils.get_num_partitions(
             state.data.context, expected_size)
 
-        data_type = state.data_type()
+        rdd = Utils.change_coordinate(
+            Utils.remove_zeros(
+                state.data,
+                state.data_type,
+                state.coordinate_format),
+            state.coordinate_format,
+            Utils.MatrixCoordinateDefault)
 
-        rdd = state.data.filter(
-            lambda m: m[1] != data_type
-        ).map(
+        rdd = rdd.map(
             __map
         ).reduceByKey(
             lambda a, b: a + b, numPartitions=num_partitions

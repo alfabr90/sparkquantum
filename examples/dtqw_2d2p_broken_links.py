@@ -107,7 +107,7 @@ if not entangled:
         mesh,
         positions,
         amplitudes,
-        interaction,
+        interaction=interaction,
         representationFormat=representationFormat)
 else:
     # Center of the mesh
@@ -115,12 +115,12 @@ else:
 
     if representationFormat == Utils.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
-        state = [[(3 * mesh_size + position) * coin_size * mesh_size + (0 * mesh_size + position), 1.0 / math.sqrt(2)],
-                 [(0 * mesh_size + position) * coin_size * mesh_size + (3 * mesh_size + position), -1.0 / math.sqrt(2)]]
+        state = [[(3 * mesh_size + position) * coin_size * mesh_size + (0 * mesh_size + position), 1, 1.0 / math.sqrt(2)],
+                 [(0 * mesh_size + position) * coin_size * mesh_size + (3 * mesh_size + position), 1, -1.0 / math.sqrt(2)]]
     elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
         # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|x1,y1>|1,1>|x2,y2>|0,0> - |x1,y1>|0,0>|x2,y2>|1,1>) / sqrt(2)
-        state = [[(position * coin_size + 3) * mesh_size * coin_size + (position * coin_size + 0), 1.0 / math.sqrt(2)],
-                 [(position * coin_size + 0) * mesh_size * coin_size + (position * coin_size + 3), -1.0 / math.sqrt(2)]]
+        state = [[(position * coin_size + 3) * mesh_size * coin_size + (position * coin_size + 0), 1, 1.0 / math.sqrt(2)],
+                 [(position * coin_size + 0) * mesh_size * coin_size + (position * coin_size + 3), 1, -1.0 / math.sqrt(2)]]
 
     rdd = sparkContext.parallelize(state)
     shape = [(coin_size * mesh_size) ** num_particles, 1]
@@ -130,7 +130,7 @@ else:
         coin,
         mesh,
         num_particles,
-        interaction)
+        interaction=interaction)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)

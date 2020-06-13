@@ -11,7 +11,7 @@ class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
     def __init__(self, rdd, shape, data_type=complex,
-                 coord_format=Utils.MatrixCoordinateDefault):
+                 coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
         """Build an operator object.
 
         Parameters
@@ -19,36 +19,33 @@ class Operator(Matrix):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this operator object. Must be a two-dimensional tuple.
+            The shape of this object. Must be a two-dimensional tuple.
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        coordinate_format : int, optional
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, shape, data_type=data_type)
-
-        self._coordinate_format = coord_format
-
-    @property
-    def coordinate_format(self):
-        """int"""
-        return self._coordinate_format
+        super().__init__(
+            rdd,
+            shape,
+            data_type=data_type,
+            coordinate_format=coordinate_format,
+            num_elements=num_elements)
 
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
 
-    def kron(self, other, coord_format=Utils.MatrixCoordinateDefault):
+    def kron(self, other):
         """Perform a tensor (Kronecker) product with another operator.
 
         Parameters
         ----------
         other : :py:class:`sparkquantum.dtqw.operator.Operator`
             The other operator.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
 
         Returns
         -------
@@ -67,78 +64,18 @@ class Operator(Matrix):
             raise TypeError(
                 "'Operator' instance expected, not '{}'".format(type(other)))
 
-        rdd, new_shape = self._kron(other)
+        rdd, shape, data_type, num_elements = self._kron(other)
 
-        return Operator(rdd, new_shape, coord_format=coord_format)
+        return Operator(rdd, shape, data_type=data_type,
+                        num_elements=num_elements)
 
-    def _multiply_operator(self, other, coord_format):
-        if self._shape[1] != other.shape[0]:
-            self._logger.error("incompatible shapes {} and {}".format(
-                self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(
-                self._shape, other.shape))
-
-        shape = (self._shape[0], other.shape[1])
-        num_partitions = max(self.data.getNumPartitions(),
-                             other.data.getNumPartitions())
-
-        rdd = self.data.join(
-            other.data, numPartitions=num_partitions
-        ).map(
-            lambda m: ((m[1][0][0], m[1][1][0]), m[1][0][1] * m[1][1][1])
-        ).reduceByKey(
-            lambda a, b: a + b, numPartitions=num_partitions
-        )
-
-        if coord_format == Utils.MatrixCoordinateMultiplier:
-            rdd = rdd.map(
-                lambda m: (m[0][1], (m[0][0], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        elif coord_format == Utils.MatrixCoordinateMultiplicand:
-            rdd = rdd.map(
-                lambda m: (m[0][0], (m[0][1], m[1]))
-            ).partitionBy(
-                numPartitions=num_partitions
-            )
-        else:  # Utils.MatrixCoordinateDefault
-            rdd = rdd.map(
-                lambda m: (m[0][0], m[0][1], m[1])
-            )
-
-        return Operator(rdd, shape, coord_format=coord_format)
-
-    def _multiply_state(self, other):
-        if self._shape[1] != other.shape[0]:
-            self._logger.error("incompatible shapes {} and {}".format(
-                self._shape, other.shape))
-            raise ValueError("incompatible shapes {} and {}".format(
-                self._shape, other.shape))
-
-        shape = other.shape
-
-        rdd = self.data.join(
-            other.data, numPartitions=self.data.getNumPartitions()
-        ).map(
-            lambda m: (m[1][0][0], m[1][0][1] * m[1][1])
-        ).reduceByKey(
-            lambda a, b: a + b, numPartitions=self.data.getNumPartitions()
-        )
-
-        return State(rdd, shape, other.coin, other.mesh,
-                     other.num_particles, other.interaction)
-
-    def multiply(self, other, coord_format=Utils.MatrixCoordinateDefault):
+    def multiply(self, other):
         """Multiply this operator with another one or with a system state.
 
         Parameters
         ----------
         other : :py:class:`sparkquantum.dtqw.operator.Operator` or :py:class:`sparkquantum.dtqw.state.State`
             An operator if multiplying another operator, state otherwise.
-        coord_format : int, optional
-            Indicate if the operator must be returned in an apropriate format for multiplications.
-            Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`. Not applicable when multiplying a state.
 
         Returns
         -------
@@ -155,9 +92,15 @@ class Operator(Matrix):
 
         """
         if is_operator(other):
-            return self._multiply_operator(other, coord_format)
+            rdd, shape, data_type, num_elements = self._multiply_matrix(other)
+
+            return Operator(rdd, shape, data_type=data_type,
+                            num_elements=num_elements)
         elif is_state(other):
-            return self._multiply_state(other)
+            rdd, shape, data_type, num_elements = self._multiply_matrix(other)
+
+            return State(rdd, shape, other.coin, other.mesh, other.num_particles,
+                         interaction=other.interaction, data_type=data_type, num_elements=num_elements)
         else:
             self._logger.error(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
