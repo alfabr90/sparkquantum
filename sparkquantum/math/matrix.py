@@ -173,8 +173,6 @@ class Matrix(Base):
             self._data_type,
             Utils.MatrixCoordinateDefault)
 
-        rdd = self._data
-
         data = rdd.collect()
 
         result = np.zeros(self._shape, dtype=self._data_type)
@@ -339,6 +337,159 @@ class Matrix(Base):
 
         return round(self.norm(), round_precision) == 1.0
 
+    def _sum_matrix(self, other, constant):
+        if self._shape[0] != other.shape[0] or self._shape[1] != other.shape[1]:
+            self._logger.error(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+            raise ValueError(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+
+        data_type = Utils.get_precedent_type(
+            self._data_type, other.data_type)
+
+        rdd = self._data
+        other_rdd = other.data
+
+        if self._num_elements is not None and other.num_elements is not None:
+            expected_elements = self._num_elements + other.num_elements
+
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+        else:
+            expected_elements = None
+
+            num_partitions = max(
+                rdd.getNumPartitions(),
+                other_rdd.getNumPartitions())
+
+        def __map(m):
+            a = m[1][0]
+            b = m[1][1]
+
+            if a is None:
+                a = 0
+
+            if b is None:
+                b = 0
+
+            return (m[0][0], m[0][1], a + constant * b)
+
+        rdd = rdd.fullOuterJoin(
+            other_rdd, numPartitions=num_partitions
+        ).map(
+            __map
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, expected_elements
+
+    def _sum_number(self, other, constant):
+        if other == type(other)():
+            return self._data, self._data_type
+
+        data_type = Utils.get_precedent_type(
+            self._data_type, type(other))
+
+        rdd = self._data
+
+        other_rdd = self._spark_context.range(
+            self._shape[0]
+        ).cartesian(
+            self._spark_context.range(self._shape[1])
+        ).map(
+            lambda m: (m, constant * other)
+        )
+
+        expected_elements = self._size
+
+        num_partitions = Utils.get_num_partitions(
+            self._spark_context,
+            Utils.get_size_of_type(data_type) * expected_elements
+        )
+
+        def __map(m):
+            a = m[1][0]
+            b = m[1][1]
+
+            if a is None:
+                a = 0
+
+            return (m[0][0], m[0][1], a + constant * b)
+
+        rdd = rdd.rightOuterJoin(
+            other_rdd, num_partitions=num_partitions
+        ).map(
+            __map
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, expected_elements
+
+    def _sum(self, other, constant):
+        if is_matrix(other):
+            return self._sum_matrix(other, constant)
+        elif Utils.is_scalar(other):
+            return self._sum_number(other, constant)
+        else:
+            self._logger.error(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+
+    def sum(self, other):
+        """Perform a summation with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.Matrix` or scalar
+            The other matrix or scalar.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.Matrix` object or not a scalar.
+
+        """
+        rdd, shape, data_type, num_elements = self._sum(other, 1)
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=num_elements)
+
+    def subtract(self, other):
+        """Perform a subtraction with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.Matrix` or scalar
+            The other matrix or number.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.Matrix` object or not a scalar.
+
+        """
+        rdd, shape, data_type, num_elements = self._sum(other, -1)
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=num_elements)
+
     def _multiply_matrix(self, other):
         if self._shape[1] != other.shape[0]:
             self._logger.error(
@@ -388,8 +539,25 @@ class Matrix(Base):
 
         return rdd, new_shape, data_type, expected_elements
 
+    def _multiply_number(self, other):
+        if (isinstance(other, int) and other == 1 or
+                isinstance(other, float) and other == 1.0):
+            return self._data, self._shape, self._data_type
+
+        data_type = Utils.get_precedent_type(self._data_type, type(other))
+
+        rdd = self._data
+
+        rdd = rdd.map(
+            lambda m: (m[0], m[1], m[2] * other)
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, self._num_elements
+
     def multiply(self, other):
-        """Multiply this matrix by another one or by a number, i.e, int, float or complex.
+        """Multiply this matrix by another one or by a scalar (number), i.e, int, float or complex.
 
         Notes
         -----
@@ -399,8 +567,8 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix`
-            The other matrix that will be multiplied by this matrix.
+        other : :py:class:`sparkquantum.math.Matrix` or a scalar
+            The other matrix or scalar that will be multiplied by this matrix.
 
         Returns
         -------
@@ -410,7 +578,7 @@ class Matrix(Base):
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
+            If `other` is not a :py:class:`sparkquantum.math.Matrix` or not a scalar.
         ValueError
             If this matrix's and `other`'s shapes are incompatible for multiplication.
 
@@ -420,11 +588,16 @@ class Matrix(Base):
 
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
+        elif Utils.is_scalar(other):
+            rdd, shape, data_type, num_elements = self._multiply_number(other)
+
+            return Matrix(rdd, shape, data_type=data_type,
+                          num_elements=num_elements)
         else:
             self._logger.error(
-                "'Matrix' intance, not '{}'".format(type(other)))
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
             raise TypeError(
-                "'Matrix' intance, not '{}'".format(type(other)))
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
 
 
 def is_matrix(obj):

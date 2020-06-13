@@ -1,6 +1,3 @@
-import math
-from datetime import datetime
-
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.dtqw.coin.coin import is_coin
@@ -349,6 +346,15 @@ class State(Matrix):
 
         return State(rdd, shape, self._coin, self._mesh, self._num_particles, interaction=self._interaction,
                      data_type=data_type, coordinate_format=self._coordinate_format, num_elements=num_elements)
+
+    def sum(self, other):
+        raise NotImplementedError
+
+    def subtract(self, other):
+        raise NotImplementedError
+
+    def multiply(self, other):
+        raise NotImplementedError
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,

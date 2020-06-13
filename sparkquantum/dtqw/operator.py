@@ -1,5 +1,3 @@
-import math
-
 from sparkquantum.dtqw.state import State, is_state
 from sparkquantum.math.matrix import Matrix
 from sparkquantum.utils.utils import Utils
@@ -68,6 +66,12 @@ class Operator(Matrix):
 
         return Operator(rdd, shape, data_type=data_type,
                         num_elements=num_elements)
+
+    def sum(self, other):
+        raise NotImplementedError
+
+    def subtract(self, other):
+        raise NotImplementedError
 
     def multiply(self, other):
         """Multiply this operator with another one or with a system state.

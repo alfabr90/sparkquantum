@@ -36,6 +36,11 @@ class Utils():
     Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(i,(j,value))`` coordinates. This is mandatory
     when the object is the multiplicand operand.
     """
+    MatrixCoordinateIndexed = 3
+    """
+    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``((i,j),value)`` coordinates. This is mandatory
+    when the object is the multiplicand operand.
+    """
     StateRepresentationFormatCoinPosition = 0
     """
     Indicate that the quantum system is represented as the kronecker product between the coin and position subspaces.
@@ -46,7 +51,7 @@ class Utils():
     """
     StateDumpingFormatIndex = 0
     """
-    Indicate that the quantum system will be dumped to disk with the format ``(i,1,value)``.
+    Indicate that the quantum system will be dumped to disk with the format ``(i,value)``.
     """
     StateDumpingFormatCoordinate = 1
     """
@@ -113,6 +118,23 @@ class Utils():
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def is_scalar(obj):
+        """Check if an object is a scalar (number), i.e., an int, a float or a complex.
+
+        Parameters
+        ----------
+        obj
+            Any python object.
+
+        Returns
+        -------
+        bool
+            True if argument is a scalar, False otherwise.
+
+        """
+        return isinstance(obj, (int, float, complex))
 
     @staticmethod
     def is_shape(shape):
@@ -204,41 +226,42 @@ class Utils():
             raise TypeError("'RDD' instance expected, not '{}'".format(
                 type(rdd)))
 
-        if old_coordinate == Utils.MatrixCoordinateMultiplier:
-            if new_coordinate == Utils.MatrixCoordinateMultiplier:
-                return rdd
-            elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
-                return rdd.map(
-                    lambda m: (m[1][0], (m[0], m[1][1]))
-                )
-            else:  # Utils.MatrixCoordinateDefault
-                return rdd.map(
+        if old_coordinate == new_coordinate:
+            return rdd
+
+        if old_coordinate != Utils.MatrixCoordinateDefault:
+            if old_coordinate == Utils.MatrixCoordinateMultiplier:
+                rdd = rdd.map(
                     lambda m: (m[1][0], m[0], m[1][1])
                 )
-        elif old_coordinate == Utils.MatrixCoordinateMultiplicand:
-            if new_coordinate == Utils.MatrixCoordinateMultiplier:
-                return rdd.map(
-                    lambda m: (m[1][0], (m[0], m[1][1]))
-                )
-            elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
-                return rdd
-            else:  # Utils.MatrixCoordinateDefault
-                return rdd.map(
+            elif old_coordinate == Utils.MatrixCoordinateMultiplicand:
+                rdd = rdd.map(
                     lambda m: (m[0], m[1][0], m[1][1])
                 )
-        elif old_coordinate == Utils.MatrixCoordinateDefault:
+            elif old_coordinate == Utils.MatrixCoordinateIndexed:
+                rdd = rdd.map(
+                    lambda m: (m[0][0], m[0][1], m[1])
+                )
+            else:
+                raise ValueError("invalid coordinate format")
+
+        if new_coordinate != Utils.MatrixCoordinateDefault:
             if new_coordinate == Utils.MatrixCoordinateMultiplier:
-                return rdd.map(
+                rdd = rdd.map(
                     lambda m: (m[1], (m[0], m[2]))
                 )
             elif new_coordinate == Utils.MatrixCoordinateMultiplicand:
-                return rdd.map(
+                rdd = rdd.map(
                     lambda m: (m[0], (m[1], m[2]))
                 )
-            else:  # Utils.MatrixCoordinateDefault
-                return rdd
-        else:
-            raise ValueError("invalid coordinate format")
+            elif new_coordinate == Utils.MatrixCoordinateIndexed:
+                rdd = rdd.map(
+                    lambda m: ((m[0], m[1]), m[2])
+                )
+            else:
+                raise ValueError("invalid coordinate format")
+
+        return rdd
 
     @staticmethod
     def remove_zeros(rdd, data_type, coordinate_format):
