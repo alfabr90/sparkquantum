@@ -419,7 +419,7 @@ class Matrix(Base):
 
         return rdd, self._shape, data_type, expected_elements
 
-    def _sum_number(self, other, constant):
+    def _sum_scalar(self, other, constant):
         if other == type(other)():
             return self._data, self._data_type
 
@@ -466,7 +466,7 @@ class Matrix(Base):
         if is_matrix(other):
             return self._sum_matrix(other, constant)
         elif Utils.is_scalar(other):
-            return self._sum_number(other, constant)
+            return self._sum_scalar(other, constant)
         else:
             self._logger.error(
                 "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
@@ -570,7 +570,7 @@ class Matrix(Base):
 
         return rdd, new_shape, data_type, expected_elements
 
-    def _multiply_number(self, other):
+    def _multiply_scalar(self, other):
         if (isinstance(other, int) and other == 1 or
                 isinstance(other, float) and other == 1.0):
             return self._data, self._shape, self._data_type
@@ -620,7 +620,7 @@ class Matrix(Base):
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
         elif Utils.is_scalar(other):
-            rdd, shape, data_type, num_elements = self._multiply_number(other)
+            rdd, shape, data_type, num_elements = self._multiply_scalar(other)
 
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
@@ -629,6 +629,110 @@ class Matrix(Base):
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
+
+    @staticmethod
+    def is_empty(matrix):
+        """Check whether matrix is empty, i.e., its rows and column sizes are zero.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is empty, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                'Matrix instance expected, not {}'.format(type(matrix)))
+
+        return matrix.shape[0] == 0 and matrix.shape[1] == 0
+
+    @staticmethod
+    def is_square(matrix):
+        """Check whether matrix is square, i.e., its rows and column sizes are equal.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is square, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                'Matrix instance expected, not {}'.format(type(matrix)))
+
+        return matrix.shape[0] == matrix.shape[1]
+
+    @staticmethod
+    def is_rowvector(matrix):
+        """Check whether matrix is a row vector, i.e., it has only one row.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is a row vector, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                'Matrix instance expected, not {}'.format(type(matrix)))
+
+        return matrix.shape[0] == 1
+
+    @staticmethod
+    def is_columnvector(matrix):
+        """Check whether matrix is a column vector, i.e., it has only one column.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is a column vector, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                'Matrix instance expected, not {}'.format(type(matrix)))
+
+        return matrix.shape[1] == 1
 
 
 def is_matrix(obj):
