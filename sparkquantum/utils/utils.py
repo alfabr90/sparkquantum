@@ -24,21 +24,21 @@ class Utils():
     """
     MatrixCoordinateDefault = 0
     """
-    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(i,j,value)`` coordinates.
+    Indicate that the :py:class:`sparkquantum.math.matrix.Matrix` object must have its entries stored as ``(i,j,value)`` coordinates.
     """
     MatrixCoordinateMultiplier = 1
     """
-    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(j,(i,value))`` coordinates. This is mandatory
+    Indicate that the :py:class:`sparkquantum.math.matrix.Matrix` object must have its entries stored as ``(j,(i,value))`` coordinates. This is mandatory
     when the object is the multiplier operand.
     """
     MatrixCoordinateMultiplicand = 2
     """
-    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``(i,(j,value))`` coordinates. This is mandatory
+    Indicate that the :py:class:`sparkquantum.math.matrix.Matrix` object must have its entries stored as ``(i,(j,value))`` coordinates. This is mandatory
     when the object is the multiplicand operand.
     """
     MatrixCoordinateIndexed = 3
     """
-    Indicate that the :py:class:`sparkquantum.math.Matrix` object must have its entries stored as ``((i,j),value)`` coordinates. This is mandatory
+    Indicate that the :py:class:`sparkquantum.math.matrix.Matrix` object must have its entries stored as ``((i,j),value)`` coordinates. This is mandatory
     when the object is the multiplicand operand.
     """
     StateRepresentationFormatCoinPosition = 0
@@ -200,7 +200,7 @@ class Utils():
 
     @staticmethod
     def change_coordinate(rdd, old_coordinate, new_coordinate):
-        """Change the coordinate format of a :py:class:`sparkquantum.math.Matrix` object's RDD.
+        """Change the coordinate format of a :py:class:`sparkquantum.math.matrix.Matrix` object's RDD.
 
         Notes
         -----
@@ -210,7 +210,7 @@ class Utils():
         Parameters
         ----------
         rdd : :py:class:`pyspark.RDD`
-            The :py:class:`sparkquantum.math.Matrix` object's RDD to have its coordinate format changed.
+            The :py:class:`sparkquantum.math.matrix.Matrix` object's RDD to have its coordinate format changed.
         old_coordinate : int
             The original coordinate format.
         new_coordinate : int
@@ -265,7 +265,7 @@ class Utils():
 
     @staticmethod
     def remove_zeros(rdd, data_type, coordinate_format):
-        """Remove zero'd elements of a :py:class:`sparkquantum.math.Matrix` object's RDD.
+        """Remove zero'd elements of a :py:class:`sparkquantum.math.matrix.Matrix` object's RDD.
 
         Notes
         -----
@@ -274,11 +274,11 @@ class Utils():
         Parameters
         ----------
         rdd : :py:class:`pyspark.RDD`
-            The :py:class:`sparkquantum.math.Matrix` object's RDD to have its zero'd elements removed.
+            The :py:class:`sparkquantum.math.matrix.Matrix` object's RDD to have its zero'd elements removed.
         data_type : type
             The Python type of all values in the RDD.
         coordinate_format : int
-            The coordinate format of the :py:class:`sparkquantum.math.Matrix` object's RDD.
+            The coordinate format of the :py:class:`sparkquantum.math.matrix.Matrix` object's RDD.
 
         Returns
         -------

@@ -205,6 +205,37 @@ class Matrix(Base):
 
         return self
 
+    def _transpose(self):
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
+
+        shape = (self._shape[1], self._shape[0])
+
+        rdd = rdd.map(
+            lambda m: (m[1], m[0], m[2])
+        )
+
+        return rdd, shape
+
+    def transpose(self):
+        """Transpose this matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        """
+        rdd, shape = self._transpose()
+
+        return Matrix(rdd, shape, data_type=self._data_type,
+                      coordinate_format=Utils.MatrixCoordinateDefault)
+
     def _kron(self, other):
         other_shape = other.shape
         new_shape = (
@@ -258,18 +289,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix`
+        other : :py:class:`sparkquantum.math.matrix.Matrix`
             The other matrix.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
 
         """
         if not is_matrix(other):
@@ -447,18 +478,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix` or scalar
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
             The other matrix or scalar.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix` object or not a scalar.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
 
         """
         rdd, shape, data_type, num_elements = self._sum(other, 1)
@@ -471,18 +502,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix` or scalar
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
             The other matrix or number.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix` object or not a scalar.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
 
         """
         rdd, shape, data_type, num_elements = self._sum(other, -1)
@@ -567,18 +598,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix` or a scalar
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or a scalar
             The other matrix or scalar that will be multiplied by this matrix.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix` or not a scalar.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` or not a scalar.
         ValueError
             If this matrix's and `other`'s shapes are incompatible for multiplication.
 
@@ -601,7 +632,7 @@ class Matrix(Base):
 
 
 def is_matrix(obj):
-    """Check whether argument is a :py:class:`sparkquantum.math.Matrix` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.matrix.Matrix` object.
 
     Parameters
     ----------
@@ -611,7 +642,7 @@ def is_matrix(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.math.Matrix` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.matrix.Matrix` object, False otherwise.
 
     """
     return isinstance(obj, Matrix)

@@ -37,6 +37,20 @@ class Operator(Matrix):
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
 
+    def transpose(self):
+        """Transpose this operator.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The resulting operator.
+
+        """
+        rdd, shape = self._transpose()
+
+        return Operator(rdd, shape, data_type=self._data_type,
+                        coordinate_format=Utils.MatrixCoordinateDefault)
+
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another operator.
 

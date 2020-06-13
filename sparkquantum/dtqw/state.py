@@ -317,6 +317,20 @@ class State(Matrix):
             self._logger.error("invalid dumping format")
             raise ValueError("invalid dumping format")
 
+    def transpose(self):
+        """Transpose this state.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.state.State`
+            The resulting state.
+
+        """
+        rdd, shape = self._transpose()
+
+        return State(rdd, shape, self._coin, self._mesh, self._num_elements, self._interaction,
+                     data_type=self._data_type, coordinate_format=Utils.MatrixCoordinateDefault)
+
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
 
