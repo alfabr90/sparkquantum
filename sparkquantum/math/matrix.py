@@ -1,7 +1,7 @@
 import math
 
 import numpy as np
-from pyspark import RDD
+from pyspark import RDD, SparkContext
 
 from sparkquantum.math.base import Base
 from sparkquantum.utils.utils import Utils
@@ -652,7 +652,7 @@ class Matrix(Base):
         """
         if not is_matrix(matrix):
             raise TypeError(
-                'Matrix instance expected, not {}'.format(type(matrix)))
+                "'Matrix' instance expected, not {}".format(type(matrix)))
 
         return matrix.shape[0] == 0 and matrix.shape[1] == 0
 
@@ -678,7 +678,7 @@ class Matrix(Base):
         """
         if not is_matrix(matrix):
             raise TypeError(
-                'Matrix instance expected, not {}'.format(type(matrix)))
+                "'Matrix' instance expected, not {}".format(type(matrix)))
 
         return matrix.shape[0] == matrix.shape[1]
 
@@ -704,7 +704,7 @@ class Matrix(Base):
         """
         if not is_matrix(matrix):
             raise TypeError(
-                'Matrix instance expected, not {}'.format(type(matrix)))
+                "'Matrix' instance expected, not {}".format(type(matrix)))
 
         return matrix.shape[0] == 1
 
@@ -730,9 +730,165 @@ class Matrix(Base):
         """
         if not is_matrix(matrix):
             raise TypeError(
-                'Matrix instance expected, not {}'.format(type(matrix)))
+                "'Matrix' instance expected, not {}".format(type(matrix)))
 
         return matrix.shape[1] == 1
+
+    @staticmethod
+    def diagonal(size, value):
+        """Create a diagonal matrix with its elements being the desired value.
+
+        Parameters
+        ----------
+        size : int
+            The size of the diagonal.
+        value: int, float or complex
+            The value of each element of the diagonal matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `size` is not an int or `value` is not a scalar (number).
+
+        """
+        if not isinstance(size, int):
+            raise TypeError("int expected, not {}".format(type(size)))
+
+        if not isinstance(value, (int, float, complex)):
+            raise TypeError(
+                "int, float or complex expected, not {}".format(type(value)))
+
+        sc = SparkContext.getOrCreate()
+
+        shape = (size, size)
+        data_type = type(value)
+
+        if value == data_type():
+            rdd = sc.emptyRDD()
+        else:
+            expected_elements = shape[0]
+
+            num_partitions = Utils.get_num_partitions(
+                sc,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+
+            rdd = sc.range(size, numSlices=num_partitions).map(
+                lambda m: (m, m, value)
+            )
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      coordinate_format=Utils.MatrixCoordinateDefault)
+
+    @staticmethod
+    def eye(size):
+        """Create an identity matrix.
+
+        Parameters
+        ----------
+        size : int
+            The size of the diagonal.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `size` is not an int.
+
+        """
+        return Matrix.diagonal(size, 1.0)
+
+    @staticmethod
+    def zeros(shape, data_type=float):
+        """Create a matrix full of zeros.
+
+        Notes
+        -----
+        As all matrix-like objects are treated as sparse, an empty RDD is used.
+
+        Parameters
+        ----------
+        shape : list or tuple
+            The shape of the matrix.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is float.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `shape` is not a valid shape.
+
+        """
+        if not Utils.is_shape(shape):
+            raise ValueError("invalid shape")
+
+        sc = SparkContext.getOrCreate()
+
+        rdd = sc.emptyRDD()
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      coordinate_format=Utils.MatrixCoordinateDefault)
+
+    @staticmethod
+    def ones(shape, data_type=float):
+        """Create a matrix full of ones.
+
+        Parameters
+        ----------
+        shape : list or tuple
+            The shape of the matrix.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is float.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `shape` is not a valid shape.
+
+        """
+        if not Utils.is_shape(shape):
+            raise ValueError("invalid shape")
+
+        sc = SparkContext.getOrCreate()
+
+        value = data_type() + 1
+
+        expected_elements = shape[0] * shape[1]
+
+        num_partitions = Utils.get_num_partitions(
+            sc,
+            Utils.get_size_of_type(data_type) * expected_elements
+        )
+
+        rdd = sc.range(
+            shape[0], numSlices=num_partitions
+        ).cartesian(
+            sc.range(shape[1], numSlices=num_partitions)
+        ).map(
+            lambda m: (m[0], m[1], value)
+        )
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      coordinate_format=Utils.MatrixCoordinateDefault)
 
 
 def is_matrix(obj):
