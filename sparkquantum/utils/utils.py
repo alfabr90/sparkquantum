@@ -138,7 +138,7 @@ class Utils():
 
     @staticmethod
     def is_shape(shape):
-        """Check if an object is a shape, i.e., a list or a tuple.
+        """Check if an object is a shape, i.e., a list or a tuple of length 2 and positive values.
 
         Parameters
         ----------
@@ -151,7 +151,8 @@ class Utils():
             True if argument is a shape, False otherwise.
 
         """
-        return isinstance(shape, (list, tuple))
+        return (isinstance(shape, (list, tuple)) and
+                len(shape) == 2 and shape[0] >= 0 and shape[1] >= 0)
 
     @staticmethod
     def broadcast(sc, data):
