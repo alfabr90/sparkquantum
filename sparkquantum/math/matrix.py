@@ -316,6 +316,36 @@ class Matrix(Base):
         return Matrix(rdd, shape, data_type=data_type,
                       num_elements=num_elements)
 
+    def trace(self):
+        """Calculate the trace of this matrix.
+
+        Returns
+        -------
+        float
+            The trace of this matrix.
+
+        Raises
+        ------
+        TypeError
+            If this matrix is nor square.
+
+        """
+        if not Matrix.is_square(self):
+            self._logger.error(
+                "Cannot calculate the trace of non square matrix")
+            raise TypeError("Cannot calculate the trace of non square matrix")
+
+        rdd = Utils.change_coordinate(
+            self._data,
+            self._coordinate_format,
+            Utils.MatrixCoordinateDefault)
+
+        return rdd.filter(
+            lambda m: m[0] == m[1]
+        ).reduce(
+            lambda a, b: a + b
+        )
+
     def norm(self):
         """Calculate the norm of this matrix.
 
