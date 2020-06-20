@@ -99,26 +99,28 @@ class Profiler:
         self._start()
 
     def _request(self, url_suffix=''):
-        self._logger.info("performing request to '{}'...".format(
-            self._base_url + 'applications' + url_suffix))
+        url = self._base_url + 'applications' + url_suffix
+
+        self._logger.info("performing request to '{}'...".format(url))
 
         t1 = datetime.now()
 
         try:
-            with request.urlopen(self._base_url + 'applications' + url_suffix) as response:
+            with request.urlopen(url) as response:
                 result = response.read()
 
             self._logger.debug("request performed in {}s".format(
                 (datetime.now() - t1).total_seconds()))
         except error.URLError as e:
             self._logger.warning(
-                "request failed with the following error: '{}' and no data will be returned".format(e.reason))
+                "request to {} failed with the following error: '{}' and no data will be returned".format(url, e.reason))
             return None
 
         if result is not None:
             result = json.loads(result.decode('utf-8'))
         else:
-            self._logger.warning("the response is empty")
+            self._logger.warning(
+                "the response of request to {} is empty".format(url))
         return result
 
     def request_applications(self):

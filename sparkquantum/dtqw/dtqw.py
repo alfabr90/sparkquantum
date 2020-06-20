@@ -563,9 +563,6 @@ class DiscreteTimeQuantumWalk:
 
         Raises
         ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
         ValueError
             If `steps` is not valid or if the collision phase is not valid.
             If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' or 'quantum.dtqw.state.representationFormat' configuration is not valid.
