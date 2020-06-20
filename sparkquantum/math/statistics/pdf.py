@@ -288,7 +288,7 @@ class PDF(Base):
         plt.clf()
 
         self._logger.info(
-            "plot in {}s".format(
+            "plot was done in {}s".format(
                 (datetime.now() - t1).total_seconds()))
 
     def plot_contour(self, filename=None, title=None, labels=None, **kwargs):
@@ -353,7 +353,7 @@ class PDF(Base):
         plt.clf()
 
         self._logger.info(
-            "contour plot in {}s".format(
+            "contour plot was done in {}s".format(
                 (datetime.now() - t1).total_seconds()))
 
 

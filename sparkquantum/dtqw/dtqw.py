@@ -145,6 +145,44 @@ class DiscreteTimeQuantumWalk:
                           'quantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
+    def _profile_state(self, profile_title, log_title,
+                       state, step=None, initial_time=None):
+        app_id = self._spark_context.applicationId
+
+        self._profiler.profile_resources(app_id)
+        self._profiler.profile_executors(app_id)
+
+        if step is None:
+            info = self._profiler.profile_state(
+                '{}{}'.format(profile_title, step),
+                state,
+                0.0)
+
+            if info is not None:
+                self._logger.info(
+                    "{} is consuming {} bytes in memory and {} bytes in disk".format(
+                        log_title, info['memoryUsed'], info['diskUsed']
+                    )
+                )
+        else:
+            info = self._profiler.profile_state(
+                '{}{}'.format(profile_title, step),
+                state,
+                (datetime.now() - initial_time).total_seconds())
+
+            if info is not None:
+                self._logger.info(
+                    "step {} was done in {}s".format(step, info['buildingTime']))
+                self._logger.info(
+                    "{} of step {} is consuming {} bytes in memory and {} bytes in disk".format(
+                        log_title, step, info['memoryUsed'], info['diskUsed']
+                    )
+                )
+
+        if Utils.get_conf(self._spark_context,
+                          'quantum.dtqw.profiler.logExecutors') == 'True':
+            self._profiler.log_executors(app_id=app_id)
+
     def _create_coin_operator(self, storage_level):
         self._logger.info("building coin operator...")
 
@@ -525,9 +563,6 @@ class DiscreteTimeQuantumWalk:
 
         Raises
         ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
         ValueError
             If `steps` is not valid or if the collision phase is not valid.
             If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' or 'quantum.dtqw.state.representationFormat' configuration is not valid.
@@ -552,17 +587,7 @@ class DiscreteTimeQuantumWalk:
 
         app_id = self._spark_context.applicationId
 
-        self._profiler.profile_resources(app_id)
-        self._profiler.profile_executors(app_id)
-
-        info = self._profiler.profile_state('initialState', result, 0.0)
-
-        if info is not None:
-            self._logger.info(
-                "initial state is consuming {} bytes in memory and {} bytes in disk".format(
-                    info['memoryUsed'], info['diskUsed']
-                )
-            )
+        self._profile_state('initialState', 'initial state', result)
 
         self._profiler.log_rdd(app_id=app_id)
 
@@ -652,22 +677,12 @@ class DiscreteTimeQuantumWalk:
                         marginal[p].dump(
                             configs['dumping_path'] + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
 
-            self._profiler.profile_resources(app_id)
-            self._profiler.profile_executors(app_id)
-
-            info = self._profiler.profile_state(
-                'systemState{}'.format(
-                    i), result, (datetime.now() - t_tmp).total_seconds()
-            )
-
-            if info is not None:
-                self._logger.info(
-                    "step {} was done in {}s".format(i, info['buildingTime']))
-                self._logger.info(
-                    "system state of step {} is consuming {} bytes in memory and {} bytes in disk".format(
-                        i, info['memoryUsed'], info['diskUsed']
-                    )
-                )
+            self._profile_state(
+                'systemState',
+                'system state',
+                result_tmp,
+                i,
+                t_tmp)
 
             self._profiler.log_rdd(app_id=app_id)
 
@@ -684,23 +699,9 @@ class DiscreteTimeQuantumWalk:
             self._logger.error("the final state is not unitary")
             raise ValueError("the final state is not unitary")
 
-        self._logger.debug("unitarity check was done in {}s".format(
+        self._logger.info("unitarity check was done in {}s".format(
             (datetime.now() - t1).total_seconds()))
 
-        self._profiler.profile_resources(app_id)
-        self._profiler.profile_executors(app_id)
-
-        info = self._profiler.profile_state('finalState', result, 0.0)
-
-        if info is not None:
-            self._logger.info(
-                "final state is consuming {} bytes in memory and {} bytes in disk".format(
-                    info['memoryUsed'], info['diskUsed']
-                )
-            )
-
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
-            self._profiler.log_executors(app_id=app_id)
+        self._profile_state('finalState', 'final state', result)
 
         return result
