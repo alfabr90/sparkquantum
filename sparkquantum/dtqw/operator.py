@@ -1,5 +1,3 @@
-import math
-
 from sparkquantum.dtqw.state import State, is_state
 from sparkquantum.math.matrix import Matrix
 from sparkquantum.utils.utils import Utils
@@ -39,6 +37,45 @@ class Operator(Matrix):
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
 
+    def change_coordinate(self, coordinate_format):
+        """Change the coordinate format of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created
+        in the desired coordinate format. Thus, a new instance of this class
+        is returned with this RDD.
+
+        Parameters
+        ----------
+        coordinate_format : int
+            The new coordinate format of this object.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            A new operator object with the RDD in the desired coordinate format.
+
+        """
+        rdd = self._change_coordinate(coordinate_format)
+
+        return Operator(rdd, self._shape, data_type=self._data_type,
+                        coordinate_format=coordinate_format, num_elements=self._num_elements)
+
+    def transpose(self):
+        """Transpose this operator.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The resulting operator.
+
+        """
+        rdd, shape = self._transpose()
+
+        return Operator(rdd, shape, data_type=self._data_type,
+                        num_elements=self._num_elements)
+
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another operator.
 
@@ -68,6 +105,12 @@ class Operator(Matrix):
 
         return Operator(rdd, shape, data_type=data_type,
                         num_elements=num_elements)
+
+    def sum(self, other):
+        raise NotImplementedError
+
+    def subtract(self, other):
+        raise NotImplementedError
 
     def multiply(self, other):
         """Multiply this operator with another one or with a system state.

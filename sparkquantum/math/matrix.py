@@ -1,7 +1,7 @@
 import math
 
 import numpy as np
-from pyspark import RDD
+from pyspark import RDD, SparkContext
 
 from sparkquantum.math.base import Base
 from sparkquantum.utils.utils import Utils
@@ -173,8 +173,6 @@ class Matrix(Base):
             self._data_type,
             Utils.MatrixCoordinateDefault)
 
-        rdd = self._data
-
         data = rdd.collect()
 
         result = np.zeros(self._shape, dtype=self._data_type)
@@ -184,8 +182,20 @@ class Matrix(Base):
 
         return result
 
+    def _change_coordinate(self, coordinate_format):
+        return Utils.change_coordinate(
+            self._data,
+            old_coordinate=self._coordinate_format,
+            new_coordinate=coordinate_format)
+
     def change_coordinate(self, coordinate_format):
         """Change the coordinate format of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created
+        in the desired coordinate format. Thus, a new instance of this class
+        is returned with this RDD.
 
         Parameters
         ----------
@@ -195,17 +205,44 @@ class Matrix(Base):
         Returns
         -------
         :py:class:`sparkquantum.math.matrix.Matrix`
-            A reference to this object.
+            A new matrix object with the RDD in the desired coordinate format.
 
         """
-        self._data = Utils.change_coordinate(
-            self._data,
-            old_coordinate=self._coordinate_format,
-            new_coordinate=coordinate_format)
+        rdd = self._change_coordinate(coordinate_format)
 
-        self._coordinate_format = coordinate_format
+        return Matrix(rdd, self._shape, data_type=self._data_type,
+                      coordinate_format=coordinate_format, num_elements=self._num_elements)
 
-        return self
+    def _transpose(self):
+        rdd = Utils.remove_zeros(
+            Utils.change_coordinate(
+                self._data,
+                self._coordinate_format,
+                Utils.MatrixCoordinateDefault),
+            self._data_type,
+            Utils.MatrixCoordinateDefault)
+
+        shape = (self._shape[1], self._shape[0])
+
+        rdd = rdd.map(
+            lambda m: (m[1], m[0], m[2])
+        )
+
+        return rdd, shape
+
+    def transpose(self):
+        """Transpose this matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        """
+        rdd, shape = self._transpose()
+
+        return Matrix(rdd, shape, data_type=self._data_type,
+                      num_elements=self._num_elements)
 
     def _kron(self, other):
         other_shape = other.shape
@@ -260,18 +297,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix`
+        other : :py:class:`sparkquantum.math.matrix.Matrix`
             The other matrix.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
 
         """
         if not is_matrix(other):
@@ -286,6 +323,36 @@ class Matrix(Base):
 
         return Matrix(rdd, shape, data_type=data_type,
                       num_elements=num_elements)
+
+    def trace(self):
+        """Calculate the trace of this matrix.
+
+        Returns
+        -------
+        float
+            The trace of this matrix.
+
+        Raises
+        ------
+        TypeError
+            If this matrix is nor square.
+
+        """
+        if not Matrix.is_square(self):
+            self._logger.error(
+                "Cannot calculate the trace of non square matrix")
+            raise TypeError("Cannot calculate the trace of non square matrix")
+
+        rdd = Utils.change_coordinate(
+            self._data,
+            self._coordinate_format,
+            Utils.MatrixCoordinateDefault)
+
+        return rdd.filter(
+            lambda m: m[0] == m[1]
+        ).reduce(
+            lambda a, b: a + b
+        )
 
     def norm(self):
         """Calculate the norm of this matrix.
@@ -339,6 +406,159 @@ class Matrix(Base):
 
         return round(self.norm(), round_precision) == 1.0
 
+    def _sum_matrix(self, other, constant):
+        if self._shape[0] != other.shape[0] or self._shape[1] != other.shape[1]:
+            self._logger.error(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+            raise ValueError(
+                "incompatible shapes {} and {}".format(
+                    self._shape, other.shape))
+
+        data_type = Utils.get_precedent_type(
+            self._data_type, other.data_type)
+
+        rdd = self._data
+        other_rdd = other.data
+
+        if self._num_elements is not None and other.num_elements is not None:
+            expected_elements = self._num_elements + other.num_elements
+
+            num_partitions = Utils.get_num_partitions(
+                self._spark_context,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+        else:
+            expected_elements = None
+
+            num_partitions = max(
+                rdd.getNumPartitions(),
+                other_rdd.getNumPartitions())
+
+        def __map(m):
+            a = m[1][0]
+            b = m[1][1]
+
+            if a is None:
+                a = 0
+
+            if b is None:
+                b = 0
+
+            return (m[0][0], m[0][1], a + constant * b)
+
+        rdd = rdd.fullOuterJoin(
+            other_rdd, numPartitions=num_partitions
+        ).map(
+            __map
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, expected_elements
+
+    def _sum_scalar(self, other, constant):
+        if other == type(other)():
+            return self._data, self._data_type
+
+        data_type = Utils.get_precedent_type(
+            self._data_type, type(other))
+
+        rdd = self._data
+
+        other_rdd = self._spark_context.range(
+            self._shape[0]
+        ).cartesian(
+            self._spark_context.range(self._shape[1])
+        ).map(
+            lambda m: (m, constant * other)
+        )
+
+        expected_elements = self._size
+
+        num_partitions = Utils.get_num_partitions(
+            self._spark_context,
+            Utils.get_size_of_type(data_type) * expected_elements
+        )
+
+        def __map(m):
+            a = m[1][0]
+            b = m[1][1]
+
+            if a is None:
+                a = 0
+
+            return (m[0][0], m[0][1], a + constant * b)
+
+        rdd = rdd.rightOuterJoin(
+            other_rdd, num_partitions=num_partitions
+        ).map(
+            __map
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, expected_elements
+
+    def _sum(self, other, constant):
+        if is_matrix(other):
+            return self._sum_matrix(other, constant)
+        elif Utils.is_scalar(other):
+            return self._sum_scalar(other, constant)
+        else:
+            self._logger.error(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+
+    def sum(self, other):
+        """Perform a summation with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
+            The other matrix or scalar.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
+
+        """
+        rdd, shape, data_type, num_elements = self._sum(other, 1)
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=num_elements)
+
+    def subtract(self, other):
+        """Perform a subtraction with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
+            The other matrix or number.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
+
+        """
+        rdd, shape, data_type, num_elements = self._sum(other, -1)
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=num_elements)
+
     def _multiply_matrix(self, other):
         if self._shape[1] != other.shape[0]:
             self._logger.error(
@@ -388,8 +608,25 @@ class Matrix(Base):
 
         return rdd, new_shape, data_type, expected_elements
 
+    def _multiply_scalar(self, other):
+        if (isinstance(other, int) and other == 1 or
+                isinstance(other, float) and other == 1.0):
+            return self._data, self._shape, self._data_type
+
+        data_type = Utils.get_precedent_type(self._data_type, type(other))
+
+        rdd = self._data
+
+        rdd = rdd.map(
+            lambda m: (m[0], m[1], m[2] * other)
+        )
+
+        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+
+        return rdd, self._shape, data_type, self._num_elements
+
     def multiply(self, other):
-        """Multiply this matrix by another one or by a number, i.e, int, float or complex.
+        """Multiply this matrix by another one or by a scalar (number), i.e, int, float or complex.
 
         Notes
         -----
@@ -399,18 +636,18 @@ class Matrix(Base):
 
         Parameters
         ----------
-        other : :py:class:`sparkquantum.math.Matrix`
-            The other matrix that will be multiplied by this matrix.
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or a scalar
+            The other matrix or scalar that will be multiplied by this matrix.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.Matrix`
+        :py:class:`sparkquantum.math.matrix.Matrix`
             The resulting matrix.
 
         Raises
         ------
         TypeError
-            If `other` is not a :py:class:`sparkquantum.math.Matrix`.
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` or not a scalar.
         ValueError
             If this matrix's and `other`'s shapes are incompatible for multiplication.
 
@@ -420,15 +657,282 @@ class Matrix(Base):
 
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
+        elif Utils.is_scalar(other):
+            rdd, shape, data_type, num_elements = self._multiply_scalar(other)
+
+            return Matrix(rdd, shape, data_type=data_type,
+                          num_elements=num_elements)
         else:
             self._logger.error(
-                "'Matrix' intance, not '{}'".format(type(other)))
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
             raise TypeError(
-                "'Matrix' intance, not '{}'".format(type(other)))
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
+
+    @staticmethod
+    def is_empty(matrix):
+        """Check whether matrix is empty, i.e., its rows and column sizes are zero.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is empty, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not {}".format(type(matrix)))
+
+        return matrix.shape[0] == 0 and matrix.shape[1] == 0
+
+    @staticmethod
+    def is_square(matrix):
+        """Check whether matrix is square, i.e., its rows and column sizes are equal.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is square, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not {}".format(type(matrix)))
+
+        return matrix.shape[0] == matrix.shape[1]
+
+    @staticmethod
+    def is_rowvector(matrix):
+        """Check whether matrix is a row vector, i.e., it has only one row.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is a row vector, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not {}".format(type(matrix)))
+
+        return matrix.shape[0] == 1
+
+    @staticmethod
+    def is_columnvector(matrix):
+        """Check whether matrix is a column vector, i.e., it has only one column.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            A :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        Returns
+        -------
+        bool
+            True if matrix is a column vector, False otherwise.
+
+        Raises
+        ------
+        TypeError
+            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not {}".format(type(matrix)))
+
+        return matrix.shape[1] == 1
+
+    @staticmethod
+    def diagonal(size, value):
+        """Create a diagonal matrix with its elements being the desired value.
+
+        Parameters
+        ----------
+        size : int
+            The size of the diagonal.
+        value: int, float or complex
+            The value of each element of the diagonal matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `size` is not an int or `value` is not a scalar (number).
+
+        """
+        if not isinstance(size, int):
+            raise TypeError("int expected, not {}".format(type(size)))
+
+        if not isinstance(value, (int, float, complex)):
+            raise TypeError(
+                "int, float or complex expected, not {}".format(type(value)))
+
+        sc = SparkContext.getOrCreate()
+
+        shape = (size, size)
+        data_type = type(value)
+
+        expected_elements = shape[0]
+
+        if value == data_type():
+            rdd = sc.emptyRDD()
+        else:
+            num_partitions = Utils.get_num_partitions(
+                sc,
+                Utils.get_size_of_type(data_type) * expected_elements
+            )
+
+            rdd = sc.range(size, numSlices=num_partitions).map(
+                lambda m: (m, m, value)
+            )
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=expected_elements)
+
+    @staticmethod
+    def eye(size):
+        """Create an identity matrix.
+
+        Parameters
+        ----------
+        size : int
+            The size of the diagonal.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `size` is not an int.
+
+        """
+        return Matrix.diagonal(size, 1.0)
+
+    @staticmethod
+    def zeros(shape, data_type=float):
+        """Create a matrix full of zeros.
+
+        Notes
+        -----
+        As all matrix-like objects are treated as sparse, an empty RDD is used.
+
+        Parameters
+        ----------
+        shape : list or tuple
+            The shape of the matrix.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is float.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `shape` is not a valid shape.
+
+        """
+        if not Utils.is_shape(shape):
+            raise ValueError("invalid shape")
+
+        sc = SparkContext.getOrCreate()
+
+        expected_elements = shape[0] * shape[1]
+
+        rdd = sc.emptyRDD()
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=expected_elements)
+
+    @staticmethod
+    def ones(shape, data_type=float):
+        """Create a matrix full of ones.
+
+        Parameters
+        ----------
+        shape : list or tuple
+            The shape of the matrix.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is float.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `shape` is not a valid shape.
+
+        """
+        if not Utils.is_shape(shape):
+            raise ValueError("invalid shape")
+
+        sc = SparkContext.getOrCreate()
+
+        value = data_type() + 1
+
+        expected_elements = shape[0] * shape[1]
+
+        num_partitions = Utils.get_num_partitions(
+            sc,
+            Utils.get_size_of_type(data_type) * expected_elements
+        )
+
+        rdd = sc.range(
+            shape[0], numSlices=num_partitions
+        ).cartesian(
+            sc.range(shape[1], numSlices=num_partitions)
+        ).map(
+            lambda m: (m[0], m[1], value)
+        )
+
+        return Matrix(rdd, shape, data_type=data_type,
+                      num_elements=expected_elements)
 
 
 def is_matrix(obj):
-    """Check whether argument is a :py:class:`sparkquantum.math.Matrix` object.
+    """Check whether argument is a :py:class:`sparkquantum.math.matrix.Matrix` object.
 
     Parameters
     ----------
@@ -438,7 +942,7 @@ def is_matrix(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.math.Matrix` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.math.matrix.Matrix` object, False otherwise.
 
     """
     return isinstance(obj, Matrix)

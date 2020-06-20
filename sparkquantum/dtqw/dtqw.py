@@ -1,7 +1,7 @@
-from datetime import datetime
-import fileinput
 import math
+import fileinput
 from glob import glob
+from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
