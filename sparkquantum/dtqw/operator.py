@@ -107,10 +107,10 @@ class Operator(Matrix):
                         num_elements=num_elements)
 
     def sum(self, other):
-        raise NotImplementedError
+        return None
 
     def subtract(self, other):
-        raise NotImplementedError
+        return None
 
     def multiply(self, other):
         """Multiply this operator with another one or with a system state.

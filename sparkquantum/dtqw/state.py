@@ -388,13 +388,13 @@ class State(Matrix):
                      interaction=self._interaction, data_type=data_type, num_elements=num_elements)
 
     def sum(self, other):
-        raise NotImplementedError
+        return None
 
     def subtract(self, other):
-        raise NotImplementedError
+        return None
 
     def multiply(self, other):
-        raise NotImplementedError
+        return None
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,
