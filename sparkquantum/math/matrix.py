@@ -182,8 +182,20 @@ class Matrix(Base):
 
         return result
 
+    def _change_coordinate(self, coordinate_format):
+        return Utils.change_coordinate(
+            self._data,
+            old_coordinate=self._coordinate_format,
+            new_coordinate=coordinate_format)
+
     def change_coordinate(self, coordinate_format):
         """Change the coordinate format of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created
+        in the desired coordinate format. Thus, a new instance of this class
+        is returned with this RDD.
 
         Parameters
         ----------
@@ -193,17 +205,13 @@ class Matrix(Base):
         Returns
         -------
         :py:class:`sparkquantum.math.matrix.Matrix`
-            A reference to this object.
+            A new matrix object with the RDD in the desired coordinate format.
 
         """
-        self._data = Utils.change_coordinate(
-            self._data,
-            old_coordinate=self._coordinate_format,
-            new_coordinate=coordinate_format)
+        rdd = self._change_coordinate(coordinate_format)
 
-        self._coordinate_format = coordinate_format
-
-        return self
+        return Matrix(rdd, self._shape, data_type=self._data_type,
+                      coordinate_format=coordinate_format, num_elements=self._num_elements)
 
     def _transpose(self):
         rdd = Utils.remove_zeros(
@@ -234,7 +242,7 @@ class Matrix(Base):
         rdd, shape = self._transpose()
 
         return Matrix(rdd, shape, data_type=self._data_type,
-                      coordinate_format=Utils.MatrixCoordinateDefault)
+                      num_elements=self._num_elements)
 
     def _kron(self, other):
         other_shape = other.shape
@@ -798,11 +806,11 @@ class Matrix(Base):
         shape = (size, size)
         data_type = type(value)
 
+        expected_elements = shape[0]
+
         if value == data_type():
             rdd = sc.emptyRDD()
         else:
-            expected_elements = shape[0]
-
             num_partitions = Utils.get_num_partitions(
                 sc,
                 Utils.get_size_of_type(data_type) * expected_elements
@@ -813,7 +821,7 @@ class Matrix(Base):
             )
 
         return Matrix(rdd, shape, data_type=data_type,
-                      coordinate_format=Utils.MatrixCoordinateDefault)
+                      num_elements=expected_elements)
 
     @staticmethod
     def eye(size):
@@ -868,10 +876,12 @@ class Matrix(Base):
 
         sc = SparkContext.getOrCreate()
 
+        expected_elements = shape[0] * shape[1]
+
         rdd = sc.emptyRDD()
 
         return Matrix(rdd, shape, data_type=data_type,
-                      coordinate_format=Utils.MatrixCoordinateDefault)
+                      num_elements=expected_elements)
 
     @staticmethod
     def ones(shape, data_type=float):
@@ -918,7 +928,7 @@ class Matrix(Base):
         )
 
         return Matrix(rdd, shape, data_type=data_type,
-                      coordinate_format=Utils.MatrixCoordinateDefault)
+                      num_elements=expected_elements)
 
 
 def is_matrix(obj):

@@ -317,6 +317,32 @@ class State(Matrix):
             self._logger.error("invalid dumping format")
             raise ValueError("invalid dumping format")
 
+    def change_coordinate(self, coordinate_format):
+        """Change the coordinate format of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created
+        in the desired coordinate format. Thus, a new instance of this class
+        is returned with this RDD.
+
+        Parameters
+        ----------
+        coordinate_format : int
+            The new coordinate format of this object.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.state.State`
+            A new state object with the RDD in the desired coordinate format.
+
+        """
+        rdd = self._change_coordinate(coordinate_format)
+
+        return State(rdd, self._shape, self._coin, self._mesh, self._num_particles,
+                     interaction=self._interaction, data_type=self._data_type,
+                     coordinate_format=coordinate_format, num_elements=self._num_elements)
+
     def transpose(self):
         """Transpose this state.
 
@@ -328,8 +354,8 @@ class State(Matrix):
         """
         rdd, shape = self._transpose()
 
-        return State(rdd, shape, self._coin, self._mesh, self._num_elements, self._interaction,
-                     data_type=self._data_type, coordinate_format=Utils.MatrixCoordinateDefault)
+        return State(rdd, shape, self._coin, self._mesh, self._num_particles,
+                     interaction=self._interaction, data_type=self._data_type, num_elements=self._num_elements)
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
@@ -358,8 +384,8 @@ class State(Matrix):
 
         rdd, shape, data_type, num_elements = self._kron(other)
 
-        return State(rdd, shape, self._coin, self._mesh, self._num_particles, interaction=self._interaction,
-                     data_type=data_type, coordinate_format=self._coordinate_format, num_elements=num_elements)
+        return State(rdd, shape, self._coin, self._mesh, self._num_particles,
+                     interaction=self._interaction, data_type=data_type, num_elements=num_elements)
 
     def sum(self, other):
         raise NotImplementedError
@@ -485,7 +511,8 @@ class State(Matrix):
             rdd = spark_context.parallelize(state)
 
             base_states.append(
-                State(rdd, shape, coin, mesh, num_particles, interaction=interaction, data_type=data_type, num_elements=num_elements))
+                State(rdd, shape, coin, mesh, num_particles,
+                      interaction=interaction, data_type=data_type, num_elements=num_elements))
 
         initial_state = base_states[0]
 
