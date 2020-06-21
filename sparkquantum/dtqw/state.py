@@ -396,6 +396,12 @@ class State(Matrix):
     def multiply(self, other):
         return None
 
+    def divide(self, other):
+        return None
+
+    def dot_product(self, other):
+        return None
+
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,
                data_type=complex, representationFormat=Utils.StateRepresentationFormatCoinPosition):

@@ -150,6 +150,12 @@ class Operator(Matrix):
             raise TypeError(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 
+    def divide(self, other):
+        return None
+
+    def dot_product(self, other):
+        return None
+
 
 def is_operator(obj):
     """Check whether argument is an :py:class:`sparkquantum.dtqw.operator.Operator` object.
