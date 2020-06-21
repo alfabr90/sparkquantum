@@ -107,10 +107,10 @@ class Operator(Matrix):
                         num_elements=num_elements)
 
     def sum(self, other):
-        raise NotImplementedError
+        return None
 
     def subtract(self, other):
-        raise NotImplementedError
+        return None
 
     def multiply(self, other):
         """Multiply this operator with another one or with a system state.
@@ -149,6 +149,12 @@ class Operator(Matrix):
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
+
+    def divide(self, other):
+        return None
+
+    def dot_product(self, other):
+        return None
 
 
 def is_operator(obj):

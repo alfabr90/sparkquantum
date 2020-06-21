@@ -608,17 +608,20 @@ class Matrix(Base):
 
         return rdd, new_shape, data_type, expected_elements
 
-    def _multiply_scalar(self, other):
-        if (isinstance(other, int) and other == 1 or
-                isinstance(other, float) and other == 1.0):
-            return self._data, self._shape, self._data_type
+    def _multiply_scalar(self, other, constant):
+        if isinstance(other, (int, float)):
+            if other == 1.0:
+                return self._data, self._shape, self._data_type
+            elif other == 0.0 and constant < 0:
+                # It is a division by zero operation
+                raise ZeroDivisionError
 
         data_type = Utils.get_precedent_type(self._data_type, type(other))
 
         rdd = self._data
 
         rdd = rdd.map(
-            lambda m: (m[0], m[1], m[2] * other)
+            lambda m: (m[0], m[1], m[2] * other ** constant)
         )
 
         rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
@@ -658,7 +661,8 @@ class Matrix(Base):
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
         elif Utils.is_scalar(other):
-            rdd, shape, data_type, num_elements = self._multiply_scalar(other)
+            rdd, shape, data_type, num_elements = self._multiply_scalar(
+                other, 1)
 
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
@@ -667,6 +671,85 @@ class Matrix(Base):
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
+
+    def divide(self, other):
+        """Divide this matrix by another one or by a scalar (number), i.e, int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or a scalar
+            The other matrix or scalar that will divide this matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is a :py:class:`sparkquantum.math.matrix.Matrix`.
+        TypeError
+            If `other` is not a scalar.
+        ZeroDivisionError
+            if `other` is equal to zero.
+
+        """
+        if is_matrix(other):
+            raise NotImplementedError
+        elif Utils.is_scalar(other):
+            rdd, shape, data_type, num_elements = self._multiply_scalar(
+                other, -1
+            )
+
+            return Matrix(rdd, shape, data_type=data_type,
+                          num_elements=num_elements)
+        else:
+            self._logger.error(
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
+
+    def dot_product(self, other):
+        """Perform a dot (scalar) product with another matrix (column vector).
+
+        Notes
+        -----
+        This matrix must be a row vector.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix`
+            The other matrix.
+
+        Returns
+        -------
+        int, float or complex
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
+
+        """
+        if not self.is_rowvector(self):
+            self._logger.error("This 'Matrix' instance must be a row vector")
+            raise ValueError("This 'Matrix' instance must be a row vector")
+
+        if not self.is_columnvector(self):
+            self._logger.error(
+                "The other 'Matrix' instance must be a column vector")
+            raise ValueError(
+                "The other 'Matrix' instance must be a column vector")
+
+        matrix = self.multiply(other)
+
+        result = matrix.data.collect()
+
+        if len(result):
+            return matrix.data_type()
+        else:
+            return result[0]
 
     @staticmethod
     def is_empty(matrix):
