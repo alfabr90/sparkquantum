@@ -73,7 +73,7 @@ class Lattice(Natural):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return steps <= self.center_x() and steps <= self.center_y()
+        return super().check_steps() and steps <= self.center_x() and steps <= self.center_y()
 
     def create_operator(self):
         """Build the shift operator for the walk.

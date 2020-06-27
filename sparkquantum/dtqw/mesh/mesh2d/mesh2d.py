@@ -103,22 +103,6 @@ class Mesh2D(Mesh):
             indexing='ij'
         )
 
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-            Number of steps of the walk.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
     def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 
