@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum.utils.utils import Utils
@@ -51,28 +49,6 @@ class Coin:
 
         """
         return self.__class__.__name__
-
-    def is_1d(self):
-        """Check if this is a coin for one-dimensional meshes.
-
-        Returns
-        -------
-        Bool
-            True if this coin is for one-dimensional meshes, False otherwise.
-
-        """
-        return False
-
-    def is_2d(self):
-        """Check if this is a Coin for two-dimensional meshes.
-
-        Returns
-        -------
-        Bool
-            True if this coin is for two-dimensional meshes, False otherwise.
-
-        """
-        return False
 
     def create_operator(
             self, mesh, storage_level=StorageLevel.MEMORY_AND_DISK):
