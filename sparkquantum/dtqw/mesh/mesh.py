@@ -137,13 +137,13 @@ class Mesh:
         steps : int
             Number of steps of the walk.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+        bool
+            True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        raise NotImplementedError
+        return 0 <= steps
 
     def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.

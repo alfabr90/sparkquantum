@@ -36,22 +36,6 @@ class Cycle(Mesh1D):
         """
         return 'Cycle {}'.format(self.__strcomp__())
 
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-            Number of steps of the walk.
-
-        Returns
-        -------
-        bool
-            True if this number of steps is valid for the size of the mesh, False otherwise.
-
-        """
-        return True
-
     def create_operator(self):
         """Build the shift operator for the walk.
 

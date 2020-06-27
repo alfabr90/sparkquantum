@@ -65,7 +65,7 @@ class Line(Mesh1D):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return steps <= self.center()
+        return super().check_steps(steps) and steps <= self.center()
 
     def create_operator(self):
         """Build the shift operator for the walk.

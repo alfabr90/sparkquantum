@@ -19,17 +19,6 @@ class Coin1D(Coin):
 
         self._size = 2
 
-    def is_1d(self):
-        """Check if this is a coin for one-dimensional meshes.
-
-        Returns
-        -------
-        bool
-            True if this coin is for one-dimensional meshes, False otherwise.
-
-        """
-        return True
-
     def __str__(self):
         return 'One-dimensional Coin'
 

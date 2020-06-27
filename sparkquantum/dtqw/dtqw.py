@@ -572,7 +572,7 @@ class DiscreteTimeQuantumWalk:
             the 'quantum.dtqw.walk.dumpStatesPDF' configuration is set to 'True' and the PDF of some of the intermediary states does not sum one.
 
         """
-        if steps <= 0:
+        if steps < 0:
             self._logger.error(
                 "the number of steps must be greater than or equal to 0")
             raise ValueError(
