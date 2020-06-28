@@ -46,19 +46,3 @@ class Natural(Mesh2D):
     def __str__(self):
         return 'Two-dimensional Natural Mesh with dimension {}'.format(
             self._size)
-
-    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the mesh operator.
-
-        Parameters
-        ----------
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError

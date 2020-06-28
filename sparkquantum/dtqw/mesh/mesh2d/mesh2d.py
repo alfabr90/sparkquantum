@@ -41,9 +41,6 @@ class Mesh2D(Mesh):
         self._validate(size)
         return size
 
-    def _define_num_edges(self, size):
-        raise NotImplementedError
-
     def __str__(self):
         """Build a string representing this mesh.
 
@@ -102,35 +99,3 @@ class Mesh2D(Mesh):
             range(self._size[1]),
             indexing='ij'
         )
-
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-            Number of steps of the walk.
-
-        Returns
-        -------
-        bool
-            True if this number of steps is valid for the size of the mesh, False otherwise.
-
-        """
-        return super().check_steps(steps)
-
-    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the mesh operator.
-
-        Parameters
-        ----------
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
