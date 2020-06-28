@@ -28,7 +28,7 @@ class Lattice(Natural):
 
     def _define_size(self, size):
         self._validate(size)
-        return 2 * size[0] + 1, 2 * size[0] + 1
+        return 2 * size[0] + 1, 2 * size[1] + 1
 
     def __str__(self):
         """Build a string representing this mesh.
