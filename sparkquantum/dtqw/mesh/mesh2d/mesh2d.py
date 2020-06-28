@@ -103,6 +103,22 @@ class Mesh2D(Mesh):
             indexing='ij'
         )
 
+    def check_steps(self, steps):
+        """Check if the number of steps is valid for the size of the mesh.
+
+        Parameters
+        ----------
+        steps : int
+            Number of steps of the walk.
+
+        Returns
+        -------
+        bool
+            True if this number of steps is valid for the size of the mesh, False otherwise.
+
+        """
+        return super().check_steps(steps)
+
     def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.
 

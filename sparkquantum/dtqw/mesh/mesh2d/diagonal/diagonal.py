@@ -41,28 +41,11 @@ class Diagonal(Mesh2D):
         # 00 01 02 03 04 00 |
         # -----------------
         #         x
-        size = self._define_size(size)
-        return size[0] * size[1]
+        return self._size[0] * self._size[1]
 
     def __str__(self):
         return 'Two-dimensional Diagonal Mesh with dimension {}'.format(
             self._size)
-
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-            Number of steps of the walk.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
 
     def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.

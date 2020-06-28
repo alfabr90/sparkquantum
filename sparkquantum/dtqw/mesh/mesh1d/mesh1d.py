@@ -43,7 +43,7 @@ class Mesh1D(Mesh):
         # 00 O 01 O 02 O 03 O 04 O 00
         # ---------------------------
         #              x
-        return self._define_size(size)
+        return self._size
 
     def __str__(self):
         """Build a string representing this mesh.
