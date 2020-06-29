@@ -186,7 +186,7 @@ class PositionGauge(Gauge):
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
-        if round(pdf.sum_values(), round_precision) != 1.0:
+        if round(pdf.sum(), round_precision) != 1.0:
             self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
@@ -437,7 +437,7 @@ class PositionGauge(Gauge):
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
-        if round(pdf.sum_values(), round_precision) != 1.0:
+        if round(pdf.sum(), round_precision) != 1.0:
             self._logger.error("PDFs must sum one")
             raise ValueError("PDFs must sum one")
 
