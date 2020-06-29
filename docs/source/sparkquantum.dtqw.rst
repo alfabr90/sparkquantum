@@ -31,6 +31,14 @@ sparkquantum.dtqw.operator module
    :undoc-members:
    :show-inheritance:
 
+sparkquantum.dtqw.particle module
+---------------------------------
+
+.. automodule:: sparkquantum.dtqw.particle
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 sparkquantum.dtqw.qw\_profiler module
 -------------------------------------
 

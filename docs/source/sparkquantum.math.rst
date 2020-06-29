@@ -28,14 +28,6 @@ sparkquantum.math.matrix module
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.math.vector module
--------------------------------
-
-.. automodule:: sparkquantum.math.vector
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 Module contents
 ---------------
