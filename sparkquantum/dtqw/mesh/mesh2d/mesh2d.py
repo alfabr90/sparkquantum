@@ -52,28 +52,6 @@ class Mesh2D(Mesh):
         """
         return 'Two-dimensional Mesh {}'.format(self.__strcomp__())
 
-    def center_x(self):
-        """Return the site number of the center of this mesh for the `x` coordinate.
-
-        Returns
-        -------
-        int
-            The center site number for the `x` coordinate.
-
-        """
-        return int((self._size[0] - 1) / 2)
-
-    def center_y(self):
-        """Return the site number of the center of this mesh for the `y` coordinate.
-
-        Returns
-        -------
-        int
-            The center site number for the `y` coordinate.
-
-        """
-        return int((self._size[1] - 1) / 2)
-
     def center(self):
         """Return the site number of the center of this mesh.
 
@@ -83,7 +61,19 @@ class Mesh2D(Mesh):
             The center site number.
 
         """
-        return self.center_x() * self._size[1] + self.center_y()
+        return int((self._size[0] - 1) / 2) * \
+            self._size[1] + int((self._size[1] - 1) / 2)
+
+    def center_coordinates(self):
+        """Return the coordinates of the center site of this mesh.
+
+        Returns
+        -------
+        tuple or list
+            The coordinates of the center site.
+
+        """
+        return (int((self._size[0] - 1) / 2), int((self._size[1] - 1) / 2))
 
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.

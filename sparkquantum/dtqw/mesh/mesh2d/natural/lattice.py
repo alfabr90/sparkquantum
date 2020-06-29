@@ -50,8 +50,7 @@ class Lattice(Natural):
             The meshgrid with the sizes of this mesh.
 
         """
-        center_x = self.center_x()
-        center_y = self.center_y()
+        center_x, center_y = self.center_coordinates()
 
         return np.meshgrid(
             range(- center_x, center_x + 1),
@@ -73,9 +72,9 @@ class Lattice(Natural):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return (super().check_steps(steps) and
-                steps <= self.center_x() and
-                steps <= self.center_y())
+        center_x, center_y = self.center_coordinates()
+
+        return super().check_steps(steps) and steps <= center_x and steps <= center_y
 
     def create_operator(self):
         """Build the shift operator for the walk.
