@@ -43,7 +43,7 @@ class Mesh1D(Mesh):
         # 00 O 01 O 02 O 03 O 04 O 00
         # ---------------------------
         #              x
-        return self._define_size(size)
+        return self._size
 
     def __str__(self):
         """Build a string representing this mesh.
@@ -77,19 +77,3 @@ class Mesh1D(Mesh):
 
         """
         return range(self._size)
-
-    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the mesh operator.
-
-        Parameters
-        ----------
-        storage_level: : py: class: `pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is: py: const: `pyspark.StorageLevel.MEMORY_AND_DISK`.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError

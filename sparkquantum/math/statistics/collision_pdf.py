@@ -1,5 +1,3 @@
-import math
-
 from pyspark import StorageLevel
 
 from sparkquantum.math.statistics.pdf import PDF
@@ -34,76 +32,10 @@ class CollisionPDF(PDF):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Collistion Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Collistion Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
-    def sum_values(self):
-        """Sum the probabilities of this PDF.
-
-        Returns
-        -------
-        float
-            The sum of the probabilities.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = 1
-        elif self._mesh.dimension == 2:
-            ind = 2
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        data_type = self._data_type()
-
-        return self.data.filter(
-            lambda m: m[ind] != data_type
-        ).map(
-            lambda m: m[ind]
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-    def norm(self):
-        """Calculate the norm of this PDF.
-
-        Returns
-        -------
-        float
-            The norm of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = 1
-        elif self._mesh.dimension == 2:
-            ind = 2
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        data_type = self._data_type()
-
-        n = self.data.filter(
-            lambda m: m[ind] != data_type
-        ).map(
-            lambda m: m[ind].real ** 2
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-        return math.sqrt(n)
-
-    def normalize(self, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def normalize(self, norm=None, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Normalize this PDF.
 
         Notes
@@ -112,6 +44,8 @@ class CollisionPDF(PDF):
 
         Parameters
         ----------
+        norm : float, optional
+            The norm of this PDF. When `None` is passed as argument, the norm is calculated.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
             Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
@@ -127,7 +61,8 @@ class CollisionPDF(PDF):
             If the dimension of the mesh is not valid.
 
         """
-        norm = self.norm()
+        if norm is None:
+            norm = self.norm()
 
         def __map(m):
             m[-1] /= norm

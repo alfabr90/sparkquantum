@@ -1,7 +1,8 @@
+import math
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 from matplotlib import cm
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
@@ -14,7 +15,8 @@ __all__ = ['PDF', 'is_pdf']
 class PDF(Base):
     """Top-level class for probability distribution functions (PDF)."""
 
-    def __init__(self, rdd, shape, mesh, num_particles):
+    def __init__(self, rdd, shape, mesh, num_particles,
+                 data_type=float, num_elements=None):
         """Build a top-level object for probability distribution functions (PDF).
 
         Parameters
@@ -22,19 +24,24 @@ class PDF(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this matrix object. Must be a two-dimensional tuple.
+            The shape of this object. Must be a n-dimensional tuple.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is complex.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd)
+        super().__init__(rdd, num_elements=num_elements)
 
         self._shape = shape
-        self._data_type = float
         self._mesh = mesh
         self._num_particles = num_particles
+        self._data_type = data_type
 
         self._size = self._shape[0] * self._shape[1]
 
@@ -58,11 +65,6 @@ class PDF(Base):
         return self._shape
 
     @property
-    def data_type(self):
-        """type"""
-        return self._data_type
-
-    @property
     def mesh(self):
         """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
@@ -71,6 +73,11 @@ class PDF(Base):
     def num_particles(self):
         """int"""
         return self._num_particles
+
+    @property
+    def data_type(self):
+        """type"""
+        return self._data_type
 
     @property
     def size(self):
@@ -83,41 +90,90 @@ class PDF(Base):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
     def sum_values(self):
-        """Sum the values of this PDF.
+        """Sum the probabilities of this PDF.
 
-        Raises
+        Returns
         -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+        float
+            The sum of the probabilities.
 
         """
-        raise NotImplementedError
+        data_type = self._data_type()
+
+        return self.data.filter(
+            lambda m: m[-1] != data_type
+        ).map(
+            lambda m: m[-1]
+        ).reduce(
+            lambda a, b: a + b
+        )
 
     def norm(self):
         """Calculate the norm of this PDF.
 
-        Raises
-        ------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+        Returns
+        -------
+        float
+            The norm of this PDF.
 
         """
-        raise NotImplementedError
+        data_type = self._data_type()
+
+        n = self.data.filter(
+            lambda m: m[-1] != data_type
+        ).map(
+            lambda m: m[-1].real ** 2
+        ).reduce(
+            lambda a, b: a + b
+        )
+
+        return math.sqrt(n)
 
     def expected_value(self):
         """Calculate the expected value of this PDF.
 
-        Raises
+        Returns
         -------
+        float
+            The expected value of this PDF.
+
+        Raises
+        ------
         NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+            If the dimension of the mesh is not valid.
 
         """
-        raise NotImplementedError
+        if self._mesh.dimension == 1:
+            mesh_size = (self._mesh.center(), 1)
+        elif self._mesh.dimension == 2:
+            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
+        else:
+            self._logger.error("mesh dimension not implemented")
+            raise NotImplementedError("mesh dimension not implemented")
+
+        step = self._mesh.dimension
+
+        def _map(m):
+            v = 1
+
+            for i in range(0, len(m), step):
+                v *= m[i] - mesh_size[i]
+
+            return m[-1] * v
+
+        data_type = self._data_type()
+
+        return self.data.filter(
+            lambda m: m[-1] != data_type
+        ).map(
+            _map
+        ).reduce(
+            lambda a, b: a + b
+        )
 
     def variance(self, mean=None):
         """Calculate the variance of this PDF.
@@ -125,15 +181,49 @@ class PDF(Base):
         Parameters
         ----------
         mean : float, optional
-            The mean of this PDF. When None is passed as argument, the mean is calculated.
+            The mean of this PDF. When `None` is passed as argument, the mean is calculated.
+
+        Returns
+        -------
+        float
+            The variance of this PDF.
 
         Raises
         ------
         NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+            If the dimension of the mesh is not valid.
 
         """
-        raise NotImplementedError
+        if self._mesh.dimension == 1:
+            mesh_size = (self._mesh.center(), 1)
+        elif self._mesh.dimension == 2:
+            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
+        else:
+            self._logger.error("mesh dimension not implemented")
+            raise NotImplementedError("mesh dimension not implemented")
+
+        if mean is None:
+            mean = self.expected_value()
+
+        step = self._mesh.dimension
+
+        def _map(m):
+            v = 1
+
+            for i in range(0, len(m), step):
+                v *= m[i] - mesh_size[i]
+
+            return m[-1] * v ** 2
+
+        data_type = self._data_type()
+
+        return self.data.filter(
+            lambda m: m[-1] != data_type
+        ).map(
+            _map
+        ).reduce(
+            lambda a, b: a + b
+        ) - mean
 
     def max(self):
         """Find the maximum value of this PDF.
@@ -143,25 +233,9 @@ class PDF(Base):
         float
             The maximum value of this PDF.
 
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
         """
-        if self._mesh.dimension == 1:
-            ind = 1
-        elif self._mesh.dimension == 2:
-            ind = 2
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        def __map(m):
-            return m[ind]
-
         return self.data.map(
-            __map
+            lambda m: m[-1]
         ).max()
 
     def min(self):
@@ -172,25 +246,9 @@ class PDF(Base):
         float
             The minimum value of this PDF.
 
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
         """
-        if self._mesh.dimension == 1:
-            ind = 1
-        elif self._mesh.dimension == 2:
-            ind = 2
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        def __map(m):
-            return m[ind]
-
         return self.data.map(
-            __map
+            lambda m: m[-1]
         ).min()
 
     def plot(self, filename, title=None, labels=None, **kwargs):

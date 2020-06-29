@@ -1,8 +1,7 @@
 from datetime import datetime
 
-import math
-import matplotlib.pyplot as plt
 from matplotlib import cm
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
@@ -37,74 +36,8 @@ class JointPDF(PDF):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Joint Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
-
-    def sum_values(self):
-        """Sum the values of this PDF.
-
-        Returns
-        -------
-        float
-            The sum of the probabilities.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = self._num_particles
-        elif self._mesh.dimension == 2:
-            ind = self._num_particles * 2
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        data_type = self._data_type()
-
-        return self.data.filter(
-            lambda m: m[ind] != data_type
-        ).map(
-            lambda m: m[ind]
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-    def norm(self):
-        """Calculate the norm of this PDF.
-
-        Returns
-        -------
-        float
-            The norm of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = self._num_particles
-        elif self._mesh.dimension == 2:
-            ind = 2 * self._num_particles
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        data_type = self._data_type()
-
-        n = self.data.filter(
-            lambda m: m[ind] != data_type
-        ).map(
-            lambda m: m[ind].real ** 2
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-        return math.sqrt(n)
+        return 'Joint Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
     def expected_value(self):
         """Calculate the expected value of this PDF.
@@ -121,31 +54,29 @@ class JointPDF(PDF):
 
         """
         if self._mesh.dimension == 1:
-            ndim = 1
-            ind = ndim * self._num_particles
             mesh_size = (int(self._mesh.size / 2), 1)
         elif self._mesh.dimension == 2:
-            ndim = 2
-            ind = ndim * self._num_particles
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
+        step = self._mesh.dimension
+
         def _map(m):
             v = 1
 
-            for i in range(0, ind, ndim):
-                for d in range(ndim):
+            for i in range(0, len(m), step):
+                for d in range(step):
                     v *= m[i + d] - mesh_size[d]
 
-            return m[ind] * v
+            return m[-1] * v
 
         data_type = self._data_type()
 
         return self.data.filter(
-            lambda m: m[ind] != data_type
+            lambda m: m[-1] != data_type
         ).map(
             _map
         ).reduce(
@@ -172,12 +103,8 @@ class JointPDF(PDF):
 
         """
         if self._mesh.dimension == 1:
-            ndim = 1
-            ind = ndim * self._num_particles
             mesh_size = (int(self._mesh.size / 2), 1)
         elif self._mesh.dimension == 2:
-            ndim = 2
-            ind = ndim * self._num_particles
             mesh_size = (
                 int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
         else:
@@ -187,84 +114,26 @@ class JointPDF(PDF):
         if mean is None:
             mean = self.expected_value()
 
+        step = self._mesh.dimension
+
         def _map(m):
             v = 1
 
-            for i in range(0, ind, ndim):
-                for d in range(ndim):
+            for i in range(0, len(m), step):
+                for d in range(step):
                     v *= m[i + d] - mesh_size[d]
 
-            return m[ind] * v ** 2
+            return m[-1] * v ** 2
 
         data_type = self._data_type()
 
         return self.data.filter(
-            lambda m: m[ind] != data_type
+            lambda m: m[-1] != data_type
         ).map(
             _map
         ).reduce(
             lambda a, b: a + b
         ) - mean
-
-    def max(self):
-        """Find the maximum value of this PDF.
-
-        Returns
-        ------
-        float
-            The maximum value of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = self._num_particles
-        elif self._mesh.dimension == 2:
-            ndim = 2
-            ind = ndim * self._num_particles
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        def __map(m):
-            return m[ind]
-
-        return self.data.map(
-            __map
-        ).max()
-
-    def min(self):
-        """Find the minimum value of this PDF.
-
-        Returns
-        ------
-        float
-            The minimum value of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            ind = self._num_particles
-        elif self._mesh.dimension == 2:
-            ndim = 2
-            ind = ndim * self._num_particles
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        def __map(m):
-            return m[ind]
-
-        return self.data.map(
-            __map
-        ).min()
 
     def plot(self, filename, title=None, labels=None, **kwargs):
         """Plot the probabilities over the mesh.

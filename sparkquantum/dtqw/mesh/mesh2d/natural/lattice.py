@@ -28,7 +28,7 @@ class Lattice(Natural):
 
     def _define_size(self, size):
         self._validate(size)
-        return 2 * size[0] + 1, 2 * size[0] + 1
+        return 2 * size[0] + 1, 2 * size[1] + 1
 
     def __str__(self):
         """Build a string representing this mesh.
@@ -73,7 +73,9 @@ class Lattice(Natural):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return super().check_steps() and steps <= self.center_x() and steps <= self.center_y()
+        return (super().check_steps(steps) and
+                steps <= self.center_x() and
+                steps <= self.center_y())
 
     def create_operator(self):
         """Build the shift operator for the walk.
