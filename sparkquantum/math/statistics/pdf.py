@@ -147,10 +147,8 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.dimension == 1:
-            mesh_size = (self._mesh.center(), 1)
-        elif self._mesh.dimension == 2:
-            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
+        if self._mesh.dimension == 1 or self._mesh.dimension == 2:
+            mesh_size = self._mesh.center_coordinates()
         else:
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
@@ -194,10 +192,8 @@ class PDF(Base):
             If the dimension of the mesh is not valid.
 
         """
-        if self._mesh.dimension == 1:
-            mesh_size = (self._mesh.center(), 1)
-        elif self._mesh.dimension == 2:
-            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
+        if self._mesh.dimension == 1 or self._mesh.dimension == 2:
+            mesh_size = self._mesh.center_coordinates()
         else:
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")

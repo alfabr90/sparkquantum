@@ -67,6 +67,17 @@ class Mesh1D(Mesh):
         """
         return int((self._size - 1) / 2)
 
+    def center_coordinates(self):
+        """Return the coordinates of the center site of this mesh.
+
+        Returns
+        -------
+        tuple or list
+            The coordinates of the center site.
+
+        """
+        return (self.center(), )
+
     def axis(self):
         """Build a generator with the size of this mesh.
 
