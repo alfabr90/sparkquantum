@@ -93,7 +93,7 @@ class PDF(Base):
         return 'Probability Distribution Function of {} with shape {} over a {}'.format(
             particles, self._shape, self._mesh)
 
-    def sum_values(self):
+    def sum(self):
         """Sum the probabilities of this PDF.
 
         Returns
