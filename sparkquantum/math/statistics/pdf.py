@@ -15,7 +15,8 @@ __all__ = ['PDF', 'is_pdf']
 class PDF(Base):
     """Top-level class for probability distribution functions (PDF)."""
 
-    def __init__(self, rdd, shape, mesh, num_particles):
+    def __init__(self, rdd, shape, mesh, num_particles,
+                 data_type=float, num_elements=None):
         """Build a top-level object for probability distribution functions (PDF).
 
         Parameters
@@ -23,19 +24,24 @@ class PDF(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this matrix object. Must be a two-dimensional tuple.
+            The shape of this object. Must be a n-dimensional tuple.
         mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
             The mesh where the particles has walked on.
         num_particles : int
             The number of particles present in the walk.
+        data_type : type, optional
+            The Python type of all values in this object. Default value is complex.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd)
+        super().__init__(rdd, num_elements=num_elements)
 
         self._shape = shape
-        self._data_type = float
         self._mesh = mesh
         self._num_particles = num_particles
+        self._data_type = data_type
 
         self._size = self._shape[0] * self._shape[1]
 
@@ -59,11 +65,6 @@ class PDF(Base):
         return self._shape
 
     @property
-    def data_type(self):
-        """type"""
-        return self._data_type
-
-    @property
     def mesh(self):
         """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
         return self._mesh
@@ -72,6 +73,11 @@ class PDF(Base):
     def num_particles(self):
         """int"""
         return self._num_particles
+
+    @property
+    def data_type(self):
+        """type"""
+        return self._data_type
 
     @property
     def size(self):
@@ -84,8 +90,8 @@ class PDF(Base):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
     def sum_values(self):
         """Sum the probabilities of this PDF.
@@ -142,10 +148,9 @@ class PDF(Base):
 
         """
         if self._mesh.dimension == 1:
-            mesh_size = (int(self._mesh.size / 2), 1)
+            mesh_size = (self._mesh.center(), 1)
         elif self._mesh.dimension == 2:
-            mesh_size = (
-                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
         else:
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
@@ -190,10 +195,9 @@ class PDF(Base):
 
         """
         if self._mesh.dimension == 1:
-            mesh_size = (int(self._mesh.size / 2), 1)
+            mesh_size = (self._mesh.center(), 1)
         elif self._mesh.dimension == 2:
-            mesh_size = (
-                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
+            mesh_size = (self._mesh.center_x(), self._mesh.center_y())
         else:
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")

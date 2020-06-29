@@ -29,5 +29,5 @@ class MarginalPDF(PDF):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Marginal Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Marginal Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)

@@ -32,8 +32,8 @@ class CollisionPDF(PDF):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Collistion Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Collistion Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
     def normalize(self, norm=None, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Normalize this PDF.

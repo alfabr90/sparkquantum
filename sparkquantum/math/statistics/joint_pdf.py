@@ -36,8 +36,8 @@ class JointPDF(PDF):
         else:
             particles = '{} particles'.format(self._num_particles)
 
-        return 'Joint Probability Distribution Function with shape {} of {} over a {}'.format(
-            self._shape, particles, self._mesh)
+        return 'Joint Probability Distribution Function of {} with shape {} over a {}'.format(
+            particles, self._shape, self._mesh)
 
     def expected_value(self):
         """Calculate the expected value of this PDF.
