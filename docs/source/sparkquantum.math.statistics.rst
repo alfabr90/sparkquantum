@@ -1,41 +1,13 @@
 sparkquantum.math.statistics package
 ====================================
 
-Submodules
-----------
+Subpackages
+-----------
 
-sparkquantum.math.statistics.collision\_pdf module
---------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: sparkquantum.math.statistics.collision_pdf
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sparkquantum.math.statistics.joint\_pdf module
-----------------------------------------------
-
-.. automodule:: sparkquantum.math.statistics.joint_pdf
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sparkquantum.math.statistics.marginal\_pdf module
--------------------------------------------------
-
-.. automodule:: sparkquantum.math.statistics.marginal_pdf
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sparkquantum.math.statistics.pdf module
----------------------------------------
-
-.. automodule:: sparkquantum.math.statistics.pdf
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
+   sparkquantum.math.statistics.probability_distribution
 
 Module contents
 ---------------
