@@ -1,6 +1,6 @@
 import math
 
-from sparkquantum.math.base import Base
+from sparkquantum.base import Base
 
 __all__ = ['ProbabilityDistribution', 'is_probability_distribution']
 

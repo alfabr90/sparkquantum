@@ -3,7 +3,7 @@ import math
 import numpy as np
 from pyspark import RDD, SparkContext
 
-from sparkquantum.math.base import Base
+from sparkquantum.base import Base
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['Matrix', 'is_matrix']

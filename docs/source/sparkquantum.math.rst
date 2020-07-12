@@ -12,14 +12,6 @@ Subpackages
 Submodules
 ----------
 
-sparkquantum.math.base module
------------------------------
-
-.. automodule:: sparkquantum.math.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 sparkquantum.math.matrix module
 -------------------------------
 
