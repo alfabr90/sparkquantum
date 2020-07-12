@@ -11,6 +11,18 @@ Subpackages
    sparkquantum.math
    sparkquantum.utils
 
+Submodules
+----------
+
+sparkquantum.base module
+------------------------
+
+.. automodule:: sparkquantum.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Module contents
 ---------------
 
