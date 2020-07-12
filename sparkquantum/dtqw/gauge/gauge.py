@@ -28,22 +28,23 @@ class Gauge:
         """
         return self._profiler
 
-    def _profile_pdf(self, profiler_title, log_title, pdf, initial_time):
+    def _profile_probability_distribution(
+            self, profiler_title, log_title, probability_distribution, initial_time):
         app_id = self._spark_context.applicationId
 
         self._profiler.profile_resources(app_id)
         self._profiler.profile_executors(app_id)
 
-        info = self._profiler.profile_pdf(
+        info = self._profiler.profile_probability_distribution(
             profiler_title,
-            pdf,
+            probability_distribution,
             (datetime.now() - initial_time).total_seconds())
 
         if info is not None:
             self._logger.info(
                 "{} was done in {}s".format(log_title, info['buildingTime']))
             self._logger.info(
-                "PDF with {} is consuming {} bytes in memory and {} bytes in disk".format(
+                "Probability distribution with {} is consuming {} bytes in memory and {} bytes in disk".format(
                     log_title, info['memoryUsed'], info['diskUsed']
                 )
             )

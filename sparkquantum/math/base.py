@@ -6,10 +6,10 @@ __all__ = ['Base']
 
 
 class Base:
-    """Top-level class for math entities."""
+    """Top-level class to act as a container of :py:class:`pyspark.RDD`."""
 
     def __init__(self, rdd, num_elements=None):
-        """Build a top-level object for math entities. It is a container of :py:class:`pyspark.RDD`.
+        """Build a top-level object that acts as a container of :py:class:`pyspark.RDD`.
 
         Parameters
         ----------

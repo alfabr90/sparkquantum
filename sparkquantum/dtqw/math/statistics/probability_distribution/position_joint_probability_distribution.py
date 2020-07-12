@@ -5,16 +5,18 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
-from sparkquantum.math.statistics.pdf import PDF
+from sparkquantum.dtqw.math.statistics.probability_distribution.position_probability_distribution import PositionProbabilityDistribution
 
-__all__ = ['JointPDF']
+__all__ = ['PositionJointProbabilityDistribution']
 
 
-class JointPDF(PDF):
-    """Class for probability distribution function (PDF) of the entire quantum system."""
+class PositionJointProbabilityDistribution(PositionProbabilityDistribution):
+    """Class for joint probability distributions regarding the possible positions
+    of all particles of a quantum system state."""
 
-    def __init__(self, rdd, shape, mesh, num_particles):
-        """Build an object for probability distribution function (PDF) of the entire quantum system.
+    def __init__(self, rdd, shape, num_variables, state, num_elements=None):
+        """Build an object for a joint probability distribution regarding the possible
+        positions of all particles of a quantum system state.
 
         Parameters
         ----------
@@ -22,118 +24,20 @@ class JointPDF(PDF):
             The base RDD of this object.
         shape : tuple
             The shape of this matrix object. Must be a two-dimensional tuple.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            The mesh where the particles has walked on.
-        num_particles : int
-            The number of particles present in the walk.
+        num_variables : int
+            The number of variables of this probability distribution.
+        state : :py:class:`sparkquantum.dtqw.state.State`
+            The quantum state of the system.
+        num_elements : int, optional
+            The expected (or definitive) number of elements. This helps to find a
+            better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, shape, mesh, num_particles)
+        super().__init__(rdd, shape, num_variables, state, num_elements=num_elements)
 
     def __str__(self):
-        if self._num_particles == 1:
-            particles = 'one particle'
-        else:
-            particles = '{} particles'.format(self._num_particles)
-
-        return 'Joint Probability Distribution Function of {} with shape {} over a {}'.format(
-            particles, self._shape, self._mesh)
-
-    def expected_value(self):
-        """Calculate the expected value of this PDF.
-
-        Returns
-        -------
-        float
-            The expected value of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            mesh_size = (int(self._mesh.size / 2), 1)
-        elif self._mesh.dimension == 2:
-            mesh_size = (
-                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        step = self._mesh.dimension
-
-        def _map(m):
-            v = 1
-
-            for i in range(0, len(m), step):
-                for d in range(step):
-                    v *= m[i + d] - mesh_size[d]
-
-            return m[-1] * v
-
-        data_type = self._data_type()
-
-        return self.data.filter(
-            lambda m: m[-1] != data_type
-        ).map(
-            _map
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-    def variance(self, mean=None):
-        """Calculate the variance of this PDF.
-
-        Parameters
-        ----------
-        mean : float, optional
-            The mean of this PDF. When None is passed as argument, the mean is calculated.
-
-        Returns
-        -------
-        float
-            The variance of this PDF.
-
-        Raises
-        ------
-        NotImplementedError
-            If the dimension of the mesh is not valid.
-
-        """
-        if self._mesh.dimension == 1:
-            mesh_size = (int(self._mesh.size / 2), 1)
-        elif self._mesh.dimension == 2:
-            mesh_size = (
-                int(self._mesh.size[0] / 2), int(self._mesh.size[1] / 2))
-        else:
-            self._logger.error("mesh dimension not implemented")
-            raise NotImplementedError("mesh dimension not implemented")
-
-        if mean is None:
-            mean = self.expected_value()
-
-        step = self._mesh.dimension
-
-        def _map(m):
-            v = 1
-
-            for i in range(0, len(m), step):
-                for d in range(step):
-                    v *= m[i + d] - mesh_size[d]
-
-            return m[-1] * v ** 2
-
-        data_type = self._data_type()
-
-        return self.data.filter(
-            lambda m: m[-1] != data_type
-        ).map(
-            _map
-        ).reduce(
-            lambda a, b: a + b
-        ) - mean
+        return 'Joint Probability Distribution regarding the possible positions of all particles of a {}'.format(
+            self._state)
 
     def plot(self, filename, title=None, labels=None, **kwargs):
         """Plot the probabilities over the mesh.
@@ -150,21 +54,22 @@ class JointPDF(PDF):
             Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
-        if self._mesh.dimension == 1 and self._num_particles > 2:
+        if self._state.mesh.dimension == 1 and self._state.num_particles > 2:
             self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of one and two particles"
                                  )
             return None
 
-        if self._mesh.dimension == 2 and self._num_particles > 1:
+        if self._state.mesh.dimension == 2 and self._state.num_particles > 1:
             self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the joint probabilities \
                     of systems of just one particle"
                                  )
             return None
 
-        if not (self._mesh.dimension == 1 and self._num_particles == 2):
+        if not (self._state.mesh.dimension ==
+                1 and self._state.num_particles == 2):
             super().plot(filename, title=title, labels=labels, **kwargs)
         else:
             self._logger.info("starting plot of probabilities...")
@@ -175,15 +80,15 @@ class JointPDF(PDF):
             plt.clf()
 
             axis = np.meshgrid(
-                self._mesh.axis(),
-                self._mesh.axis(),
+                self._state.mesh.axis(),
+                self._state.mesh.axis(),
                 indexing='ij'
             )
 
-            pdf = np.zeros(self._shape, dtype=float)
+            probability_distribution = np.zeros(self._shape, dtype=float)
 
             for i in self.data.collect():
-                pdf[i[0], i[1]] = i[2]
+                probability_distribution[i[0], i[1]] = i[2]
 
             figure = plt.figure()
             axes = figure.add_subplot(111, projection='3d')
@@ -191,7 +96,7 @@ class JointPDF(PDF):
             axes.plot_surface(
                 axis[0],
                 axis[1],
-                pdf,
+                probability_distribution,
                 rstride=1,
                 cstride=1,
                 cmap=cm.YlGnBu_r,
@@ -210,6 +115,7 @@ class JointPDF(PDF):
 
             if title:
                 axes.set_title(title)
+
             axes.view_init(elev=50)
 
             # figure.set_size_inches(12.8, 12.8)
@@ -237,21 +143,22 @@ class JointPDF(PDF):
             Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
         """
-        if self._mesh.dimension == 1 and self._num_particles != 2:
+        if self._state.mesh.dimension == 1 and self._state.num_particles != 2:
             self._logger.warning("for one-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of two particles"
                                  )
             return None
 
-        if self._mesh.dimension == 2 and self._num_particles > 1:
+        if self._state.mesh.dimension == 2 and self._state.num_particles > 1:
             self._logger.warning("for two-dimensional meshes, \
                     it is only possible to plot the contour of the joint probability \
                     of systems of just one particle"
                                  )
             return None
 
-        if not (self._mesh.dimension == 1 and self._num_particles == 2):
+        if not (self._state.mesh.dimension ==
+                1 and self._state.num_particles == 2):
             super().plot_contour(filename, title=title, labels=labels, **kwargs)
         else:
             self._logger.info("starting contour plot of probabilities...")
@@ -262,25 +169,30 @@ class JointPDF(PDF):
             plt.clf()
 
             axis = np.meshgrid(
-                self._mesh.axis(),
-                self._mesh.axis(),
+                self._state.mesh.axis(),
+                self._state.mesh.axis(),
                 indexing='ij'
             )
 
-            pdf = np.zeros(self._shape, dtype=float)
+            probability_distribution = np.zeros(self._shape, dtype=float)
 
             for i in self.data.collect():
-                pdf[i[0], i[1]] = i[2]
+                probability_distribution[i[0], i[1]] = i[2]
 
             if 'levels' not in kwargs:
-                max_level = pdf.max()
+                max_level = probability_distribution.max()
 
                 if not max_level:
                     max_level = 1
 
                 levels = np.linspace(0, max_level, 41)
 
-            plt.contourf(axis[0], axis[1], pdf, levels=levels, **kwargs)
+            plt.contourf(
+                axis[0],
+                axis[1],
+                probability_distribution,
+                levels=levels,
+                **kwargs)
             plt.colorbar()
 
             if labels:
