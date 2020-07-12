@@ -95,7 +95,7 @@ class Utils():
         'quantum.dtqw.walk.checkUnitary': 'False',
         'quantum.dtqw.walk.dumpingFrequency': -1,
         'quantum.dtqw.walk.dumpingPath': './',
-        'quantum.dtqw.walk.dumpStatesPDF': 'False',
+        'quantum.dtqw.walk.dumpStatesProbabilityDistributions': 'False',
         'quantum.dtqw.walkOperator.checkpoint': 'False',
         'quantum.dtqw.walkOperator.kroneckerMode': KroneckerModeBroadcast,
         'quantum.dtqw.walkOperator.tempPath': './',

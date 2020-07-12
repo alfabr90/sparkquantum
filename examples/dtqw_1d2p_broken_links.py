@@ -129,7 +129,7 @@ dtqw = DiscreteTimeQuantumWalk(initial_state)
 # Performing the walk
 final_state = dtqw.walk(steps)
 
-# Measuring the state of the system and plotting its PDF
+# Measuring the state of the system and plotting its probability distribution
 gauge = PositionGauge()
 
 joint, collision, marginal = gauge.measure(final_state)

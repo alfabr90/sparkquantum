@@ -154,9 +154,7 @@ class DiscreteTimeQuantumWalk:
 
         if step is None:
             info = self._profiler.profile_state(
-                '{}{}'.format(profile_title, step),
-                state,
-                0.0)
+                '{}'.format(profile_title), state, 0.0)
 
             if info is not None:
                 self._logger.info(
@@ -532,12 +530,12 @@ class DiscreteTimeQuantumWalk:
             'quantum.dtqw.walk.checkUnitary'
         )
 
-        configs['dump_states_pdf'] = Utils.get_conf(
+        configs['dump_states_probability_distributions'] = Utils.get_conf(
             self._spark_context,
-            'quantum.dtqw.walk.dumpStatesPDF'
+            'quantum.dtqw.walk.dumpStatesProbabilityDistributions'
         )
 
-        if configs['dump_states_pdf'] == 'True':
+        if configs['dump_states_probability_distributions'] == 'True':
             configs['dumping_path'] = Utils.get_conf(
                 self._spark_context,
                 'quantum.dtqw.walk.dumpingPath'
@@ -569,7 +567,7 @@ class DiscreteTimeQuantumWalk:
             If operators' shapes are incompatible for multiplication.
             If the final state of the system is not unitary. This exception is also raised in cases
             where the 'quantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
-            the 'quantum.dtqw.walk.dumpStatesPDF' configuration is set to 'True' and the PDF of some of the intermediary states does not sum one.
+            the 'quantum.dtqw.walk.dumpStatesProbabilityDistribution' configuration is set to 'True' and the probability distribution of some of the intermediary states does not sum one.
 
         """
         if steps < 0:
@@ -662,20 +660,20 @@ class DiscreteTimeQuantumWalk:
                     raise ValueError(
                         "the state {} is not unitary".format(i))
 
-            if configs['dump_states_pdf'] == 'True':
+            if configs['dump_states_probability_distributions'] == 'True':
                 if self._num_particles == 1:
                     result_tmp.measure().dump(
-                        configs['dumping_path'] + "pdf/" + str(i))
+                        configs['dumping_path'] + "probability_distributions/" + str(i))
                 else:
                     joint, collision, marginal = result_tmp.measure()
 
                     joint.dump(
-                        configs['dumping_path'] + "pdf/joint/" + str(i))
+                        configs['dumping_path'] + "probability_distributions/joint/" + str(i))
                     collision.dump(
-                        configs['dumping_path'] + "pdf/collision/" + str(i))
+                        configs['dumping_path'] + "probability_distributions/collision/" + str(i))
                     for p in range(len(marginal)):
                         marginal[p].dump(
-                            configs['dumping_path'] + "pdf/marginal/" + str(i) + "/particle" + str(p + 1))
+                            configs['dumping_path'] + "probability_distributions/marginal/" + str(i) + "/particle" + str(p + 1))
 
             self._profile_state(
                 'systemState',

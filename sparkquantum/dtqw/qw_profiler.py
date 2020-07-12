@@ -1,6 +1,6 @@
 from sparkquantum.dtqw.operator import is_operator
 from sparkquantum.dtqw.state import is_state
-from sparkquantum.math.statistics.pdf import is_pdf
+from sparkquantum.math.statistics.probability_distribution.probability_distribution import is_probability_distribution
 from sparkquantum.utils.profiler import Profiler
 
 __all__ = ['QuantumWalkProfiler']
@@ -21,7 +21,7 @@ class QuantumWalkProfiler(Profiler):
         self._times = None
         self._operators = None
         self._states = None
-        self._pdfs = None
+        self._probability_distributions = None
 
         self._start()
 
@@ -36,7 +36,7 @@ class QuantumWalkProfiler(Profiler):
                 'size': 0, 'numElements': 0}
 
     @staticmethod
-    def _default_pdf():
+    def _default_probability_distribution():
         return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
                 'size': 0, 'numElements': 0}
 
@@ -50,7 +50,7 @@ class QuantumWalkProfiler(Profiler):
         self._times = {}
         self._operators = {}
         self._states = {}
-        self._pdfs = {}
+        self._probability_distributions = {}
 
     def profile_time(self, name, value):
         """Store the execution or building time for a named quantum walk element.
@@ -174,57 +174,60 @@ class QuantumWalkProfiler(Profiler):
 
             return self._states[name][-1]
 
-    def profile_pdf(self, name, pdf, time):
-        """Store building time and resources information for a named measurement (PDF).
+    def profile_probability_distribution(
+            self, name, probability_distribution, time):
+        """Store building time and resources information for a named measurement (probability distribution).
 
         Parameters
         ----------
         name : str
-            A name for the pdf.
-        pdf : :py:class:`sparkquantum.math.statistics.pdf.PDF`
-            The pdf object.
+            A name for the probability_distribution.
+        probability_distribution : :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`
+            The probability distribution object.
         time : float
-            The measured building time of the pdf.
+            The measured building time of the probability_distribution.
 
         Returns
         -------
         dict
-            The resources information measured for the pdf if profiling is enabled, `None` otherwise.
+            The resources information measured for the probability distribution if profiling is enabled, `None` otherwise.
 
         Raises
         -----
         TypeError
-            If `pdf` is not a :py:class:`sparkquantum.math.statistics.pdf.PDF`.
+            If `probability_distribution` is not a :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`.
 
         """
         if self._enabled:
-            self._logger.info("profiling PDF data for '{}'...".format(name))
+            self._logger.info(
+                "profiling probability distribution data for '{}'...".format(name))
 
-            if not is_pdf(pdf):
+            if not is_probability_distribution(probability_distribution):
                 self._logger.error(
-                    "'PDF' instance expected, not '{}'".format(type(pdf)))
+                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(probability_distribution)))
                 raise TypeError(
-                    "'PDF' instance expected, not '{}'".format(type(pdf)))
+                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(probability_distribution)))
 
-            if name not in self._pdfs:
-                self._pdfs[name] = []
+            if name not in self._probability_distributions:
+                self._probability_distributions[name] = []
 
-            self._pdfs[name].append(self._default_pdf())
+            self._probability_distributions[name].append(
+                self._default_probability_distribution())
 
-            app_id = pdf.spark_context.applicationId
-            rdd_id = pdf.data.id()
+            app_id = probability_distribution.spark_context.applicationId
+            rdd_id = probability_distribution.data.id()
             data = self.request_rdd(app_id, rdd_id)
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._default_pdf():
-                        self._pdfs[name][-1][k] = v
+                    if k in self._default_probability_distribution():
+                        self._probability_distributions[name][-1][k] = v
 
-            self._pdfs[name][-1]['buildingTime'] = time
-            self._pdfs[name][-1]['size'] = pdf.size
-            self._pdfs[name][-1]['numElements'] = pdf.num_elements
+            self._probability_distributions[name][-1]['buildingTime'] = time
+            self._probability_distributions[name][-1]['size'] = probability_distribution.size
+            self._probability_distributions[name][-1]['numElements'] = probability_distribution.num_elements
 
-            return self._pdfs[name][-1]
+            return self._probability_distributions[name][-1]
 
     def get_times(self, name=None):
         """Get the measured time of all elements or of the named one.
@@ -309,32 +312,32 @@ class QuantumWalkProfiler(Profiler):
                 "no resources information for states have been obtained")
             return {}
 
-    def get_pdfs(self, name=None):
-        """Get the resources information of all PDFs or of the one with the provided name.
+    def get_probability_distributions(self, name=None):
+        """Get the resources information of all probability distributions or of the one with the provided name.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.math.statistics.pdf.PDF`.
+            The name used for a :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`.
 
         Returns
         -------
         dict or list
-            A dict with the resources information of all PDFs or a list of the resources information of the named PDF.
+            A dict with the resources information of all probability distributions or a list of the resources information of the named probability distribution.
 
         """
-        if len(self._pdfs):
+        if len(self._probability_distributions):
             if name is None:
-                return self._pdfs.copy()
+                return self._probability_distributions.copy()
             else:
-                if name not in self._pdfs:
+                if name not in self._probability_distributions:
                     self._logger.warning(
-                        "no resources information for pdf '{}'".format(name))
+                        "no resources information for probability distribution '{}'".format(name))
                     return {}
-                return self._pdfs[name]
+                return self._probability_distributions[name]
         else:
             self._logger.warning(
-                "no resources information for pdfs have been obtained")
+                "no resources information for probability distributions have been obtained")
             return {}
 
     def export_times(self, path, extension='csv'):
@@ -445,8 +448,8 @@ class QuantumWalkProfiler(Profiler):
             self._logger.warning(
                 "no measurement of states' resources has been done")
 
-    def export_pdfs(self, path, extension='csv'):
-        """Export all stored pdfs' resources.
+    def export_probability_distributions(self, path, extension='csv'):
+        """Export all stored probability distributions' resources.
 
         Notes
         -----
@@ -466,23 +469,24 @@ class QuantumWalkProfiler(Profiler):
 
         """
         self._logger.info(
-            "exporting pdfs' resources in {} format...".format(extension))
+            "exporting probability distributions' resources in {} format...".format(extension))
 
-        if len(self._pdfs):
-            pdfs = []
+        if len(self._probability_distributions):
+            probability_distributions = []
 
-            for k, v in self._pdfs.items():
+            for k, v in self._probability_distributions.items():
                 for i in v:
-                    pdfs.append(i.copy())
-                    pdfs[-1]['name'] = k
+                    probability_distributions.append(i.copy())
+                    probability_distributions[-1]['name'] = k
 
             self._export_values(
-                pdfs, pdfs[-1].keys(), path + 'pdfs', extension)
+                probability_distributions, probability_distributions[-1].keys(), path + 'probability_distributions', extension)
 
-            self._logger.info("pdfs' resources successfully exported")
+            self._logger.info(
+                "probability distributions' resources successfully exported")
         else:
             self._logger.warning(
-                "no measurement of pdfs' resources has been done")
+                "no measurement of probability distributions' resources has been done")
 
     def export(self, path, extension='csv'):
         """Export all stored profiling information of quantum walks.
@@ -509,4 +513,4 @@ class QuantumWalkProfiler(Profiler):
         self.export_times(path, extension)
         self.export_operators(path, extension)
         self.export_states(path, extension)
-        self.export_pdfs(path, extension)
+        self.export_probability_distributions(path, extension)

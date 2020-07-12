@@ -3,10 +3,10 @@ from datetime import datetime
 from pyspark import StorageLevel
 
 from sparkquantum.dtqw.gauge.gauge import Gauge
-from sparkquantum.math.statistics.collision_pdf import CollisionPDF
-from sparkquantum.math.statistics.joint_pdf import JointPDF
-from sparkquantum.math.statistics.marginal_pdf import MarginalPDF
-from sparkquantum.math.statistics.pdf import is_pdf
+from sparkquantum.dtqw.math.statistics.probability_distribution.position_collision_probability_distribution import PositionCollisionProbabilityDistribution
+from sparkquantum.dtqw.math.statistics.probability_distribution.position_joint_probability_distribution import PositionJointProbabilityDistribution
+from sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution import PositionMarginalProbabilityDistribution
+from sparkquantum.dtqw.math.statistics.probability_distribution.position_probability_distribution import is_position_probability_distribution
 from sparkquantum.utils.utils import Utils
 
 __all__ = ['PositionGauge']
@@ -16,7 +16,7 @@ class PositionGauge(Gauge):
     """Top-level class for system state's positions measurements (gauge)."""
 
     def __init__(self):
-        """Build a top-level system state's positions measurements (gauge) object."""
+        """Build a top-level system state's positions measurement (gauge) object."""
         super().__init__()
 
     def measure_system(
@@ -32,8 +32,8 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.JointPDF`
-            The PDF with all possible positions of the entire system.
+        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_join_probability_distribution.PositionJointProbabilityDistribution`
+            The probability distribution regarding the possible positions of all particles of the quantum system state.
 
         Raises
         ------
@@ -42,7 +42,7 @@ class PositionGauge(Gauge):
 
         ValueError
             If the chosen 'quantum.dtqw.state.representationFormat' configuration
-            is not valid or if the sum of the calculated PDF is not equal to one.
+            is not valid or if the sum of the calculated probability distribution is not equal to one.
 
         """
         self._logger.info("measuring the state of the system...")
@@ -178,25 +178,26 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        pdf = JointPDF(rdd, shape, state.mesh,
-                       state.num_particles).materialize(storage_level)
+        probability_distribution = PositionJointProbabilityDistribution(
+            rdd, shape, ndim * num_particles, state, num_elements=expected_elements
+        ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
-        if round(pdf.sum(), round_precision) != 1.0:
-            self._logger.error("PDFs must sum one")
-            raise ValueError("PDFs must sum one")
+        if round(probability_distribution.sum(), round_precision) != 1.0:
+            self._logger.error("Probability distributions must sum one")
+            raise ValueError("Probability distributions must sum one")
 
-        self._profile_pdf(
+        self._profile_probability_distribution(
             'systemMeasurement',
             'system measurement',
-            pdf,
+            probability_distribution,
             initial_time)
 
-        return pdf
+        return probability_distribution
 
     def measure_collision(self, state, system_measurement,
                           storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -207,15 +208,16 @@ class PositionGauge(Gauge):
         ----------
         state : :py:class:`sparkquantum.dtqw.state.State`
             A system state.
-        system_measurement : :py:class:`sparkquantum.math.statistics.pdf.PDF`
+        system_measurement : :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_joint_probability_distribution.PositionJointProbabilityDistribution`
             The measurement of all possible positions of the entire system.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.collision_pdf.CollisionPDF`
-            The PDF with all possible positions of the system when all particles are located at the same site.
+        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_collision_probability_distribution.PositionCollisionProbabilityDistribution`
+            The probability distribution regarding the possible positions of all particles
+            of the quantum system state when all particles are located at the same site.
 
         Raises
         ------
@@ -237,10 +239,11 @@ class PositionGauge(Gauge):
 
         initial_time = datetime.now()
 
-        if not is_pdf(system_measurement):
+        if not isinstance(system_measurement,
+                          PositionJointProbabilityDistribution):
             self._logger.error(
-                "'PDF' instance expected, not '{}'".format(type(system_measurement)))
-            raise TypeError("'PDF' instance expected, not '{}'".format(
+                "'PositionJointProbabilityDistribution' instance expected, not '{}'".format(type(system_measurement)))
+            raise TypeError("'PositionJointProbabilityDistribution' instance expected, not '{}'".format(
                 type(system_measurement)))
 
         if state.mesh.dimension == 1:
@@ -291,16 +294,17 @@ class PositionGauge(Gauge):
             num_partitions
         )
 
-        pdf = CollisionPDF(rdd, shape, state.mesh,
-                           state.num_particles).materialize(storage_level)
+        probability_distribution = PositionCollisionProbabilityDistribution(
+            rdd, shape, ndim * num_particles, state, num_elements=expected_elements
+        ).materialize(storage_level)
 
-        self._profile_pdf(
+        self._profile_probability_distribution(
             'collisionMeasurement',
             'collision measurement',
-            pdf,
+            probability_distribution,
             initial_time)
 
-        return pdf
+        return probability_distribution
 
     def measure_particle(self, state, particle,
                          storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -317,8 +321,9 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.marginal_pdf.MarginalPDF`
-            The PDF with all possible possitions of the desired particle.
+        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution`
+            The probability distribution regarding the possible positions
+            of a desired particle of the quantum system state.
 
         Raises
         ------
@@ -328,7 +333,7 @@ class PositionGauge(Gauge):
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
             if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the sum of the calculated PDF is not equal to one.
+            if the sum of the calculated probability distribution is not equal to one.
 
         """
         if particle < 0 or particle >= state.num_particles:
@@ -429,27 +434,28 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        pdf = MarginalPDF(rdd, shape, state.mesh,
-                          state.num_particles).materialize(storage_level)
+        probability_distribution = PositionMarginalProbabilityDistribution(
+            rdd, shape, state, num_elements=expected_elements
+        ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(Utils.get_conf(
             self._spark_context, 'quantum.math.roundPrecision'))
 
-        if round(pdf.sum(), round_precision) != 1.0:
-            self._logger.error("PDFs must sum one")
-            raise ValueError("PDFs must sum one")
+        if round(probability_distribution.sum(), round_precision) != 1.0:
+            self._logger.error("Probability distributions must sum one")
+            raise ValueError("Probability distributions must sum one")
 
-        self._profile_pdf(
+        self._profile_probability_distribution(
             'partialMeasurementParticle{}'.format(
                 particle + 1),
             'partial measurement for particle {}'.format(
                 particle + 1),
-            pdf,
+            probability_distribution,
             initial_time)
 
-        return pdf
+        return probability_distribution
 
     def measure_particles(
             self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -465,7 +471,7 @@ class PositionGauge(Gauge):
         Returns
         -------
         tuple
-            A tuple containing the PDF with all possible positions of each particle.
+            A tuple containing the probability distribution with all possible positions of each particle.
 
         Raises
         ------
@@ -475,7 +481,7 @@ class PositionGauge(Gauge):
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
             if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the sum of the calculated PDF is not equal to one.
+            if the sum of the calculated probability distribution is not equal to one.
 
         """
         return [self.measure_particle(state, p, storage_level)
@@ -498,8 +504,9 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.math.statistics.pdf.PDF` or tuple
-            :py:class:`sparkquantum.math.statistics.pdf.PDF` if the system is composed by only one particle, tuple otherwise.
+        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution` or tuple
+            :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution`
+            if the system is composed by only one particle, tuple otherwise.
 
         Raises
         ------
@@ -508,7 +515,7 @@ class PositionGauge(Gauge):
 
         ValueError
             If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the sum of the calculated PDF is not equal to one.
+            if the sum of the calculated probability distributions is not equal to one.
 
         """
         if state.num_particles == 1:
