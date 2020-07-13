@@ -40,10 +40,10 @@ sparkquantum.dtqw.particle module
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.dtqw.qw\_profiler module
--------------------------------------
+sparkquantum.dtqw.profiler module
+---------------------------------
 
-.. automodule:: sparkquantum.dtqw.qw_profiler
+.. automodule:: sparkquantum.dtqw.profiler
    :members:
    :undoc-members:
    :show-inheritance:

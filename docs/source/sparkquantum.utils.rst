@@ -4,10 +4,10 @@ sparkquantum.utils package
 Submodules
 ----------
 
-sparkquantum.utils.profiler module
+sparkquantum.profiler module
 ----------------------------------
 
-.. automodule:: sparkquantum.utils.profiler
+.. automodule:: sparkquantum.profiler
    :members:
    :undoc-members:
    :show-inheritance:
