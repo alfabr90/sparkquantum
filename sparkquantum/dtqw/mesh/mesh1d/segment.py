@@ -47,8 +47,8 @@ class Segment(Mesh1D):
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         coin_size = self._coin_size
@@ -63,14 +63,14 @@ class Segment(Mesh1D):
         repr_format = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.state.representationFormat'))
+                'sparkquantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
             generation_mode = util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.mesh.brokenLinks.generationMode')
+                'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
             if generation_mode == util.BrokenLinksGenerationModeRDD:
                 if repr_format == util.StateRepresentationFormatCoinPosition:

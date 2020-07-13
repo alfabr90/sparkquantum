@@ -41,7 +41,7 @@ class PositionGauge(Gauge):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration
             is not valid or if the sum of the calculated probability distribution is not equal to one.
 
         """
@@ -50,7 +50,7 @@ class PositionGauge(Gauge):
         initial_time = datetime.now()
 
         repr_format = int(util.get_conf(self._spark_context,
-                                        'quantum.dtqw.state.representationFormat'))
+                                        'sparkquantum.dtqw.state.representationFormat'))
 
         if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
@@ -185,7 +185,7 @@ class PositionGauge(Gauge):
         self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(util.get_conf(
-            self._spark_context, 'quantum.math.roundPrecision'))
+            self._spark_context, 'sparkquantum.math.roundPrecision'))
 
         if round(probability_distribution.sum(), round_precision) != 1.0:
             self._logger.error("Probability distributions must sum one")
@@ -332,7 +332,7 @@ class PositionGauge(Gauge):
 
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
-            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
             if the sum of the calculated probability distribution is not equal to one.
 
         """
@@ -346,7 +346,7 @@ class PositionGauge(Gauge):
         initial_time = datetime.now()
 
         repr_format = int(util.get_conf(self._spark_context,
-                                        'quantum.dtqw.state.representationFormat'))
+                                        'sparkquantum.dtqw.state.representationFormat'))
 
         if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
@@ -441,7 +441,7 @@ class PositionGauge(Gauge):
         self._logger.info("checking if the probabilities sum one...")
 
         round_precision = int(util.get_conf(
-            self._spark_context, 'quantum.math.roundPrecision'))
+            self._spark_context, 'sparkquantum.math.roundPrecision'))
 
         if round(probability_distribution.sum(), round_precision) != 1.0:
             self._logger.error("Probability distributions must sum one")
@@ -480,7 +480,7 @@ class PositionGauge(Gauge):
 
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
-            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
             if the sum of the calculated probability distribution is not equal to one.
 
         """
@@ -514,7 +514,7 @@ class PositionGauge(Gauge):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
             if the sum of the calculated probability distributions is not equal to one.
 
         """

@@ -29,7 +29,7 @@ class CollisionPhaseInteraction(Interaction):
         Raises
         ------
         ValueError
-            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat'
+            If the collision phase or the chosen 'sparkquantum.dtqw.state.representationFormat'
             configuration is not valid.
 
         """
@@ -61,14 +61,14 @@ class CollisionPhaseInteraction(Interaction):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         phase = cmath.exp(self._collision_phase * (0.0 + 1.0j))
         num_particles = self._num_particles
 
         repr_format = int(util.get_conf(self._spark_context,
-                                        'quantum.dtqw.state.representationFormat'))
+                                        'sparkquantum.dtqw.state.representationFormat'))
 
         if self._mesh.dimension == 1:
             ndim = self._mesh.dimension

@@ -92,10 +92,10 @@ class Matrix(Base):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
@@ -103,21 +103,23 @@ class Matrix(Base):
         Raises
         ------
         ValueError
-            If the chosen 'quantum.math.dumpingMode' configuration is not valid.
+            If the chosen 'sparkquantum.math.dumpingMode' configuration is not valid.
 
         """
         if glue is None:
-            glue = util.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = util.get_conf(
+                self._spark_context,
+                'sparkquantum.dumpingGlue')
 
         if codec is None:
             codec = util.get_conf(
                 self._spark_context,
-                'quantum.dumpingCompressionCodec')
+                'sparkquantum.dumpingCompressionCodec')
 
         dumping_mode = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.math.dumpingMode'))
+                'sparkquantum.math.dumpingMode'))
 
         rdd = util.remove_zeros(
             util.change_coordinate(
@@ -391,7 +393,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This method uses the 'quantum.math.roundPrecision' configuration to round the calculated norm.
+        This method uses the 'sparkquantum.math.roundPrecision' configuration to round the calculated norm.
 
         Returns
         -------
@@ -402,7 +404,7 @@ class Matrix(Base):
         round_precision = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.math.roundPrecision'))
+                'sparkquantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 

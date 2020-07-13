@@ -142,7 +142,7 @@ class DiscreteTimeQuantumWalk:
                     log_title, info['memoryUsed'], info['diskUsed']))
 
         if util.get_conf(self._spark_context,
-                         'quantum.dtqw.profiler.logExecutors') == 'True':
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _profile_state(self, profile_title, log_title,
@@ -178,7 +178,7 @@ class DiscreteTimeQuantumWalk:
                 )
 
         if util.get_conf(self._spark_context,
-                         'quantum.dtqw.profiler.logExecutors') == 'True':
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _create_coin_operator(self, storage_level):
@@ -269,7 +269,7 @@ class DiscreteTimeQuantumWalk:
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.walkOperator.kroneckerMode' configuration is not valid.
 
         """
         app_id = self._spark_context.applicationId
@@ -308,7 +308,7 @@ class DiscreteTimeQuantumWalk:
                 num_partitions=num_partitions).persist(storage_level)
 
             if util.get_conf(self._spark_context,
-                             'quantum.dtqw.walkOperator.checkpoint') == 'True':
+                             'sparkquantum.dtqw.walkOperator.checkpoint') == 'True':
                 eo = eo.checkpoint()
 
             self._walk_operators = (eo.materialize(storage_level), )
@@ -325,7 +325,7 @@ class DiscreteTimeQuantumWalk:
             self._walk_operators = []
 
             kron_mode = util.get_conf(
-                self._spark_context, 'quantum.dtqw.walkOperator.kroneckerMode')
+                self._spark_context, 'sparkquantum.dtqw.walkOperator.kroneckerMode')
 
             if kron_mode != util.KroneckerModeBroadcast and kron_mode != util.KroneckerModeDump:
                 self._logger.error("invalid kronecker mode")
@@ -337,7 +337,7 @@ class DiscreteTimeQuantumWalk:
             elif kron_mode == util.KroneckerModeDump:
                 path = util.get_temp_path(
                     util.get_conf(self._spark_context,
-                                  'quantum.dtqw.walkOperator.tempPath')
+                                  'sparkquantum.dtqw.walkOperator.tempPath')
                 )
 
                 evolution_operator.dump(path)
@@ -447,7 +447,7 @@ class DiscreteTimeQuantumWalk:
                 ).partition_by(num_partitions=num_partitions).persist(storage_level)
 
                 if util.get_conf(
-                        self._spark_context, 'quantum.dtqw.walkOperator.checkpoint') == 'True':
+                        self._spark_context, 'sparkquantum.dtqw.walkOperator.checkpoint') == 'True':
                     wo = wo.checkpoint()
 
                 self._walk_operators.append(wo.materialize(storage_level))
@@ -505,21 +505,21 @@ class DiscreteTimeQuantumWalk:
         configs['checkpointing_frequency'] = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.checkpointingFrequency'
+                'sparkquantum.dtqw.walk.checkpointingFrequency'
             )
         )
 
         configs['dumping_frequency'] = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingFrequency'
+                'sparkquantum.dtqw.walk.dumpingFrequency'
             )
         )
 
         if configs['dumping_frequency'] >= 0:
             configs['dumping_path'] = util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingPath'
+                'sparkquantum.dtqw.walk.dumpingPath'
             )
 
             if not configs['dumping_path'].endswith('/'):
@@ -527,18 +527,18 @@ class DiscreteTimeQuantumWalk:
 
         configs['check_unitary'] = util.get_conf(
             self._spark_context,
-            'quantum.dtqw.walk.checkUnitary'
+            'sparkquantum.dtqw.walk.checkUnitary'
         )
 
         configs['dump_states_probability_distributions'] = util.get_conf(
             self._spark_context,
-            'quantum.dtqw.walk.dumpStatesProbabilityDistributions'
+            'sparkquantum.dtqw.walk.dumpStatesProbabilityDistributions'
         )
 
         if configs['dump_states_probability_distributions'] == 'True':
             configs['dumping_path'] = util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingPath'
+                'sparkquantum.dtqw.walk.dumpingPath'
             )
 
             if not configs['dumping_path'].endswith('/'):
@@ -563,11 +563,11 @@ class DiscreteTimeQuantumWalk:
         ------
         ValueError
             If `steps` is not valid or if the collision phase is not valid.
-            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' or 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.walkOperator.kroneckerMode' or 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
             If operators' shapes are incompatible for multiplication.
             If the final state of the system is not unitary. This exception is also raised in cases
-            where the 'quantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
-            the 'quantum.dtqw.walk.dumpStatesProbabilityDistribution' configuration is set to 'True' and the probability distribution of some of the intermediary states does not sum one.
+            where the 'sparkquantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
+            the 'sparkquantum.dtqw.walk.dumpStatesProbabilityDistribution' configuration is set to 'True' and the probability distribution of some of the intermediary states does not sum one.
 
         """
         if steps < 0:

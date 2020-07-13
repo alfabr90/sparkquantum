@@ -71,13 +71,13 @@ class PermanentBrokenLinks(BrokenLinks):
         -------
         :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
             The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken,
-            depending on the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration.
+            depending on the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration.
 
         Raises
         ------
         ValueError
             If `num_edges` is out of the bounds of the number of edges of the mesh or
-            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+            if the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         if isinstance(self._edges, range):
@@ -111,7 +111,7 @@ class PermanentBrokenLinks(BrokenLinks):
 
         generation_mode = util.get_conf(
             self._spark_context,
-            'quantum.dtqw.mesh.brokenLinks.generationMode')
+            'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == util.BrokenLinksGenerationModeRDD:
             return rdd

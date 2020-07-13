@@ -57,12 +57,12 @@ class RandomBrokenLinks(BrokenLinks):
         -------
         :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
             The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken,
-            depending on the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration.
+            depending on the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration.
 
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         probability = self._probability
@@ -77,7 +77,7 @@ class RandomBrokenLinks(BrokenLinks):
 
         generation_mode = util.get_conf(
             self._spark_context,
-            'quantum.dtqw.mesh.brokenLinks.generationMode')
+            'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
         if generation_mode == util.BrokenLinksGenerationModeRDD:
             return rdd

@@ -50,7 +50,7 @@ class Gauge:
             )
 
         if util.get_conf(self._spark_context,
-                         'quantum.dtqw.profiler.logExecutors') == 'True':
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def measure_system(

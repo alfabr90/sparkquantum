@@ -41,7 +41,7 @@ class Coin1D(Coin):
             If `mesh` is not valid.
 
         ValueError
-            If `mesh` is not one-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If `mesh` is not one-dimensional or if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if not is_mesh(mesh):
@@ -71,7 +71,7 @@ class Coin1D(Coin):
         repr_format = int(
             util.get_conf(
                 self._spark_context,
-                'quantum.dtqw.state.representationFormat'))
+                'sparkquantum.dtqw.state.representationFormat'))
 
         if repr_format == util.StateRepresentationFormatCoinPosition:
             # The coin operator is built by applying a tensor product between the chosen coin and

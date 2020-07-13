@@ -80,33 +80,33 @@ a left join is performed, making it not the best mode.
 """
 
 ConfigDefaults = {
-    'quantum.cluster.maxPartitionSize': 64 * 10 ** 6,
-    'quantum.cluster.numPartitionsSafetyFactor': 1.3,
-    'quantum.cluster.totalCores': 1,
-    'quantum.cluster.useSparkDefaultNumPartitions': 'False',
-    'quantum.dtqw.interactionOperator.checkpoint': 'False',
-    'quantum.dtqw.mesh.brokenLinks.generationMode': BrokenLinksGenerationModeBroadcast,
-    'quantum.dtqw.profiler.logExecutors': 'False',
-    'quantum.dtqw.walk.checkpointingFrequency': -1,
-    'quantum.dtqw.walk.checkUnitary': 'False',
-    'quantum.dtqw.walk.dumpingFrequency': -1,
-    'quantum.dtqw.walk.dumpingPath': './',
-    'quantum.dtqw.walk.dumpStatesProbabilityDistributions': 'False',
-    'quantum.dtqw.walkOperator.checkpoint': 'False',
-    'quantum.dtqw.walkOperator.kroneckerMode': KroneckerModeBroadcast,
-    'quantum.dtqw.walkOperator.tempPath': './',
-    'quantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
-    'quantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
-    'quantum.dumpingCompressionCodec': None,
-    'quantum.dumpingGlue': ' ',
-    'quantum.logging.enabled': 'False',
-    'quantum.logging.filename': './log.txt',
-    'quantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
-    'quantum.logging.level': logging.WARNING,
-    'quantum.math.dumpingMode': DumpingModePartFiles,
-    'quantum.math.roundPrecision': 10,
-    'quantum.profiling.enabled': 'False',
-    'quantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
+    'sparkquantum.cluster.maxPartitionSize': 64 * 10 ** 6,
+    'sparkquantum.cluster.numPartitionsSafetyFactor': 1.3,
+    'sparkquantum.cluster.totalCores': 1,
+    'sparkquantum.cluster.useSparkDefaultNumPartitions': 'False',
+    'sparkquantum.dtqw.interactionOperator.checkpoint': 'False',
+    'sparkquantum.dtqw.mesh.brokenLinks.generationMode': BrokenLinksGenerationModeBroadcast,
+    'sparkquantum.dtqw.profiler.logExecutors': 'False',
+    'sparkquantum.dtqw.walk.checkpointingFrequency': -1,
+    'sparkquantum.dtqw.walk.checkUnitary': 'False',
+    'sparkquantum.dtqw.walk.dumpingFrequency': -1,
+    'sparkquantum.dtqw.walk.dumpingPath': './',
+    'sparkquantum.dtqw.walk.dumpStatesProbabilityDistributions': 'False',
+    'sparkquantum.dtqw.walkOperator.checkpoint': 'False',
+    'sparkquantum.dtqw.walkOperator.kroneckerMode': KroneckerModeBroadcast,
+    'sparkquantum.dtqw.walkOperator.tempPath': './',
+    'sparkquantum.dtqw.state.dumpingFormat': StateDumpingFormatIndex,
+    'sparkquantum.dtqw.state.representationFormat': StateRepresentationFormatCoinPosition,
+    'sparkquantum.dumpingCompressionCodec': None,
+    'sparkquantum.dumpingGlue': ' ',
+    'sparkquantum.logging.enabled': 'False',
+    'sparkquantum.logging.filename': './log.txt',
+    'sparkquantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
+    'sparkquantum.logging.level': logging.WARNING,
+    'sparkquantum.math.dumpingMode': DumpingModePartFiles,
+    'sparkquantum.math.roundPrecision': 10,
+    'sparkquantum.profiling.enabled': 'False',
+    'sparkquantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
 }
 """
 Dict with the default values for all accepted configurations of the package.
@@ -366,13 +366,13 @@ def get_num_partitions(spark_context, expected_size):
 
     """
     safety_factor = float(get_conf(
-        spark_context, 'quantum.cluster.numPartitionsSafetyFactor'))
+        spark_context, 'sparkquantum.cluster.numPartitionsSafetyFactor'))
     num_partitions = None
 
     if get_conf(
-            spark_context, 'quantum.cluster.useSparkDefaultNumPartitions') == 'False':
+            spark_context, 'sparkquantum.cluster.useSparkDefaultNumPartitions') == 'False':
         num_cores = get_conf(
-            spark_context, 'quantum.cluster.totalCores')
+            spark_context, 'sparkquantum.cluster.totalCores')
 
         if not num_cores:
             raise ValueError(
@@ -380,7 +380,7 @@ def get_num_partitions(spark_context, expected_size):
 
         num_cores = int(num_cores)
         max_partition_size = int(get_conf(
-            spark_context, 'quantum.cluster.maxPartitionSize'))
+            spark_context, 'sparkquantum.cluster.maxPartitionSize'))
         num_partitions = math.ceil(
             safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 
@@ -515,13 +515,13 @@ def get_logger(
         The name of the class that is providing log data.
     level : int, optional
         The log level. Default value is `None`.
-        In this case, the value of 'quantum.logging.level' configuration parameter is used.
+        In this case, the value of 'sparkquantum.logging.level' configuration parameter is used.
     filename : int, optional
         The file where the messages will be logged. Default value is `None`.
-        In this case, the value of 'quantum.logging.filename' configuration parameter is used.
+        In this case, the value of 'sparkquantum.logging.filename' configuration parameter is used.
     format : str, optional
         The log messages format. Default value is `None`.
-        In this case, the value of 'quantum.logging.format' configuration parameter is used.
+        In this case, the value of 'sparkquantum.logging.format' configuration parameter is used.
 
     Returns
     -------
@@ -532,16 +532,16 @@ def get_logger(
     logger = logging.getLogger(name)
 
     if level is None:
-        level = int(get_conf(sc, 'quantum.logging.level'))
+        level = int(get_conf(sc, 'sparkquantum.logging.level'))
 
     logger.setLevel(level)
 
-    if get_conf(sc, 'quantum.logging.enabled') == 'True':
+    if get_conf(sc, 'sparkquantum.logging.enabled') == 'True':
         if filename is None:
-            filename = get_conf(sc, 'quantum.logging.filename')
+            filename = get_conf(sc, 'sparkquantum.logging.filename')
 
         if format is None:
-            format = get_conf(sc, 'quantum.logging.format')
+            format = get_conf(sc, 'sparkquantum.logging.format')
 
         formatter = logging.Formatter(format)
 

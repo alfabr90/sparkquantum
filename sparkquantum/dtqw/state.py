@@ -113,7 +113,7 @@ class State(Matrix):
 
         Notes
         -----
-        This method checks the dumping format by using the 'quantum.dtqw.state.dumpingFormat' configuration value.
+        This method checks the dumping format by using the 'sparkquantum.dtqw.state.dumpingFormat' configuration value.
         In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
         Depending on the chosen dumping mode, this method calls the :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
@@ -124,16 +124,16 @@ class State(Matrix):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
         dumping_format : int, optional
             Printing format used to dump this state.
-            Default value is None. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.math.dumpingFormat' configuration value.
 
         Raises
         ------
@@ -141,23 +141,25 @@ class State(Matrix):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If any of the chosen 'quantum.dtqw.state.dumpingFormat', 'quantum.math.dumpingMode' or
-            'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If any of the chosen 'sparkquantum.dtqw.state.dumpingFormat', 'sparkquantum.math.dumpingMode' or
+            'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if glue is None:
-            glue = util.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = util.get_conf(
+                self._spark_context,
+                'sparkquantum.dumpingGlue')
 
         if codec is None:
             codec = util.get_conf(self._spark_context,
-                                  'quantum.dumpingCompressionCodec')
+                                  'sparkquantum.dumpingCompressionCodec')
 
         if dumping_format is None:
             dumping_format = int(util.get_conf(
-                self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
+                self._spark_context, 'sparkquantum.dtqw.state.dumpingFormat'))
 
         dumping_mode = int(util.get_conf(
-            self._spark_context, 'quantum.math.dumpingMode'))
+            self._spark_context, 'sparkquantum.math.dumpingMode'))
 
         rdd = util.remove_zeros(
             util.change_coordinate(
@@ -189,7 +191,7 @@ class State(Matrix):
                 raise ValueError("invalid dumping mode")
         elif dumping_format == util.StateDumpingFormatCoordinate:
             repr_format = int(util.get_conf(
-                self._spark_context, 'quantum.dtqw.state.representationFormat'))
+                self._spark_context, 'sparkquantum.dtqw.state.representationFormat'))
 
             if self._mesh.dimension == 1:
                 ndim = self._mesh.dimension
@@ -440,7 +442,7 @@ class State(Matrix):
 
         ValueError
             If the length of `positions` and `amplitudes` are not compatible (or invalid) or
-            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         TypeError
             If `coin` is not a :py:class:`sparkquantum.dtqw.coin.coin.Coin`,
