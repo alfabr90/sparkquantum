@@ -107,7 +107,7 @@ from sparkquantum.dtqw.state import State
 # Initiallizing the SparkContext with some options
 num_cores = 4
 
-sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
+sparkConf = SparkConf().set('sparkquantum.cluster.totalCores', num_cores)
 sparkContext = SparkContext(conf=sparkConf)
 
 # In this example, the walk will last 30 steps
