@@ -2,14 +2,14 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
+from sparkquantum import util
 from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
 from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.utils.utils import Utils
 
 '''
     DTQW 2D - 1 particle
@@ -28,10 +28,10 @@ walk_path = "{}/{}_{}_{}_{}_{}/".format(
     base_path, 'DiagonalLattice', 2 * size + 1, bl_prob, steps, num_particles
 )
 
-Utils.create_dir(walk_path)
+util.create_dir(walk_path)
 
-representationFormat = Utils.StateRepresentationFormatCoinPosition
-# representationFormat = Utils.StateRepresentationFormatPositionCoin
+representationFormat = util.StateRepresentationFormatCoinPosition
+# representationFormat = util.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
