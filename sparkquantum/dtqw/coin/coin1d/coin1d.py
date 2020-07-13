@@ -2,10 +2,10 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.coin.coin import Coin
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Coin1D']
 
@@ -64,23 +64,23 @@ class Coin1D(Coin):
             mesh_size,
             self._data.shape[1] *
             mesh_size)
-        data = Utils.broadcast(self._spark_context, self._data)
+        data = util.broadcast(self._spark_context, self._data)
 
         num_elements = self._size ** 2 * mesh_size
 
         repr_format = int(
-            Utils.get_conf(
+            util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.state.representationFormat'))
 
-        if repr_format == Utils.StateRepresentationFormatCoinPosition:
+        if repr_format == util.StateRepresentationFormatCoinPosition:
             # The coin operator is built by applying a tensor product between the chosen coin and
             # an identity matrix with the dimensions of the chosen mesh.
             def __map(x):
                 for i in range(data.value.shape[0]):
                     for j in range(data.value.shape[1]):
                         yield (i * mesh_size + x, j * mesh_size + x, data.value[i][j])
-        elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+        elif repr_format == util.StateRepresentationFormatPositionCoin:
             # The coin operator is built by applying a tensor product between
             # an identity matrix with the dimensions of the chosen mesh and the
             # chosen coin.

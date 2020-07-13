@@ -3,9 +3,9 @@ import numpy as np
 
 from pyspark import StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.mesh.mesh2d.natural.natural import Natural
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Lattice']
 
@@ -102,19 +102,19 @@ class Lattice(Natural):
         num_elements = shape[0]
 
         repr_format = int(
-            Utils.get_conf(
+            util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(
+            generation_mode = util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
-            if generation_mode == Utils.BrokenLinksGenerationModeRDD:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if generation_mode == util.BrokenLinksGenerationModeRDD:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -145,7 +145,7 @@ class Lattice(Natural):
                                 size_xy + x * size[1] + y
 
                             yield m, n, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -189,8 +189,8 @@ class Lattice(Natural):
                 ).flatMap(
                     __map
                 )
-            elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            elif generation_mode == util.BrokenLinksGenerationModeBroadcast:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -222,7 +222,7 @@ class Lattice(Natural):
                                 size_xy + x * size[1] + y
 
                             yield m, n, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -267,7 +267,7 @@ class Lattice(Natural):
                 self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if repr_format == util.StateRepresentationFormatCoinPosition:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -284,7 +284,7 @@ class Lattice(Natural):
                                 size_xy + x * size[1] + y
 
                             yield m, n, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+            elif repr_format == util.StateRepresentationFormatPositionCoin:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])

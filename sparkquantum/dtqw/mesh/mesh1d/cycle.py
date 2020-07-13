@@ -2,9 +2,9 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.mesh.mesh1d.mesh1d import Mesh1D
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Cycle']
 
@@ -61,19 +61,19 @@ class Cycle(Mesh1D):
         num_elements = shape[0]
 
         repr_format = int(
-            Utils.get_conf(
+            util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(
+            generation_mode = util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.mesh.brokenLinks.generationMode')
 
-            if generation_mode == Utils.BrokenLinksGenerationModeRDD:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if generation_mode == util.BrokenLinksGenerationModeRDD:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -87,7 +87,7 @@ class Cycle(Mesh1D):
                                 l = 0
 
                             yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -114,8 +114,8 @@ class Cycle(Mesh1D):
                 ).flatMap(
                     __map
                 )
-            elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            elif generation_mode == util.BrokenLinksGenerationModeBroadcast:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         for i in range(size_per_coin):
                             l = (-1) ** i
@@ -128,7 +128,7 @@ class Cycle(Mesh1D):
                                 l = 0
 
                             yield (i + l) * size + (x + l) % size, (1 - i) * size + x, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         for i in range(size_per_coin):
                             l = (-1) ** i
@@ -154,12 +154,12 @@ class Cycle(Mesh1D):
                 self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if repr_format == util.StateRepresentationFormatCoinPosition:
                 def __map(x):
                     for i in range(size_per_coin):
                         l = (-1) ** i
                         yield i * size + (x + l) % size, i * size + x, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+            elif repr_format == util.StateRepresentationFormatPositionCoin:
                 def __map(x):
                     for i in range(size_per_coin):
                         l = (-1) ** i

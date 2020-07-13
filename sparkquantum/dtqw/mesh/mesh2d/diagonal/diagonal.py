@@ -1,7 +1,7 @@
 from pyspark import StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.mesh.mesh2d.mesh2d import Mesh2D
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Diagonal']
 

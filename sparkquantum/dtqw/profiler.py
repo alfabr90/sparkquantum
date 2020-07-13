@@ -1,7 +1,7 @@
 from sparkquantum.dtqw.operator import is_operator
 from sparkquantum.dtqw.state import is_state
 from sparkquantum.math.statistics.probability_distribution.probability_distribution import is_probability_distribution
-from sparkquantum.utils.profiler import Profiler
+from sparkquantum.profiler import Profiler
 
 __all__ = ['QuantumWalkProfiler']
 

@@ -1,10 +1,10 @@
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.math.matrix import Matrix
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['State', 'is_state']
 
@@ -13,7 +13,7 @@ class State(Matrix):
     """Class for the system state."""
 
     def __init__(self, rdd, shape, coin, mesh, num_particles, interaction=None,
-                 data_type=complex, coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
+                 data_type=complex, coordinate_format=util.MatrixCoordinateDefault, num_elements=None):
         """Build a state object.
 
         Parameters
@@ -33,7 +33,7 @@ class State(Matrix):
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
         coordinate_format : int, optional
-            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.util.MatrixCoordinateDefault`.
         num_elements : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
@@ -146,49 +146,49 @@ class State(Matrix):
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = util.get_conf(self._spark_context, 'quantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context,
-                                   'quantum.dumpingCompressionCodec')
+            codec = util.get_conf(self._spark_context,
+                                  'quantum.dumpingCompressionCodec')
 
         if dumping_format is None:
-            dumping_format = int(Utils.get_conf(
+            dumping_format = int(util.get_conf(
                 self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
 
-        dumping_mode = int(Utils.get_conf(
+        dumping_mode = int(util.get_conf(
             self._spark_context, 'quantum.math.dumpingMode'))
 
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = util.remove_zeros(
+            util.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                util.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            util.MatrixCoordinateDefault)
 
-        if dumping_format == Utils.StateDumpingFormatIndex:
-            if dumping_mode == Utils.DumpingModeUniqueFile:
+        if dumping_format == util.StateDumpingFormatIndex:
+            if dumping_mode == util.DumpingModeUniqueFile:
                 data = rdd.collect()
 
-                Utils.create_dir(path)
+                util.create_dir(path)
 
                 if not filename:
-                    filename = Utils.get_temp_path(path)
+                    filename = util.get_temp_path(path)
                 else:
-                    filename = Utils.append_slash_dir(path) + filename
+                    filename = util.append_slash_dir(path) + filename
 
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
                             f.write(d + "\n")
-            elif dumping_mode == Utils.DumpingModePartFiles:
+            elif dumping_mode == util.DumpingModePartFiles:
                 rdd.saveAsTextFile(path, codec)
             else:
                 self._logger.error("invalid dumping mode")
                 raise ValueError("invalid dumping mode")
-        elif dumping_format == Utils.StateDumpingFormatCoordinate:
-            repr_format = int(Utils.get_conf(
+        elif dumping_format == util.StateDumpingFormatCoordinate:
+            repr_format = int(util.get_conf(
                 self._spark_context, 'quantum.dtqw.state.representationFormat'))
 
             if self._mesh.dimension == 1:
@@ -201,7 +201,7 @@ class State(Matrix):
 
                 mesh_offset = min(self._mesh.axis())
 
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(m):
                         ix = []
 
@@ -216,7 +216,7 @@ class State(Matrix):
                         ix.append(str(m[2]))
 
                         return glue.join(ix)
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(m):
                         xi = []
 
@@ -247,7 +247,7 @@ class State(Matrix):
                 axis = self._mesh.axis()
                 mesh_offset_x, mesh_offset_y = axis[0][0][0], axis[1][0][0]
 
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                if repr_format == util.StateRepresentationFormatCoinPosition:
                     def __map(m):
                         ijxy = []
 
@@ -266,7 +266,7 @@ class State(Matrix):
                         ijxy.append(str(m[2]))
 
                         return glue.join(ijxy)
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == util.StateRepresentationFormatPositionCoin:
                     def __map(m):
                         xyij = []
 
@@ -292,21 +292,21 @@ class State(Matrix):
                 self._logger.error("mesh dimension not implemented")
                 raise NotImplementedError("mesh dimension not implemented")
 
-            if dumping_mode == Utils.DumpingModeUniqueFile:
+            if dumping_mode == util.DumpingModeUniqueFile:
                 data = rdd.collect()
 
-                Utils.create_dir(path)
+                util.create_dir(path)
 
                 if not filename:
-                    filename = Utils.get_temp_path(path)
+                    filename = util.get_temp_path(path)
                 else:
-                    filename = Utils.append_slash_dir(path) + filename
+                    filename = util.append_slash_dir(path) + filename
 
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
                             f.write(d + "\n")
-            elif dumping_mode == Utils.DumpingModePartFiles:
+            elif dumping_mode == util.DumpingModePartFiles:
                 rdd.map(
                     __map
                 ).saveAsTextFile(path, codec)
@@ -404,7 +404,7 @@ class State(Matrix):
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,
-               data_type=complex, representationFormat=Utils.StateRepresentationFormatCoinPosition):
+               data_type=complex, representationFormat=util.StateRepresentationFormatCoinPosition):
         """Create a system state.
 
         For system states with entangled particles, the state must be created
@@ -426,7 +426,7 @@ class State(Matrix):
             The Python type of all values in this object. Default value is complex.
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
-            Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
+            Default value is :py:const:`sparkquantum.utils.util.StateRepresentationFormatCoinPosition`.
 
         Returns
         -------
@@ -450,7 +450,7 @@ class State(Matrix):
         """
         spark_context = SparkContext.getOrCreate()
 
-        logger = Utils.get_logger(spark_context, State.__name__)
+        logger = util.get_logger(spark_context, State.__name__)
 
         if not is_coin(coin):
             logger.error(
@@ -502,11 +502,11 @@ class State(Matrix):
         for p in range(num_particles):
             num_elements = len(amplitudes[p])
 
-            if representationFormat == Utils.StateRepresentationFormatCoinPosition:
+            if representationFormat == util.StateRepresentationFormatCoinPosition:
                 state = (
                     (a * mesh_size + positions[p], 1, amplitudes[p][a]) for a in range(num_elements)
                 )
-            elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
+            elif representationFormat == util.StateRepresentationFormatPositionCoin:
                 state = (
                     (positions[p] * coin_size + a, 1, amplitudes[p][a]) for a in range(num_elements)
                 )

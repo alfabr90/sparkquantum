@@ -1,6 +1,6 @@
+from sparkquantum import util
 from sparkquantum.dtqw.state import State, is_state
 from sparkquantum.math.matrix import Matrix
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Operator', 'is_operator']
 
@@ -9,7 +9,7 @@ class Operator(Matrix):
     """Class for the operators of quantum walks."""
 
     def __init__(self, rdd, shape, data_type=complex,
-                 coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
+                 coordinate_format=util.MatrixCoordinateDefault, num_elements=None):
         """Build an operator object.
 
         Parameters
@@ -21,7 +21,7 @@ class Operator(Matrix):
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
         coordinate_format : int, optional
-            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.util.MatrixCoordinateDefault`.
         num_elements : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.

@@ -1,6 +1,6 @@
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.utils import Utils
+from sparkquantum import util
 
 __all__ = ['Coin', 'is_coin']
 
@@ -14,7 +14,7 @@ class Coin:
         self._size = None
         self._data = None
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
     @property

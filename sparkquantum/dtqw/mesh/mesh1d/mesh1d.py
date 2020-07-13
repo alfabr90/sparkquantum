@@ -1,7 +1,7 @@
 from pyspark import StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.mesh.mesh import Mesh
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Mesh1D']
 

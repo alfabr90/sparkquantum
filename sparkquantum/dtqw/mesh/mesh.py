@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Mesh', 'is_mesh']
 
@@ -30,7 +30,7 @@ class Mesh:
 
         self._broken_links = broken_links
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
         if broken_links is not None:

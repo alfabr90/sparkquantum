@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.utils.utils import Utils
+from sparkquantum import util
 
 __all__ = ['Interaction', 'is_interaction']
 
@@ -26,7 +26,7 @@ class Interaction:
         self._num_particles = num_particles
         self._mesh = mesh
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
     @property

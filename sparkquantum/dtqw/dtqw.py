@@ -5,10 +5,10 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import util
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.state import State, is_state
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['DiscreteTimeQuantumWalk']
 
@@ -44,7 +44,7 @@ class DiscreteTimeQuantumWalk:
         self._interaction_operator = None
         self._walk_operators = None
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
         self._profiler = QuantumWalkProfiler()
 
@@ -141,8 +141,8 @@ class DiscreteTimeQuantumWalk:
                 "{} is consuming {} bytes in memory and {} bytes in disk".format(
                     log_title, info['memoryUsed'], info['diskUsed']))
 
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
+        if util.get_conf(self._spark_context,
+                         'quantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _profile_state(self, profile_title, log_title,
@@ -177,8 +177,8 @@ class DiscreteTimeQuantumWalk:
                     )
                 )
 
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
+        if util.get_conf(self._spark_context,
+                         'quantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _create_coin_operator(self, storage_level):
@@ -187,12 +187,12 @@ class DiscreteTimeQuantumWalk:
         initial_time = datetime.now()
 
         co = self._coin.create_operator(self._mesh).change_coordinate(
-            Utils.MatrixCoordinateMultiplicand
+            util.MatrixCoordinateMultiplicand
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(co.data_type) * co.num_elements
+            util.get_size_of_type(co.data_type) * co.num_elements
         )
 
         self._coin_operator = co.partition_by(
@@ -210,12 +210,12 @@ class DiscreteTimeQuantumWalk:
         initial_time = datetime.now()
 
         so = self._mesh.create_operator().change_coordinate(
-            Utils.MatrixCoordinateMultiplier
+            util.MatrixCoordinateMultiplier
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(so.data_type) * so.num_elements
+            util.get_size_of_type(so.data_type) * so.num_elements
         )
 
         self._shift_operator = so.partition_by(
@@ -233,12 +233,12 @@ class DiscreteTimeQuantumWalk:
         initial_time = datetime.now()
 
         io = self._interaction.create_operator().change_coordinate(
-            Utils.MatrixCoordinateMultiplier
+            util.MatrixCoordinateMultiplier
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(io.data_type) * io.num_elements
+            util.get_size_of_type(io.data_type) * io.num_elements
         )
 
         self._interaction_operator = io.partition_by(
@@ -296,19 +296,19 @@ class DiscreteTimeQuantumWalk:
 
         if self._num_particles == 1:
             eo = evolution_operator.change_coordinate(
-                Utils.MatrixCoordinateMultiplier
+                util.MatrixCoordinateMultiplier
             )
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(eo.data_type) * eo.num_elements
+                util.get_size_of_type(eo.data_type) * eo.num_elements
             )
 
             eo = eo.partition_by(
                 num_partitions=num_partitions).persist(storage_level)
 
-            if Utils.get_conf(self._spark_context,
-                              'quantum.dtqw.walkOperator.checkpoint') == 'True':
+            if util.get_conf(self._spark_context,
+                             'quantum.dtqw.walkOperator.checkpoint') == 'True':
                 eo = eo.checkpoint()
 
             self._walk_operators = (eo.materialize(storage_level), )
@@ -324,20 +324,20 @@ class DiscreteTimeQuantumWalk:
 
             self._walk_operators = []
 
-            kron_mode = Utils.get_conf(
+            kron_mode = util.get_conf(
                 self._spark_context, 'quantum.dtqw.walkOperator.kroneckerMode')
 
-            if kron_mode != Utils.KroneckerModeBroadcast and kron_mode != Utils.KroneckerModeDump:
+            if kron_mode != util.KroneckerModeBroadcast and kron_mode != util.KroneckerModeDump:
                 self._logger.error("invalid kronecker mode")
                 raise ValueError("invalid kronecker mode")
 
-            if kron_mode == Utils.KroneckerModeBroadcast:
-                eo = Utils.broadcast(self._spark_context,
-                                     evolution_operator.data.collect())
-            elif kron_mode == Utils.KroneckerModeDump:
-                path = Utils.get_temp_path(
-                    Utils.get_conf(self._spark_context,
-                                   'quantum.dtqw.walkOperator.tempPath')
+            if kron_mode == util.KroneckerModeBroadcast:
+                eo = util.broadcast(self._spark_context,
+                                    evolution_operator.data.collect())
+            elif kron_mode == util.KroneckerModeDump:
+                path = util.get_temp_path(
+                    util.get_conf(self._spark_context,
+                                  'quantum.dtqw.walkOperator.tempPath')
                 )
 
                 evolution_operator.dump(path)
@@ -359,11 +359,11 @@ class DiscreteTimeQuantumWalk:
                         shape_tmp[1] ** (self._num_particles - 1 - p)
                     )
 
-                    if kron_mode == Utils.KroneckerModeBroadcast:
+                    if kron_mode == util.KroneckerModeBroadcast:
                         def __map(m):
                             for i in eo.value:
                                 yield i[0] * rdd_shape[0] + m, i[1] * rdd_shape[1] + m, i[2]
-                    elif kron_mode == Utils.KroneckerModeDump:
+                    elif kron_mode == util.KroneckerModeDump:
                         def __map(m):
                             with fileinput.input(files=glob(path + '/part-*')) as f:
                                 for line in f:
@@ -390,11 +390,11 @@ class DiscreteTimeQuantumWalk:
                         shape_tmp[1] ** p
                     )
 
-                    if kron_mode == Utils.KroneckerModeBroadcast:
+                    if kron_mode == util.KroneckerModeBroadcast:
                         def __map(m):
                             for i in eo.value:
                                 yield m * shape_tmp[0] + i[0], m * shape_tmp[1] + i[1], i[2]
-                    elif kron_mode == Utils.KroneckerModeDump:
+                    elif kron_mode == util.KroneckerModeDump:
                         def __map(m):
                             with fileinput.input(files=glob(path + '/part-*')) as f:
                                 for line in f:
@@ -435,18 +435,18 @@ class DiscreteTimeQuantumWalk:
                         shape = (rdd_shape[0] * shape_tmp[0],
                                  rdd_shape[1] * shape_tmp[1])
 
-                num_partitions = Utils.get_num_partitions(
+                num_partitions = util.get_num_partitions(
                     self._spark_context,
-                    Utils.get_size_of_type(evolution_operator.data_type) *
+                    util.get_size_of_type(evolution_operator.data_type) *
                     evolution_operator.num_elements *
                     evolution_operator.shape[0] ** (self._num_particles - 1)
                 )
 
                 wo = Operator(rdd, shape).change_coordinate(
-                    Utils.MatrixCoordinateMultiplier
+                    util.MatrixCoordinateMultiplier
                 ).partition_by(num_partitions=num_partitions).persist(storage_level)
 
-                if Utils.get_conf(
+                if util.get_conf(
                         self._spark_context, 'quantum.dtqw.walkOperator.checkpoint') == 'True':
                     wo = wo.checkpoint()
 
@@ -460,8 +460,8 @@ class DiscreteTimeQuantumWalk:
 
             eo.unpersist()
 
-            if kron_mode == Utils.KroneckerModeDump:
-                Utils.remove_path(path)
+            if kron_mode == util.KroneckerModeDump:
+                util.remove_path(path)
 
     def _destroy_coin_operator(self):
         """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
@@ -503,21 +503,21 @@ class DiscreteTimeQuantumWalk:
         configs = {}
 
         configs['checkpointing_frequency'] = int(
-            Utils.get_conf(
+            util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.walk.checkpointingFrequency'
             )
         )
 
         configs['dumping_frequency'] = int(
-            Utils.get_conf(
+            util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.walk.dumpingFrequency'
             )
         )
 
         if configs['dumping_frequency'] >= 0:
-            configs['dumping_path'] = Utils.get_conf(
+            configs['dumping_path'] = util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.walk.dumpingPath'
             )
@@ -525,18 +525,18 @@ class DiscreteTimeQuantumWalk:
             if not configs['dumping_path'].endswith('/'):
                 configs['dumping_path'] += '/'
 
-        configs['check_unitary'] = Utils.get_conf(
+        configs['check_unitary'] = util.get_conf(
             self._spark_context,
             'quantum.dtqw.walk.checkUnitary'
         )
 
-        configs['dump_states_probability_distributions'] = Utils.get_conf(
+        configs['dump_states_probability_distributions'] = util.get_conf(
             self._spark_context,
             'quantum.dtqw.walk.dumpStatesProbabilityDistributions'
         )
 
         if configs['dump_states_probability_distributions'] == 'True':
-            configs['dumping_path'] = Utils.get_conf(
+            configs['dumping_path'] = util.get_conf(
                 self._spark_context,
                 'quantum.dtqw.walk.dumpingPath'
             )
@@ -615,7 +615,7 @@ class DiscreteTimeQuantumWalk:
             t_tmp = datetime.now()
 
             result_tmp = result.change_coordinate(
-                Utils.MatrixCoordinateMultiplicand
+                util.MatrixCoordinateMultiplicand
             )
 
             if self._num_particles == 1:
@@ -623,21 +623,21 @@ class DiscreteTimeQuantumWalk:
             else:
                 if self._interaction_operator is not None:
                     result_tmp = self._interaction_operator.multiply(result_tmp).change_coordinate(
-                        Utils.MatrixCoordinateMultiplicand
+                        util.MatrixCoordinateMultiplicand
                     )
 
                 for wo in reversed(self._walk_operators):
                     result_tmp = wo.multiply(result_tmp).change_coordinate(
-                        Utils.MatrixCoordinateMultiplicand
+                        util.MatrixCoordinateMultiplicand
                     )
 
                 result_tmp = result_tmp.change_coordinate(
-                    Utils.MatrixCoordinateDefault
+                    util.MatrixCoordinateDefault
                 )
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(
+                util.get_size_of_type(
                     result_tmp.data_type) * result_tmp.num_elements
             )
 
