@@ -34,17 +34,17 @@ representationFormat = util.StateRepresentationFormatCoinPosition
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
-    'quantum.cluster.totalCores', num_cores
+    'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'quantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representationFormat
 ).set(
-    'quantum.logging.enabled', 'True'
+    'sparkquantum.logging.enabled', 'True'
 ).set(
-    'quantum.logging.level', logging.DEBUG
+    'sparkquantum.logging.level', logging.DEBUG
 ).set(
-    'quantum.logging.filename', walk_path + 'log.txt'
+    'sparkquantum.logging.filename', walk_path + 'log.txt'
 ).set(
-    'quantum.profiling.enabled', 'True'
+    'sparkquantum.profiling.enabled', 'True'
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
