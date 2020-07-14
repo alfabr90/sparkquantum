@@ -21,6 +21,22 @@ sparkquantum.base module
    :undoc-members:
    :show-inheritance:
 
+sparkquantum.conf module
+------------------------
+
+.. automodule:: sparkquantum.conf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sparkquantum.constants module
+-----------------------------
+
+.. automodule:: sparkquantum.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 sparkquantum.profiler module
 ----------------------------
 

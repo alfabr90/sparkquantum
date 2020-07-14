@@ -20,6 +20,14 @@ sparkquantum.math.matrix module
    :undoc-members:
    :show-inheritance:
 
+sparkquantum.math.util module
+-----------------------------
+
+.. automodule:: sparkquantum.math.util
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 Module contents
 ---------------
