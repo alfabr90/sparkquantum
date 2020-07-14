@@ -3,7 +3,7 @@ import cmath
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import util
+from sparkquantum import constants, util
 from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
@@ -32,8 +32,8 @@ walk_path = "{}/{}_{}_{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = util.StateRepresentationFormatCoinPosition
-# representationFormat = util.StateRepresentationFormatPositionCoin
+representationFormat = constants.StateRepresentationFormatCoinPosition
+# representationFormat = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
@@ -107,11 +107,11 @@ else:
     # Center of the mesh
     position = mesh.center()
 
-    if representationFormat == util.StateRepresentationFormatCoinPosition:
+    if representationFormat == constants.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
         state = [[(3 * mesh_size + position) * coin_size * mesh_size + (0 * mesh_size + position), 1, 1.0 / math.sqrt(2)],
                  [(0 * mesh_size + position) * coin_size * mesh_size + (3 * mesh_size + position), 1, -1.0 / math.sqrt(2)]]
-    elif representationFormat == util.StateRepresentationFormatPositionCoin:
+    elif representationFormat == constants.StateRepresentationFormatPositionCoin:
         # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|x1,y1>|1,1>|x2,y2>|0,0> - |x1,y1>|0,0>|x2,y2>|1,1>) / sqrt(2)
         state = [[(position * coin_size + 3) * mesh_size * coin_size + (position * coin_size + 0), 1, 1.0 / math.sqrt(2)],
                  [(position * coin_size + 0) * mesh_size * coin_size + (position * coin_size + 3), 1, -1.0 / math.sqrt(2)]]

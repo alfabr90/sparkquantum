@@ -2,7 +2,7 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import util
+from sparkquantum import constants, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
@@ -29,8 +29,8 @@ walk_path = "{}/{}_{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = util.StateRepresentationFormatCoinPosition
-# representationFormat = util.StateRepresentationFormatPositionCoin
+representationFormat = constants.StateRepresentationFormatCoinPosition
+# representationFormat = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(

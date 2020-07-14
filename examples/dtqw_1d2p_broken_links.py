@@ -3,7 +3,7 @@ import cmath
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import util
+from sparkquantum import constants, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
@@ -34,8 +34,8 @@ walk_path = "{}/{}_{}_{}_{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = util.StateRepresentationFormatCoinPosition
-# representationFormat = util.StateRepresentationFormatPositionCoin
+representationFormat = constants.StateRepresentationFormatCoinPosition
+# representationFormat = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
@@ -96,7 +96,7 @@ else:
     # Center of the mesh
     position = mesh.center()
 
-    if representationFormat == util.StateRepresentationFormatCoinPosition:
+    if representationFormat == constants.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
         state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
                  [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, -1.0 / math.sqrt(2)]]
@@ -104,7 +104,7 @@ else:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> + |0>|x1>|1>|x2>) / sqrt(2)
         # state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
         #          [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, 1.0 / math.sqrt(2)]]
-    elif representationFormat == util.StateRepresentationFormatPositionCoin:
+    elif representationFormat == constants.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
         state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1, 1.0 / math.sqrt(2)],
                  [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, 1, -1.0 / math.sqrt(2)]]
