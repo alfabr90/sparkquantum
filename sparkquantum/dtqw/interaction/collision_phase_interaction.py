@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum import util
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.interaction.interaction import Interaction
 from sparkquantum.dtqw.operator import Operator
 
@@ -67,7 +67,7 @@ class CollisionPhaseInteraction(Interaction):
         phase = cmath.exp(self._collision_phase * (0.0 + 1.0j))
         num_particles = self._num_particles
 
-        repr_format = int(util.get_conf(self._spark_context,
+        repr_format = int(conf.get_conf(self._spark_context,
                                         'sparkquantum.dtqw.state.representationFormat'))
 
         if self._mesh.dimension == 1:
@@ -81,7 +81,7 @@ class CollisionPhaseInteraction(Interaction):
 
             num_elements = shape[0]
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
@@ -95,7 +95,7 @@ class CollisionPhaseInteraction(Interaction):
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
@@ -126,7 +126,7 @@ class CollisionPhaseInteraction(Interaction):
 
             num_elements = shape[0]
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
@@ -145,7 +145,7 @@ class CollisionPhaseInteraction(Interaction):
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 

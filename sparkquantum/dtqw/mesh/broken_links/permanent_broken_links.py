@@ -1,6 +1,6 @@
 import random
 
-from sparkquantum import util
+from sparkquantum import conf, util
 from sparkquantum.dtqw.mesh.broken_links.broken_links import BrokenLinks
 
 __all__ = ['PermanentBrokenLinks']
@@ -109,13 +109,13 @@ class PermanentBrokenLinks(BrokenLinks):
             lambda m: (m, True)
         )
 
-        generation_mode = util.get_conf(
+        generation_mode = conf.get_conf(
             self._spark_context,
             'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
-        if generation_mode == util.BrokenLinksGenerationModeRDD:
+        if generation_mode == constants.BrokenLinksGenerationModeRDD:
             return rdd
-        elif generation_mode == util.BrokenLinksGenerationModeBroadcast:
+        elif generation_mode == constants.BrokenLinksGenerationModeBroadcast:
             return util.broadcast(self._spark_context, rdd.collectAsMap())
         else:
             self._logger.error("invalid broken links generation mode")

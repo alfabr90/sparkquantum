@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum import util
+from sparkquantum import conf, util
 from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 
 __all__ = ['Gauge', 'is_gauge']
@@ -21,7 +21,7 @@ class Gauge:
 
     @property
     def profiler(self):
-        """:py:class:`sparkquantum.utils.profiler.Profiler`.
+        """:py:class:`sparkquantum.dtqw.profiler.Profiler`.
 
         To disable profiling, set it to None.
 
@@ -49,7 +49,7 @@ class Gauge:
                 )
             )
 
-        if util.get_conf(self._spark_context,
+        if conf.get_conf(self._spark_context,
                          'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 

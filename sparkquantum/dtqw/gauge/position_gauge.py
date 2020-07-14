@@ -2,12 +2,13 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
-from sparkquantum import util
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.gauge.gauge import Gauge
 from sparkquantum.dtqw.math.statistics.probability_distribution.position_collision_probability_distribution import PositionCollisionProbabilityDistribution
 from sparkquantum.dtqw.math.statistics.probability_distribution.position_joint_probability_distribution import PositionJointProbabilityDistribution
 from sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution import PositionMarginalProbabilityDistribution
 from sparkquantum.dtqw.math.statistics.probability_distribution.position_probability_distribution import is_position_probability_distribution
+from sparkquantum.math import util as mathutil
 
 __all__ = ['PositionGauge']
 
@@ -49,7 +50,7 @@ class PositionGauge(Gauge):
 
         initial_time = datetime.now()
 
-        repr_format = int(util.get_conf(self._spark_context,
+        repr_format = int(conf.get_conf(self._spark_context,
                                         'sparkquantum.dtqw.state.representationFormat'))
 
         if state.mesh.dimension == 1:
@@ -68,7 +69,7 @@ class PositionGauge(Gauge):
 
             shape = tuple(dims)
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
@@ -77,7 +78,7 @@ class PositionGauge(Gauge):
                             int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
 
                     return tuple(x), (abs(m[2]) ** 2).real
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
@@ -118,7 +119,7 @@ class PositionGauge(Gauge):
 
             shape = tuple(dims)
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
@@ -129,7 +130,7 @@ class PositionGauge(Gauge):
                             int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
 
                     return tuple(xy), (abs(m[2]) ** 2).real
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 
@@ -162,13 +163,13 @@ class PositionGauge(Gauge):
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
-        rdd = util.change_coordinate(
-            util.remove_zeros(
+        rdd = mathutil.change_coordinate(
+            mathutil.remove_zeros(
                 state.data,
                 state.data_type,
                 state.coordinate_format),
             state.coordinate_format,
-            util.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
             __map
@@ -184,7 +185,7 @@ class PositionGauge(Gauge):
 
         self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(util.get_conf(
+        round_precision = int(conf.get_conf(
             self._spark_context, 'sparkquantum.math.roundPrecision'))
 
         if round(probability_distribution.sum(), round_precision) != 1.0:
@@ -345,7 +346,7 @@ class PositionGauge(Gauge):
 
         initial_time = datetime.now()
 
-        repr_format = int(util.get_conf(self._spark_context,
+        repr_format = int(conf.get_conf(self._spark_context,
                                         'sparkquantum.dtqw.state.representationFormat'))
 
         if state.mesh.dimension == 1:
@@ -358,12 +359,12 @@ class PositionGauge(Gauge):
             cs_size = size_per_coin * size
             shape = (size, 1)
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = int(
                         m[0] / (cs_size ** (num_particles - 1 - particle))) % size
                     return x, (abs(m[2]) ** 2).real
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = int(m[0] / (cs_size ** (num_particles -
                                                 1 - particle) * size_per_coin)) % size
@@ -386,7 +387,7 @@ class PositionGauge(Gauge):
             cs_size_xy = cs_size_x * cs_size_y
             shape = (size_x, size_y)
 
-            if repr_format == util.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = (
                         int(m[0] / (cs_size_xy ** (num_particles -
@@ -395,7 +396,7 @@ class PositionGauge(Gauge):
                                     (num_particles - 1 - particle))) % size_y
                     )
                     return xy, (abs(m[2]) ** 2).real
-            elif repr_format == util.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = (
                         int(m[0] / (cs_size_xy ** (num_particles - 1 -
@@ -418,13 +419,13 @@ class PositionGauge(Gauge):
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
-        rdd = util.change_coordinate(
-            util.remove_zeros(
+        rdd = mathutil.change_coordinate(
+            mathutil.remove_zeros(
                 state.data,
                 state.data_type,
                 state.coordinate_format),
             state.coordinate_format,
-            util.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
             __map
@@ -440,7 +441,7 @@ class PositionGauge(Gauge):
 
         self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(util.get_conf(
+        round_precision = int(conf.get_conf(
             self._spark_context, 'sparkquantum.math.roundPrecision'))
 
         if round(probability_distribution.sum(), round_precision) != 1.0:

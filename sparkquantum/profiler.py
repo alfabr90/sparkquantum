@@ -5,7 +5,7 @@ from urllib import error, request
 
 from pyspark import SparkContext
 
-from sparkquantum import util
+from sparkquantum import conf, util
 
 __all__ = ['Profiler']
 
@@ -82,11 +82,11 @@ class Profiler:
             self._base_url)
 
     def _is_enabled(self):
-        return util.get_conf(self._spark_context,
+        return conf.get_conf(self._spark_context,
                              'sparkquantum.profiling.enabled') == 'True'
 
     def _get_baseurl(self):
-        return util.get_conf(self._spark_context,
+        return conf.get_conf(self._spark_context,
                              'sparkquantum.profiling.baseUrl')
 
     def _start(self):
