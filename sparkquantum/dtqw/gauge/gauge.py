@@ -21,11 +21,7 @@ class Gauge:
 
     @property
     def profiler(self):
-        """:py:class:`sparkquantum.dtqw.profiler.Profiler`.
-
-        To disable profiling, set it to None.
-
-        """
+        """:py:class:`sparkquantum.dtqw.profiler.Profiler`."""
         return self._profiler
 
     def _profile_probability_distribution(
