@@ -62,11 +62,7 @@ where `c` is the coin state and `p` is the position state.
 Thus, the initial state can be built using the static `State.create` method with all the previous data:
 
 ```python
-initial_state = State.create(
-                coin,
-                mesh,
-                positions,
-                amplitudes)
+initial_state = State.create(coin, mesh, positions, amplitudes)
 ```
 
 To perform the walk, the user must instantiate a `DiscreteTimeQuantumWalk` object with the recently built quantum state:
