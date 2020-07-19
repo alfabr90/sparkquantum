@@ -154,7 +154,7 @@ class Matrix(Base):
             self._logger.error("invalid dumping mode")
             raise ValueError("invalid dumping mode")
 
-    def numpy_array(self):
+    def ndarray(self):
         """Create a numpy array containing this object's RDD data.
 
         Notes

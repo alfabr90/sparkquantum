@@ -4,11 +4,8 @@ from pyspark import StorageLevel
 
 from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.gauge.gauge import Gauge
-from sparkquantum.dtqw.math.statistics.probability_distribution.position_collision_probability_distribution import PositionCollisionProbabilityDistribution
-from sparkquantum.dtqw.math.statistics.probability_distribution.position_joint_probability_distribution import PositionJointProbabilityDistribution
-from sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution import PositionMarginalProbabilityDistribution
-from sparkquantum.dtqw.math.statistics.probability_distribution.position_probability_distribution import is_position_probability_distribution
 from sparkquantum.math import util as mathutil
+from sparkquantum.math.distribution import ProbabilityDistribution, RandomVariable, is_probability_distribution
 
 __all__ = ['PositionGauge']
 
@@ -20,8 +17,8 @@ class PositionGauge(Gauge):
         """Build a top-level system state's positions measurement (gauge) object."""
         super().__init__()
 
-    def measure_system(
-            self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
+    def measure_system(self, state,
+                       storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform the measurement of the entire system state.
 
         Parameters
@@ -33,7 +30,7 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_join_probability_distribution.PositionJointProbabilityDistribution`
+        :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution`
             The probability distribution regarding the possible positions of all particles of the quantum system state.
 
         Raises
@@ -62,10 +59,14 @@ class PositionGauge(Gauge):
             expected_elements = size
             size_per_coin = int(coin_size / ndim)
             cs_size = size_per_coin * size
-            dims = [size for p in range(ind)]
 
             if state.num_particles == 1:
-                dims.append(1)
+                dims = [size, 1]
+                random_variables = [RandomVariable('Position')]
+            else:
+                dims = [size for p in range(ind)]
+                random_variables = [RandomVariable('Particle {}\'s Position'.format(p + 1))
+                                    for p in range(ind)]
 
             shape = tuple(dims)
 
@@ -116,6 +117,20 @@ class PositionGauge(Gauge):
             for p in range(0, ind, ndim):
                 dims.append(state.mesh.size[0])
                 dims.append(state.mesh.size[1])
+
+            if state.num_particles == 1:
+                random_variables = (
+                    RandomVariable('Position x'),
+                    RandomVariable('Position y')
+                )
+            else:
+                random_variables = []
+
+                for p in range(0, ind, ndim):
+                    random_variables.append(RandomVariable(
+                        'Particle {}\'s Position x'.format(p + 1)))
+                    random_variables.append(RandomVariable(
+                        'Particle {}\'s Position y'.format(p + 1)))
 
             shape = tuple(dims)
 
@@ -179,8 +194,8 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        probability_distribution = PositionJointProbabilityDistribution(
-            rdd, shape, ndim * num_particles, state, num_elements=expected_elements
+        probability_distribution = ProbabilityDistribution(
+            rdd, shape, random_variables, num_elements=expected_elements
         ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
@@ -209,14 +224,14 @@ class PositionGauge(Gauge):
         ----------
         state : :py:class:`sparkquantum.dtqw.state.State`
             A system state.
-        system_measurement : :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_joint_probability_distribution.PositionJointProbabilityDistribution`
+        system_measurement : :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution`
             The measurement of all possible positions of the entire system.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_collision_probability_distribution.PositionCollisionProbabilityDistribution`
+        :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution`
             The probability distribution regarding the possible positions of all particles
             of the quantum system state when all particles are located at the same site.
 
@@ -240,8 +255,7 @@ class PositionGauge(Gauge):
 
         initial_time = datetime.now()
 
-        if not isinstance(system_measurement,
-                          PositionJointProbabilityDistribution):
+        if not isinstance(system_measurement, ProbabilityDistribution):
             self._logger.error(
                 "'PositionJointProbabilityDistribution' instance expected, not '{}'".format(type(system_measurement)))
             raise TypeError("'PositionJointProbabilityDistribution' instance expected, not '{}'".format(
@@ -254,6 +268,8 @@ class PositionGauge(Gauge):
             ind = ndim * num_particles
             expected_elements = size
             shape = (size, 1)
+
+            random_variables = [RandomVariable('Position')]
 
             def __filter(m):
                 for p in range(num_particles):
@@ -270,6 +286,9 @@ class PositionGauge(Gauge):
             ind = ndim * num_particles
             expected_elements = size_x * size_y
             shape = (size_x, size_y)
+
+            random_variables = [RandomVariable('Position x'),
+                                RandomVariable('Position y')]
 
             def __filter(m):
                 for p in range(0, ind, ndim):
@@ -295,8 +314,18 @@ class PositionGauge(Gauge):
             num_partitions
         )
 
-        probability_distribution = PositionCollisionProbabilityDistribution(
-            rdd, shape, ndim * num_particles, state, num_elements=expected_elements
+        probability_distribution = ProbabilityDistribution(
+            rdd, shape, random_variables, num_elements=expected_elements
+        )
+
+        norm = probability_distribution.norm()
+
+        rdd.map(
+            lambda m: m[-1] / norm
+        )
+
+        probability_distribution = ProbabilityDistribution(
+            rdd, shape, random_variables, num_elements=expected_elements
         ).materialize(storage_level)
 
         self._profile_probability_distribution(
@@ -322,7 +351,7 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution`
+        :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution`
             The probability distribution regarding the possible positions
             of a desired particle of the quantum system state.
 
@@ -359,6 +388,8 @@ class PositionGauge(Gauge):
             cs_size = size_per_coin * size
             shape = (size, 1)
 
+            random_variables = [RandomVariable('Position')]
+
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = int(
@@ -386,6 +417,9 @@ class PositionGauge(Gauge):
             cs_size_y = size_per_coin * size_y
             cs_size_xy = cs_size_x * cs_size_y
             shape = (size_x, size_y)
+
+            random_variables = [RandomVariable('Position x'),
+                                RandomVariable('Position y')]
 
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
@@ -435,8 +469,8 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        probability_distribution = PositionMarginalProbabilityDistribution(
-            rdd, shape, state, num_elements=expected_elements
+        probability_distribution = ProbabilityDistribution(
+            rdd, shape, random_variables, num_elements=expected_elements
         ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
@@ -505,9 +539,8 @@ class PositionGauge(Gauge):
 
         Returns
         -------
-        :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution` or tuple
-            :py:class:`sparkquantum.dtqw.math.statistics.probability_distribution.position_marginal_probability_distribution.PositionMarginalProbabilityDistribution`
-            if the system is composed by only one particle, tuple otherwise.
+        :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution` or tuple :py:class:`sparkquantum.dtqw.math.distribution.ProbabilityDistribution`
+            If the system is composed by only one particle, tuple otherwise.
 
         Raises
         ------
