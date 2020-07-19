@@ -4,7 +4,7 @@ from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
-from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
+from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.profiler import QuantumWalkProfiler
