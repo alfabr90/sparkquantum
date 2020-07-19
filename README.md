@@ -103,7 +103,7 @@ from pyspark import SparkContext, SparkConf
 from sparkquantum import plot, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
+from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.state import State
 
