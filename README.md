@@ -87,7 +87,10 @@ Finally, the user can measure the final quantum state, obtaining the probability
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot('./joint_1d1p')
+
+plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
+          labels=['Position', 'Probability'])
+
 ```
 
 Below, the complete Python script of the previous example with some Spark related commands:
@@ -97,7 +100,7 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import util
+from sparkquantum import plot, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
@@ -134,11 +137,7 @@ amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)]]
 
 # Building the initial state
-initial_state = State.create(
-                coin,
-                mesh,
-                positions,
-                amplitudes)
+initial_state = State.create(coin, mesh, positions, amplitudes)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)
@@ -150,7 +149,9 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot('./joint_1d1p')
+
+plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
+          labels=['Position', 'Probability'])
 
 # Destroying the RDD and stopping the SparkContext
 joint.destroy()
