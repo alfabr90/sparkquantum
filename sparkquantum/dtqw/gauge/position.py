@@ -65,7 +65,7 @@ class PositionGauge(Gauge):
                 random_variables = [RandomVariable('Position')]
             else:
                 dims = [size for p in range(ind)]
-                random_variables = [RandomVariable('Particle {}\'s Position'.format(p + 1))
+                random_variables = [RandomVariable("Particle {}'s Position".format(p + 1))
                                     for p in range(ind)]
 
             shape = tuple(dims)
@@ -119,18 +119,16 @@ class PositionGauge(Gauge):
                 dims.append(state.mesh.size[1])
 
             if state.num_particles == 1:
-                random_variables = (
-                    RandomVariable('Position x'),
-                    RandomVariable('Position y')
-                )
+                random_variables = [RandomVariable('Position x'),
+                                    RandomVariable('Position y')]
             else:
                 random_variables = []
 
                 for p in range(0, ind, ndim):
                     random_variables.append(RandomVariable(
-                        'Particle {}\'s Position x'.format(p + 1)))
+                        "Particle {}'s Position x".format(p + 1)))
                     random_variables.append(RandomVariable(
-                        'Particle {}\'s Position y'.format(p + 1)))
+                        "Particle {}'s Position y".format(p + 1)))
 
             shape = tuple(dims)
 
