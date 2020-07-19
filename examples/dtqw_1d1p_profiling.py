@@ -3,7 +3,7 @@ import logging
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import constants, util
+from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
@@ -87,7 +87,12 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot(walk_path + 'joint_1d1p', dpi=300)
+
+axis = mesh.axis()
+data = joint.ndarray()
+labels = [v.name for v in joint.variables] + ['Probability']
+
+plot.line(axis, data, walk_path + 'joint_1d1p', labels=labels, dpi=300)
 
 # Exporting the profiling data
 dtqw.profiler.export(walk_path)

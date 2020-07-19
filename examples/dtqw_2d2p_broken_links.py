@@ -3,7 +3,7 @@ import cmath
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import constants, util
+from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase_interaction import CollisionPhaseInteraction
@@ -142,13 +142,23 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint, collision, marginal = gauge.measure(final_state)
-collision.plot(walk_path + 'collision_2d2p', dpi=300)
-collision.plot_contour(walk_path + 'collision_2d2p_contour', dpi=300)
+
+axis = mesh.axis()
+data = collision.ndarray()
+labels = [v.name for v in collision.variables] + ['Probability']
+
+plot.surface(axis, data, walk_path + 'collision_2d2p', labels=labels, dpi=300)
+plot.contour(axis, data, walk_path + 'collision_2d2p_contour',
+             labels=labels, dpi=300)
+
 for p in range(len(marginal)):
-    marginal[p].plot('{}marginal{}_2d2p'.format(walk_path, p + 1), dpi=300)
-    marginal[p].plot_contour(
-        '{}marginal{}_2d2p_contour'.format(
-            walk_path, p + 1), dpi=300)
+    data = marginal[p].ndarray()
+    labels = [v.name for v in marginal[p].variables] + ['Probability']
+
+    plot.surface(axis, data, '{}marginal{}_2d2p'.format(walk_path, p + 1),
+                 labels=labels, dpi=300)
+    plot.contour(axis, data, '{}marginal{}_2d2p_contour'.format(walk_path, p + 1),
+                 labels=labels, dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()
