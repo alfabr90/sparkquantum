@@ -12,10 +12,10 @@ sparkquantum.dtqw.gauge.gauge module
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.dtqw.gauge.position\_gauge module
-----------------------------------------------
+sparkquantum.dtqw.gauge.position module
+---------------------------------------
 
-.. automodule:: sparkquantum.dtqw.gauge.position_gauge
+.. automodule:: sparkquantum.dtqw.gauge.position
    :members:
    :undoc-members:
    :show-inheritance:
