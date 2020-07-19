@@ -37,6 +37,14 @@ sparkquantum.constants module
    :undoc-members:
    :show-inheritance:
 
+sparkquantum.plot module
+------------------------
+
+.. automodule:: sparkquantum.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 sparkquantum.profiler module
 ----------------------------
 

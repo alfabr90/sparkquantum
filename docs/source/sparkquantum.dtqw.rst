@@ -10,7 +10,6 @@ Subpackages
    sparkquantum.dtqw.coin
    sparkquantum.dtqw.gauge
    sparkquantum.dtqw.interaction
-   sparkquantum.dtqw.math
    sparkquantum.dtqw.mesh
 
 Submodules
