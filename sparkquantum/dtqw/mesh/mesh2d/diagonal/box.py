@@ -2,9 +2,9 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.diagonal import Diagonal
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Box']
 
@@ -48,8 +48,8 @@ class Box(Diagonal):
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid or
-            if the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         coin_size = self._coin_size
@@ -63,19 +63,19 @@ class Box(Diagonal):
         num_elements = shape[0]
 
         repr_format = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.state.representationFormat'))
+                'sparkquantum.dtqw.state.representationFormat'))
 
         if self._broken_links:
             broken_links = self._broken_links.generate(num_edges)
 
-            generation_mode = Utils.get_conf(
+            generation_mode = conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.mesh.brokenLinks.generationMode')
+                'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
-            if generation_mode == Utils.BrokenLinksGenerationModeRDD:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if generation_mode == constants.BrokenLinksGenerationModeRDD:
+                if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -105,7 +105,7 @@ class Box(Diagonal):
                                     size_xy + x * size[1] + y
 
                                 yield m, n, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == constants.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
                         for i in range(size_per_coin):
@@ -148,8 +148,8 @@ class Box(Diagonal):
                 ).flatMap(
                     __map
                 )
-            elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            elif generation_mode == constants.BrokenLinksGenerationModeBroadcast:
+                if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         for i in range(size_per_coin):
                             l1 = (-1) ** i
@@ -178,7 +178,7 @@ class Box(Diagonal):
                                     size_xy + x * size[1] + y
 
                                 yield m, n, 1
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == constants.StateRepresentationFormatPositionCoin:
                     def __map(e):
                         for i in range(size_per_coin):
                             l1 = (-1) ** i
@@ -220,7 +220,7 @@ class Box(Diagonal):
                 self._logger.error("invalid broken links generation mode")
                 raise ValueError("invalid broken links generation mode")
         else:
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])
@@ -244,7 +244,7 @@ class Box(Diagonal):
                                 size_xy + x * size[1] + y
 
                             yield m, n, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(xy):
                     x = xy % size[0]
                     y = int(xy / size[0])

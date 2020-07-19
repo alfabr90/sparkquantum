@@ -87,7 +87,10 @@ Finally, the user can measure the final quantum state, obtaining the probability
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot('./joint_1d1p')
+
+plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
+          labels=['Position', 'Probability'])
+
 ```
 
 Below, the complete Python script of the previous example with some Spark related commands:
@@ -97,17 +100,17 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
+from sparkquantum import plot, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
+from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.state import State
-from sparkquantum.utils.utils import Utils
 
 # Initiallizing the SparkContext with some options
 num_cores = 4
 
-sparkConf = SparkConf().set('quantum.cluster.totalCores', num_cores)
+sparkConf = SparkConf().set('sparkquantum.cluster.totalCores', num_cores)
 sparkContext = SparkContext(conf=sparkConf)
 
 # In this example, the walk will last 30 steps
@@ -134,11 +137,7 @@ amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
                (0.0 - 1.0j) / math.sqrt(2)]]
 
 # Building the initial state
-initial_state = State.create(
-                coin,
-                mesh,
-                positions,
-                amplitudes)
+initial_state = State.create(coin, mesh, positions, amplitudes)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)
@@ -150,7 +149,9 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot('./joint_1d1p')
+
+plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
+          labels=['Position', 'Probability'])
 
 # Destroying the RDD and stopping the SparkContext
 joint.destroy()
@@ -279,32 +280,32 @@ TODO: explain how the user can implement custom coins, meshes and custom mesh pe
 
 Below, there is a list of the current configuration parameters that the user can define accodingly to his/her needs. The values must be set through `SparkConf` key-value pairs:
 
-| Property Name                                        |                     Default                      | Meaning                                                                                                                                                          |
-| :--------------------------------------------------- | :----------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| quantum.cluster.maxPartitionSize                     |                       64MB                       | Maximum partition size of each RDD produced by the application. Only integers are accepted.                                                                      |
-| quantum.cluster.numPartitionsSafetyFactor            |                       1.3                        | A safety factor when calculating the best possible number of partitions of each RDD produced by the application.                                                 |
-| quantum.cluster.totalCores                           |                        1                         | Total number of cores used by the application. Necessary to calculate the best possible number of partitions of each RDD produced by the application             |
-| quantum.cluster.useSparkDefaultNumPartitions         |                      False                       | Whether to use the default number of partitions defined by Spark when partitioning the RDD produced by the application.                                          |
-| quantum.dtqw.interactionOperator.checkpoint          |                      False                       | Whether to checkpoint the interaction operator. Considered only on interacting multiparticle walks.                                                              |
-| quantum.dtqw.mesh.brokenLinks.generationMode         |    `Utils.BrokenLinksGenerationModeBroadcast`    | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken.                      |
-| quantum.dtqw.profiler.logExecutors                   |                      False                       | Whether to log executors' data if a profiler was provided.                                                                                                       |
-| quantum.dtqw.state.dumpingFormat                     |         `Utils.StateDumpingFormatIndex`          | Whether the system state has each of its elements dumped as vector indexes followed by their values or as mesh/cartesian coordinates followed by their values.   |
-| quantum.dtqw.state.representationFormat              |  `Utils.StateRepresentationFormatCoinPosition`   | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces.                     |
-| quantum.dtqw.walk.checkpointingFrequency             |                        -1                        | The frequency to checkpoint the states. A state will be checkpointed at every _n_ steps. When -1, it never checkpoints the state.                                |
-| quantum.dtqw.walk.checkUnitary                       |                      False                       | Whether to check if each state is unitary.                                                                                                                       |
-| quantum.dtqw.walk.dumpingFrequency                   |                        -1                        | The frequency of dumping the states to disk. A state will be dumped at every _n_ steps. When -1, it never dumps the state.                                       |
-| quantum.dtqw.walk.dumpingPath                        |                       "./"                       | The directory to save the dumps.                                                                                                                                 |
-| quantum.dtqw.walk.dumpStatesProbabilityDistributions |                      False                       | Whether to dump to disk the probability distribution of each state.                                                                                              |
-| quantum.dtqw.walkOperator.checkpoint                 |                      False                       | Whether to checkpoint the walk operator(s).                                                                                                                      |
-| quantum.dtqw.walkOperator.kroneckerMode              |          `Utils.KroneckerModeBroadcast`          | The kronecker product mode to build the walk operator(s). For now, can be as a broadcast variable or a RDD.                                                      |
-| quantum.dtqw.walkOperator.tempPath                   |                       "./"                       | The temporary directory to save the walk operators' dump. Considered only when the kronecker mode is `Utils.KroneckerModeDump`.                                  |
-| quantum.dumpingCompressionCodec                      |                       None                       | Compression codec class used by Spark when dumping each RDD's data disk.                                                                                         |
-| quantum.dumpingGlue                                  |                       " "                        | A string to connect the coordinates of each RDD's element when dumping its data.                                                                                 |
-| quantum.logging.enabled                              |                      False                       | Whether the application must use [Python's logging facility](https://docs.python.org/3/library/logging.html).                                                    |
-| quantum.logging.filename                             |                   './log.txt'                    | The filename (with relative or absolute path) where all log data will be written by Python's logging facility.                                                   |
-| quantum.logging.format                               | '%(levelname)s:%(name)s:%(asctime)s:%(message)s' | Python's logging.Formatter acceptable format which each log record will be at.                                                                                   |
-| quantum.logging.level                                |                `logging.WARNING`                 | Python's logging facility acceptable severity level.                                                                                                             |
-| quantum.math.dumpingMode                             |           `Utils.DumpingModePartFiles`           | Whether the mathematical entity's (Matrix, Vector, Operator, State, etc.) RDD has its data dumped to disk in a single file or in multiple part-\* files in disk. |
-| quantum.math.roundPrecision                          |                        10                        | Decimal precision when rounding numbers.                                                                                                                         |
-| quantum.profiling.enabled                            |                      False                       | Whether the application must profile all created RDD to get their metrics.                                                                                       |
-| quantum.profiling.baseUrl                            |         'http://localhost:4040/api/v1/'          | The [Spark Rest API](http://spark.apache.org/docs/latest/monitoring.html#rest-api) base URL that the application's profiler must use to get some metrics.        |
+| Property Name                                        |                      Default                      | Meaning                                                                                                                                                          |
+| :--------------------------------------------------- | :-----------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| quantum.cluster.maxPartitionSize                     |                       64MB                        | Maximum partition size of each RDD produced by the application. Only integers are accepted.                                                                      |
+| quantum.cluster.numPartitionsSafetyFactor            |                        1.3                        | A safety factor when calculating the best possible number of partitions of each RDD produced by the application.                                                 |
+| quantum.cluster.totalCores                           |                         1                         | Total number of cores used by the application. Necessary to calculate the best possible number of partitions of each RDD produced by the application             |
+| quantum.cluster.useSparkDefaultNumPartitions         |                       False                       | Whether to use the default number of partitions defined by Spark when partitioning the RDD produced by the application.                                          |
+| quantum.dtqw.interactionOperator.checkpoint          |                       False                       | Whether to checkpoint the interaction operator. Considered only on interacting multiparticle walks.                                                              |
+| quantum.dtqw.mesh.brokenLinks.generationMode         |  `constants.BrokenLinksGenerationModeBroadcast`   | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken.                      |
+| quantum.dtqw.profiler.logExecutors                   |                       False                       | Whether to log executors' data if a profiler was provided.                                                                                                       |
+| quantum.dtqw.state.dumpingFormat                     |        `constants.StateDumpingFormatIndex`        | Whether the system state has each of its elements dumped as vector indexes followed by their values or as mesh/cartesian coordinates followed by their values.   |
+| quantum.dtqw.state.representationFormat              | `constants.StateRepresentationFormatCoinPosition` | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces.                     |
+| quantum.dtqw.walk.checkpointingFrequency             |                        -1                         | The frequency to checkpoint the states. A state will be checkpointed at every _n_ steps. When -1, it never checkpoints the state.                                |
+| quantum.dtqw.walk.checkUnitary                       |                       False                       | Whether to check if each state is unitary.                                                                                                                       |
+| quantum.dtqw.walk.dumpingFrequency                   |                        -1                         | The frequency of dumping the states to disk. A state will be dumped at every _n_ steps. When -1, it never dumps the state.                                       |
+| quantum.dtqw.walk.dumpingPath                        |                       "./"                        | The directory to save the dumps.                                                                                                                                 |
+| quantum.dtqw.walk.dumpStatesProbabilityDistributions |                       False                       | Whether to dump to disk the probability distribution of each state.                                                                                              |
+| quantum.dtqw.walkOperator.checkpoint                 |                       False                       | Whether to checkpoint the walk operator(s).                                                                                                                      |
+| quantum.dtqw.walkOperator.kroneckerMode              |        `constants.KroneckerModeBroadcast`         | The kronecker product mode to build the walk operator(s). For now, can be as a broadcast variable or a RDD.                                                      |
+| quantum.dtqw.walkOperator.tempPath                   |                       "./"                        | The temporary directory to save the walk operators' dump. Considered only when the kronecker mode is `constants.KroneckerModeDump`.                              |
+| quantum.dumpingCompressionCodec                      |                       None                        | Compression codec class used by Spark when dumping each RDD's data disk.                                                                                         |
+| quantum.dumpingGlue                                  |                        " "                        | A string to connect the coordinates of each RDD's element when dumping its data.                                                                                 |
+| quantum.logging.enabled                              |                       False                       | Whether the application must use [Python's logging facility](https://docs.python.org/3/library/logging.html).                                                    |
+| quantum.logging.filename                             |                    './log.txt'                    | The filename (with relative or absolute path) where all log data will be written by Python's logging facility.                                                   |
+| quantum.logging.format                               | '%(levelname)s:%(name)s:%(asctime)s:%(message)s'  | Python's logging.Formatter acceptable format which each log record will be at.                                                                                   |
+| quantum.logging.level                                |                 `logging.WARNING`                 | Python's logging facility acceptable severity level.                                                                                                             |
+| quantum.math.dumpingMode                             |         `constants.DumpingModePartFiles`          | Whether the mathematical entity's (Matrix, Vector, Operator, State, etc.) RDD has its data dumped to disk in a single file or in multiple part-\* files in disk. |
+| quantum.math.roundPrecision                          |                        10                         | Decimal precision when rounding numbers.                                                                                                                         |
+| quantum.profiling.enabled                            |                       False                       | Whether the application must profile all created RDD to get their metrics.                                                                                       |
+| quantum.profiling.baseUrl                            |          'http://localhost:4040/api/v1/'          | The [Spark Rest API](http://spark.apache.org/docs/latest/monitoring.html#rest-api) base URL that the application's profiler must use to get some metrics.        |

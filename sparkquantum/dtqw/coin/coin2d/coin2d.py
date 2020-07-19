@@ -2,10 +2,10 @@ from datetime import datetime
 
 from pyspark import StorageLevel
 
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.coin.coin import Coin
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['Coin2D']
 
@@ -41,7 +41,7 @@ class Coin2D(Coin):
             If `mesh` is not valid.
 
         ValueError
-            If `mesh` is not two-dimensional or if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If `mesh` is not two-dimensional or if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if not is_mesh(mesh):
@@ -64,16 +64,16 @@ class Coin2D(Coin):
             mesh_size,
             self._data.shape[1] *
             mesh_size)
-        data = Utils.broadcast(self._spark_context, self._data)
+        data = util.broadcast(self._spark_context, self._data)
 
         num_elements = self._size ** 2 * mesh_size
 
         repr_format = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.state.representationFormat'))
+                'sparkquantum.dtqw.state.representationFormat'))
 
-        if repr_format == Utils.StateRepresentationFormatCoinPosition:
+        if repr_format == constants.StateRepresentationFormatCoinPosition:
             # The coin operator is built by applying a tensor product between
             # the chosen coin and an identity matrix with the dimensions of
             # the chosen mesh.
@@ -81,7 +81,7 @@ class Coin2D(Coin):
                 for i in range(data.value.shape[0]):
                     for j in range(data.value.shape[1]):
                         yield (i * mesh_size + xy, j * mesh_size + xy, data.value[i][j])
-        elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+        elif repr_format == constants.StateRepresentationFormatPositionCoin:
             # The coin operator is built by applying a tensor product between
             # an identity matrix with the dimensions of the chosen mesh and
             # the chosen coin.

@@ -3,8 +3,9 @@ import math
 import numpy as np
 from pyspark import RDD, SparkContext
 
+from sparkquantum import conf, constants, util
 from sparkquantum.base import Base
-from sparkquantum.utils.utils import Utils
+from sparkquantum.math import util as mathutil
 
 __all__ = ['Matrix', 'is_matrix']
 
@@ -13,7 +14,7 @@ class Matrix(Base):
     """Class for matrices."""
 
     def __init__(self, rdd, shape, data_type=complex,
-                 coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
+                 coordinate_format=constants.MatrixCoordinateDefault, num_elements=None):
         """Build a matrix object.
 
         Parameters
@@ -25,7 +26,7 @@ class Matrix(Base):
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
         coordinate_format : int, optional
-            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
         num_elements : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
@@ -39,7 +40,7 @@ class Matrix(Base):
 
         self._size = self._shape[0] * self._shape[1]
 
-        if not Utils.is_shape(shape):
+        if not mathutil.is_shape(shape):
             self._logger.error("invalid shape")
             raise ValueError("invalid shape")
 
@@ -84,7 +85,7 @@ class Matrix(Base):
         -----
         Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
-        This method exports the data in the :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault` format.
+        This method exports the data in the :py:const:`sparkquantum.constants.MatrixCoordinateDefault` format.
 
         Parameters
         ----------
@@ -92,10 +93,10 @@ class Matrix(Base):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
@@ -103,55 +104,57 @@ class Matrix(Base):
         Raises
         ------
         ValueError
-            If the chosen 'quantum.math.dumpingMode' configuration is not valid.
+            If the chosen 'sparkquantum.math.dumpingMode' configuration is not valid.
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = conf.get_conf(
+                self._spark_context,
+                'sparkquantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(
+            codec = conf.get_conf(
                 self._spark_context,
-                'quantum.dumpingCompressionCodec')
+                'sparkquantum.dumpingCompressionCodec')
 
         dumping_mode = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.math.dumpingMode'))
+                'sparkquantum.math.dumpingMode'))
 
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = mathutil.remove_zeros(
+            mathutil.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                constants.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
             lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
         )
 
-        if dumping_mode == Utils.DumpingModeUniqueFile:
+        if dumping_mode == constants.DumpingModeUniqueFile:
             data = rdd.collect()
 
-            Utils.create_dir(path)
+            util.create_dir(path)
 
             if not filename:
-                filename = Utils.get_temp_path(path)
+                filename = util.get_temp_path(path)
             else:
-                filename = Utils.append_slash_dir(path) + filename
+                filename = util.append_slash(path) + filename
 
             if len(data):
                 with open(filename, 'a') as f:
                     for d in data:
                         f.write(d + "\n")
-        elif dumping_mode == Utils.DumpingModePartFiles:
+        elif dumping_mode == constants.DumpingModePartFiles:
             rdd.saveAsTextFile(path, codec)
         else:
             self._logger.error("invalid dumping mode")
             raise ValueError("invalid dumping mode")
 
-    def numpy_array(self):
+    def ndarray(self):
         """Create a numpy array containing this object's RDD data.
 
         Notes
@@ -165,13 +168,13 @@ class Matrix(Base):
             The numpy array.
 
         """
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = mathutil.remove_zeros(
+            mathutil.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                constants.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         data = rdd.collect()
 
@@ -183,7 +186,7 @@ class Matrix(Base):
         return result
 
     def _change_coordinate(self, coordinate_format):
-        return Utils.change_coordinate(
+        return mathutil.change_coordinate(
             self._data,
             old_coordinate=self._coordinate_format,
             new_coordinate=coordinate_format)
@@ -214,13 +217,13 @@ class Matrix(Base):
                       coordinate_format=coordinate_format, num_elements=self._num_elements)
 
     def _transpose(self):
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = mathutil.remove_zeros(
+            mathutil.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                constants.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         shape = (self._shape[1], self._shape[0])
 
@@ -252,7 +255,7 @@ class Matrix(Base):
             self._shape[1] *
             other_shape[1])
 
-        data_type = Utils.get_precedent_type(self._data_type, other.data_type)
+        data_type = util.get_precedent_type(self._data_type, other.data_type)
 
         rdd = self._data
         other_rdd = other.data
@@ -261,9 +264,9 @@ class Matrix(Base):
         if self._num_elements is not None and other.num_elements is not None:
             expected_elements = self._num_elements * other.num_elements
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(data_type) * expected_elements
+                util.get_size_of_type(data_type) * expected_elements
             )
         else:
             expected_elements = None
@@ -288,7 +291,8 @@ class Matrix(Base):
                 m[0][2] * m[1][2])
         )
 
-        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+        rdd = mathutil.remove_zeros(
+            rdd, data_type, constants.MatrixCoordinateDefault)
 
         return rdd, new_shape, data_type, expected_elements
 
@@ -343,10 +347,10 @@ class Matrix(Base):
                 "Cannot calculate the trace of non square matrix")
             raise TypeError("Cannot calculate the trace of non square matrix")
 
-        rdd = Utils.change_coordinate(
+        rdd = mathutil.change_coordinate(
             self._data,
             self._coordinate_format,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         return rdd.filter(
             lambda m: m[0] == m[1]
@@ -363,13 +367,13 @@ class Matrix(Base):
             The norm of this matrix.
 
         """
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = mathutil.remove_zeros(
+            mathutil.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                constants.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
         if self._data_type == complex:
             def __map(m):
@@ -391,7 +395,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This method uses the 'quantum.math.roundPrecision' configuration to round the calculated norm.
+        This method uses the 'sparkquantum.math.roundPrecision' configuration to round the calculated norm.
 
         Returns
         -------
@@ -400,9 +404,9 @@ class Matrix(Base):
 
         """
         round_precision = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.math.roundPrecision'))
+                'sparkquantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 
@@ -415,7 +419,7 @@ class Matrix(Base):
                 "incompatible shapes {} and {}".format(
                     self._shape, other.shape))
 
-        data_type = Utils.get_precedent_type(
+        data_type = util.get_precedent_type(
             self._data_type, other.data_type)
 
         rdd = self._data
@@ -424,9 +428,9 @@ class Matrix(Base):
         if self._num_elements is not None and other.num_elements is not None:
             expected_elements = self._num_elements + other.num_elements
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(data_type) * expected_elements
+                util.get_size_of_type(data_type) * expected_elements
             )
         else:
             expected_elements = None
@@ -453,7 +457,8 @@ class Matrix(Base):
             __map
         )
 
-        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+        rdd = mathutil.remove_zeros(
+            rdd, data_type, constants.MatrixCoordinateDefault)
 
         return rdd, self._shape, data_type, expected_elements
 
@@ -461,7 +466,7 @@ class Matrix(Base):
         if other == type(other)():
             return self._data, self._data_type
 
-        data_type = Utils.get_precedent_type(
+        data_type = util.get_precedent_type(
             self._data_type, type(other))
 
         rdd = self._data
@@ -476,9 +481,9 @@ class Matrix(Base):
 
         expected_elements = self._size
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(data_type) * expected_elements
+            util.get_size_of_type(data_type) * expected_elements
         )
 
         def __map(m):
@@ -496,14 +501,15 @@ class Matrix(Base):
             __map
         )
 
-        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+        rdd = mathutil.remove_zeros(
+            rdd, data_type, constants.MatrixCoordinateDefault)
 
         return rdd, self._shape, data_type, expected_elements
 
     def _sum(self, other, constant):
         if is_matrix(other):
             return self._sum_matrix(other, constant)
-        elif Utils.is_scalar(other):
+        elif mathutil.is_scalar(other):
             return self._sum_scalar(other, constant)
         else:
             self._logger.error(
@@ -570,7 +576,7 @@ class Matrix(Base):
 
         new_shape = (self._shape[0], other.shape[1])
 
-        data_type = Utils.get_precedent_type(self._data_type, other.data_type)
+        data_type = util.get_precedent_type(self._data_type, other.data_type)
 
         rdd = self._data
         other_rdd = other.data
@@ -583,9 +589,9 @@ class Matrix(Base):
             else:
                 expected_elements = other.num_elements
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(data_type) * expected_elements
+                util.get_size_of_type(data_type) * expected_elements
             )
         else:
             expected_elements = None
@@ -604,7 +610,8 @@ class Matrix(Base):
             lambda m: (m[0][0], m[0][1], m[1])
         )
 
-        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+        rdd = mathutil.remove_zeros(
+            rdd, data_type, constants.MatrixCoordinateDefault)
 
         return rdd, new_shape, data_type, expected_elements
 
@@ -616,7 +623,7 @@ class Matrix(Base):
                 # It is a division by zero operation
                 raise ZeroDivisionError
 
-        data_type = Utils.get_precedent_type(self._data_type, type(other))
+        data_type = util.get_precedent_type(self._data_type, type(other))
 
         rdd = self._data
 
@@ -624,7 +631,8 @@ class Matrix(Base):
             lambda m: (m[0], m[1], m[2] * other ** constant)
         )
 
-        rdd = Utils.remove_zeros(rdd, data_type, Utils.MatrixCoordinateDefault)
+        rdd = mathutil.remove_zeros(
+            rdd, data_type, constants.MatrixCoordinateDefault)
 
         return rdd, self._shape, data_type, self._num_elements
 
@@ -633,9 +641,9 @@ class Matrix(Base):
 
         Notes
         -----
-        The coordinate format of this matrix must be :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplier`
-        and the other matrix must be :py:const:`sparkquantum.utils.Utils.MatrixCoordinateMultiplicand`.
-        The coordinate format of the resulting matrix is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+        The coordinate format of this matrix must be :py:const:`sparkquantum.constants.MatrixCoordinateMultiplier`
+        and the other matrix must be :py:const:`sparkquantum.constants.MatrixCoordinateMultiplicand`.
+        The coordinate format of the resulting matrix is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
 
         Parameters
         ----------
@@ -660,7 +668,7 @@ class Matrix(Base):
 
             return Matrix(rdd, shape, data_type=data_type,
                           num_elements=num_elements)
-        elif Utils.is_scalar(other):
+        elif mathutil.is_scalar(other):
             rdd, shape, data_type, num_elements = self._multiply_scalar(
                 other, 1)
 
@@ -697,7 +705,7 @@ class Matrix(Base):
         """
         if is_matrix(other):
             raise NotImplementedError
-        elif Utils.is_scalar(other):
+        elif mathutil.is_scalar(other):
             rdd, shape, data_type, num_elements = self._multiply_scalar(
                 other, -1
             )
@@ -894,9 +902,9 @@ class Matrix(Base):
         if value == data_type():
             rdd = sc.emptyRDD()
         else:
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 sc,
-                Utils.get_size_of_type(data_type) * expected_elements
+                util.get_size_of_type(data_type) * expected_elements
             )
 
             rdd = sc.range(size, numSlices=num_partitions).map(
@@ -954,7 +962,7 @@ class Matrix(Base):
             If `shape` is not a valid shape.
 
         """
-        if not Utils.is_shape(shape):
+        if not mathutil.is_shape(shape):
             raise ValueError("invalid shape")
 
         sc = SparkContext.getOrCreate()
@@ -988,7 +996,7 @@ class Matrix(Base):
             If `shape` is not a valid shape.
 
         """
-        if not Utils.is_shape(shape):
+        if not mathutil.is_shape(shape):
             raise ValueError("invalid shape")
 
         sc = SparkContext.getOrCreate()
@@ -997,9 +1005,9 @@ class Matrix(Base):
 
         expected_elements = shape[0] * shape[1]
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             sc,
-            Utils.get_size_of_type(data_type) * expected_elements
+            util.get_size_of_type(data_type) * expected_elements
         )
 
         rdd = sc.range(

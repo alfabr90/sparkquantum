@@ -3,9 +3,9 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.interaction.interaction import Interaction
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['CollisionPhaseInteraction']
 
@@ -29,7 +29,7 @@ class CollisionPhaseInteraction(Interaction):
         Raises
         ------
         ValueError
-            If the collision phase or the chosen 'quantum.dtqw.state.representationFormat'
+            If the collision phase or the chosen 'sparkquantum.dtqw.state.representationFormat'
             configuration is not valid.
 
         """
@@ -61,14 +61,14 @@ class CollisionPhaseInteraction(Interaction):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         phase = cmath.exp(self._collision_phase * (0.0 + 1.0j))
         num_particles = self._num_particles
 
-        repr_format = int(Utils.get_conf(self._spark_context,
-                                         'quantum.dtqw.state.representationFormat'))
+        repr_format = int(conf.get_conf(self._spark_context,
+                                        'sparkquantum.dtqw.state.representationFormat'))
 
         if self._mesh.dimension == 1:
             ndim = self._mesh.dimension
@@ -81,7 +81,7 @@ class CollisionPhaseInteraction(Interaction):
 
             num_elements = shape[0]
 
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
@@ -95,7 +95,7 @@ class CollisionPhaseInteraction(Interaction):
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
@@ -126,7 +126,7 @@ class CollisionPhaseInteraction(Interaction):
 
             num_elements = shape[0]
 
-            if repr_format == Utils.StateRepresentationFormatCoinPosition:
+            if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
@@ -145,7 +145,7 @@ class CollisionPhaseInteraction(Interaction):
                                 return m, m, phase
 
                     return m, m, 1
-            elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+            elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 

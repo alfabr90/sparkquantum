@@ -2,7 +2,7 @@ import random
 
 from pyspark import SparkContext
 
-from sparkquantum.utils.utils import Utils
+from sparkquantum import util
 
 __all__ = ['BrokenLinks']
 
@@ -14,7 +14,7 @@ class BrokenLinks():
         """Build a top-level :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object."""
         self._spark_context = SparkContext.getOrCreate()
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
     def __str__(self):

@@ -1,7 +1,7 @@
 from sparkquantum.dtqw.operator import is_operator
 from sparkquantum.dtqw.state import is_state
-from sparkquantum.math.statistics.probability_distribution.probability_distribution import is_probability_distribution
-from sparkquantum.utils.profiler import Profiler
+from sparkquantum.math.distribution import is_probability_distribution
+from sparkquantum.profiler import Profiler
 
 __all__ = ['QuantumWalkProfiler']
 
@@ -182,10 +182,10 @@ class QuantumWalkProfiler(Profiler):
         ----------
         name : str
             A name for the probability_distribution.
-        probability_distribution : :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`
+        probability_distribution : :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`
             The probability distribution object.
         time : float
-            The measured building time of the probability_distribution.
+            The measured building time of the probability distribution.
 
         Returns
         -------
@@ -195,7 +195,7 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
-            If `probability_distribution` is not a :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`.
+            If `probability_distribution` is not a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`.
 
         """
         if self._enabled:
@@ -313,17 +313,19 @@ class QuantumWalkProfiler(Profiler):
             return {}
 
     def get_probability_distributions(self, name=None):
-        """Get the resources information of all probability distributions or of the one with the provided name.
+        """Get the resources information of all probability distributions or
+        of the one with the provided name.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.math.statistics.probability_distribution.probability_distribution.ProbabilityDistribution`.
+            The name used for a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`.
 
         Returns
         -------
         dict or list
-            A dict with the resources information of all probability distributions or a list of the resources information of the named probability distribution.
+            A dict with the resources information of all probability distributions or
+            a list of the resources information of the named probability distribution.
 
         """
         if len(self._probability_distributions):

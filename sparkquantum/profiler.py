@@ -5,7 +5,7 @@ from urllib import error, request
 
 from pyspark import SparkContext
 
-from sparkquantum.utils.utils import Utils
+from sparkquantum import conf, util
 
 __all__ = ['Profiler']
 
@@ -29,7 +29,7 @@ class Profiler:
         self._base_url = self._get_baseurl()
         self._enabled = self._is_enabled()
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
         self._start()
@@ -82,12 +82,12 @@ class Profiler:
             self._base_url)
 
     def _is_enabled(self):
-        return Utils.get_conf(self._spark_context,
-                              'quantum.profiling.enabled') == 'True'
+        return conf.get_conf(self._spark_context,
+                             'sparkquantum.profiling.enabled') == 'True'
 
     def _get_baseurl(self):
-        return Utils.get_conf(self._spark_context,
-                              'quantum.profiling.baseUrl')
+        return conf.get_conf(self._spark_context,
+                             'sparkquantum.profiling.baseUrl')
 
     def _start(self):
         self._data = {}
@@ -732,7 +732,7 @@ class Profiler:
 
 
 def is_profiler(obj):
-    """Check whether argument is a :py:class:`sparkquantum.utils.profiler.Profiler` object.
+    """Check whether argument is a :py:class:`sparkquantum.profiler.Profiler` object.
 
     Parameters
     ----------
@@ -742,7 +742,7 @@ def is_profiler(obj):
     Returns
     -------
     bool
-        True if argument is a :py:class:`sparkquantum.utils.profiler.Profiler` object, False otherwise.
+        True if argument is a :py:class:`sparkquantum.profiler.Profiler` object, False otherwise.
 
     """
     return isinstance(obj, Profiler)

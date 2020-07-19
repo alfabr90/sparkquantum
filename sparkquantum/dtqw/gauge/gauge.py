@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
-from sparkquantum.utils.utils import Utils
+from sparkquantum import conf, util
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 
 __all__ = ['Gauge', 'is_gauge']
 
@@ -15,17 +15,13 @@ class Gauge:
         """Build a top-level system state measurements (gauge) object."""
         self._spark_context = SparkContext.getOrCreate()
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
         self._profiler = QuantumWalkProfiler()
 
     @property
     def profiler(self):
-        """:py:class:`sparkquantum.utils.profiler.Profiler`.
-
-        To disable profiling, set it to None.
-
-        """
+        """:py:class:`sparkquantum.dtqw.profiler.Profiler`."""
         return self._profiler
 
     def _profile_probability_distribution(
@@ -49,8 +45,8 @@ class Gauge:
                 )
             )
 
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
+        if conf.get_conf(self._spark_context,
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def measure_system(

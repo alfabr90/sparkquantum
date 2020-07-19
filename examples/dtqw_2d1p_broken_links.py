@@ -2,14 +2,14 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
+from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
-from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
+from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
 from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.utils.utils import Utils
 
 '''
     DTQW 2D - 1 particle
@@ -28,16 +28,16 @@ walk_path = "{}/{}_{}_{}_{}_{}/".format(
     base_path, 'DiagonalLattice', 2 * size + 1, bl_prob, steps, num_particles
 )
 
-Utils.create_dir(walk_path)
+util.create_dir(walk_path)
 
-representationFormat = Utils.StateRepresentationFormatCoinPosition
-# representationFormat = Utils.StateRepresentationFormatPositionCoin
+representationFormat = constants.StateRepresentationFormatCoinPosition
+# representationFormat = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
-    'quantum.cluster.totalCores', num_cores
+    'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'quantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representationFormat
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
@@ -91,8 +91,15 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot(walk_path + 'joint_2d1p', dpi=300)
-joint.plot_contour(walk_path + 'joint_2d1p_contour', dpi=300)
+
+axis = mesh.axis()
+data = joint.ndarray()
+labels = [v.name for v in joint.variables]
+
+plot.surface(axis, data, walk_path + 'joint_2d1p',
+             labels=labels + ['Probability'], dpi=300)
+plot.contour(axis, data, walk_path + 'joint_2d1p_contour',
+             labels=labels, dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
 final_state.destroy()

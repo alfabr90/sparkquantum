@@ -5,10 +5,10 @@ from datetime import datetime
 
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.operator import Operator
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.state import State, is_state
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['DiscreteTimeQuantumWalk']
 
@@ -16,26 +16,21 @@ __all__ = ['DiscreteTimeQuantumWalk']
 class DiscreteTimeQuantumWalk:
     """Build the necessary operators and perform a discrete time quantum walk."""
 
-    def __init__(self, initial_state,
+    def __init__(self, state,
                  storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build a discrete time quantum walk object.
 
         Parameters
         ----------
-        initial_state : :py:class:`sparkquantum.dtqw.state.State`
-            The initial state of the system.
+        state : :py:class:`sparkquantum.dtqw.state.State`
+            The state of the system.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the operators' RDD.
             Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         """
         self._spark_context = SparkContext.getOrCreate()
-        self._initial_state = initial_state
-        self._coin = self._initial_state.coin
-        self._mesh = self._initial_state.mesh
-        self._num_particles = self._initial_state.num_particles
-
-        self._interaction = self._initial_state.interaction
+        self._state = state
 
         self._storage_level = storage_level
 
@@ -44,15 +39,15 @@ class DiscreteTimeQuantumWalk:
         self._interaction_operator = None
         self._walk_operators = None
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
         self._profiler = QuantumWalkProfiler()
 
-        if not is_state(self._initial_state):
+        if not is_state(self._state):
             self._logger.error(
-                "'State' instance expected, not '{}'".format(type(self._coin)))
+                "'State' instance expected, not '{}'".format(type(self._state)))
             raise TypeError(
-                "'State' instance expected, not '{}'".format(type(self._coin)))
+                "'State' instance expected, not '{}'".format(type(self._state)))
 
     @property
     def spark_context(self):
@@ -60,9 +55,9 @@ class DiscreteTimeQuantumWalk:
         return self._spark_context
 
     @property
-    def initial_state(self):
+    def state(self):
         """:py:class:`sparkquantum.dtqw.state.State`"""
-        return self._initial_state
+        return self._state
 
     @property
     def coin_operator(self):
@@ -86,11 +81,7 @@ class DiscreteTimeQuantumWalk:
 
     @property
     def profiler(self):
-        """:py:class:`sparkquantum.utils.profiler.Profiler`.
-
-        To disable profiling, set it to None.
-
-        """
+        """:py:class:`sparkquantum.dtqw.profiler.Profiler`."""
         return self._profiler
 
     def __del__(self):
@@ -109,17 +100,17 @@ class DiscreteTimeQuantumWalk:
             The string representation of this walk.
 
         """
-        particles = '{} particle'.format(self._num_particles)
+        particles = '{} particle'.format(self._state.num_particles)
 
-        if self._num_particles > 1:
-            if self._interaction:
+        if self._state.num_particles > 1:
+            if self._state.interaction:
                 particles = '{} interacting particles by {}'.format(
-                    self._num_particles, self._interaction)
+                    self._state.num_particles, self._state.interaction)
             else:
-                particles = '{} particles'.format(self._num_particles)
+                particles = '{} particles'.format(self._state.num_particles)
 
         return '{} with {} and a {} over a {}'.format(
-            'Discrete Time Quantum Walk', particles, self._coin, self._mesh)
+            'Discrete Time Quantum Walk', particles, self._state.coin, self._state.mesh)
 
     def _profile_operator(self, profile_title, log_title,
                           operator, initial_time):
@@ -141,8 +132,8 @@ class DiscreteTimeQuantumWalk:
                 "{} is consuming {} bytes in memory and {} bytes in disk".format(
                     log_title, info['memoryUsed'], info['diskUsed']))
 
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
+        if conf.get_conf(self._spark_context,
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _profile_state(self, profile_title, log_title,
@@ -177,8 +168,8 @@ class DiscreteTimeQuantumWalk:
                     )
                 )
 
-        if Utils.get_conf(self._spark_context,
-                          'quantum.dtqw.profiler.logExecutors') == 'True':
+        if conf.get_conf(self._spark_context,
+                         'sparkquantum.dtqw.profiler.logExecutors') == 'True':
             self._profiler.log_executors(app_id=app_id)
 
     def _create_coin_operator(self, storage_level):
@@ -186,13 +177,13 @@ class DiscreteTimeQuantumWalk:
 
         initial_time = datetime.now()
 
-        co = self._coin.create_operator(self._mesh).change_coordinate(
-            Utils.MatrixCoordinateMultiplicand
+        co = self._state.coin.create_operator(self._state.mesh).change_coordinate(
+            constants.MatrixCoordinateMultiplicand
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(co.data_type) * co.num_elements
+            util.get_size_of_type(co.data_type) * co.num_elements
         )
 
         self._coin_operator = co.partition_by(
@@ -209,13 +200,13 @@ class DiscreteTimeQuantumWalk:
 
         initial_time = datetime.now()
 
-        so = self._mesh.create_operator().change_coordinate(
-            Utils.MatrixCoordinateMultiplier
+        so = self._state.mesh.create_operator().change_coordinate(
+            constants.MatrixCoordinateMultiplier
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(so.data_type) * so.num_elements
+            util.get_size_of_type(so.data_type) * so.num_elements
         )
 
         self._shift_operator = so.partition_by(
@@ -232,13 +223,13 @@ class DiscreteTimeQuantumWalk:
 
         initial_time = datetime.now()
 
-        io = self._interaction.create_operator().change_coordinate(
-            Utils.MatrixCoordinateMultiplier
+        io = self._state.interaction.create_operator().change_coordinate(
+            constants.MatrixCoordinateMultiplier
         )
 
-        num_partitions = Utils.get_num_partitions(
+        num_partitions = util.get_num_partitions(
             self._spark_context,
-            Utils.get_size_of_type(io.data_type) * io.num_elements
+            util.get_size_of_type(io.data_type) * io.num_elements
         )
 
         self._interaction_operator = io.partition_by(
@@ -269,7 +260,7 @@ class DiscreteTimeQuantumWalk:
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.walkOperator.kroneckerMode' configuration is not valid.
 
         """
         app_id = self._spark_context.applicationId
@@ -294,21 +285,21 @@ class DiscreteTimeQuantumWalk:
 
         initial_time = datetime.now()
 
-        if self._num_particles == 1:
+        if self._state.num_particles == 1:
             eo = evolution_operator.change_coordinate(
-                Utils.MatrixCoordinateMultiplier
+                constants.MatrixCoordinateMultiplier
             )
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(eo.data_type) * eo.num_elements
+                util.get_size_of_type(eo.data_type) * eo.num_elements
             )
 
             eo = eo.partition_by(
                 num_partitions=num_partitions).persist(storage_level)
 
-            if Utils.get_conf(self._spark_context,
-                              'quantum.dtqw.walkOperator.checkpoint') == 'True':
+            if conf.get_conf(self._spark_context,
+                             'sparkquantum.dtqw.walkOperator.checkpoint') == 'True':
                 eo = eo.checkpoint()
 
             self._walk_operators = (eo.materialize(storage_level), )
@@ -324,20 +315,20 @@ class DiscreteTimeQuantumWalk:
 
             self._walk_operators = []
 
-            kron_mode = Utils.get_conf(
-                self._spark_context, 'quantum.dtqw.walkOperator.kroneckerMode')
+            kron_mode = conf.get_conf(
+                self._spark_context, 'sparkquantum.dtqw.walkOperator.kroneckerMode')
 
-            if kron_mode != Utils.KroneckerModeBroadcast and kron_mode != Utils.KroneckerModeDump:
+            if kron_mode != constants.KroneckerModeBroadcast and kron_mode != constants.KroneckerModeDump:
                 self._logger.error("invalid kronecker mode")
                 raise ValueError("invalid kronecker mode")
 
-            if kron_mode == Utils.KroneckerModeBroadcast:
-                eo = Utils.broadcast(self._spark_context,
-                                     evolution_operator.data.collect())
-            elif kron_mode == Utils.KroneckerModeDump:
-                path = Utils.get_temp_path(
-                    Utils.get_conf(self._spark_context,
-                                   'quantum.dtqw.walkOperator.tempPath')
+            if kron_mode == constants.KroneckerModeBroadcast:
+                eo = util.broadcast(self._spark_context,
+                                    evolution_operator.data.collect())
+            elif kron_mode == constants.KroneckerModeDump:
+                path = util.get_temp_path(
+                    conf.get_conf(self._spark_context,
+                                  'sparkquantum.dtqw.walkOperator.tempPath')
                 )
 
                 evolution_operator.dump(path)
@@ -345,7 +336,7 @@ class DiscreteTimeQuantumWalk:
             self._coin_operator.unpersist()
             self._shift_operator.unpersist()
 
-            for p in range(self._num_particles):
+            for p in range(self._state.num_particles):
                 self._logger.info(
                     "building walk operator for particle {}...".format(p + 1))
 
@@ -355,15 +346,15 @@ class DiscreteTimeQuantumWalk:
                     #
                     # W1 = U (X) I2 (X) ... (X) In
                     rdd_shape = (
-                        shape_tmp[0] ** (self._num_particles - 1 - p),
-                        shape_tmp[1] ** (self._num_particles - 1 - p)
+                        shape_tmp[0] ** (self._state.num_particles - 1 - p),
+                        shape_tmp[1] ** (self._state.num_particles - 1 - p)
                     )
 
-                    if kron_mode == Utils.KroneckerModeBroadcast:
+                    if kron_mode == constants.KroneckerModeBroadcast:
                         def __map(m):
                             for i in eo.value:
                                 yield i[0] * rdd_shape[0] + m, i[1] * rdd_shape[1] + m, i[2]
-                    elif kron_mode == Utils.KroneckerModeDump:
+                    elif kron_mode == constants.KroneckerModeDump:
                         def __map(m):
                             with fileinput.input(files=glob(path + '/part-*')) as f:
                                 for line in f:
@@ -390,11 +381,11 @@ class DiscreteTimeQuantumWalk:
                         shape_tmp[1] ** p
                     )
 
-                    if kron_mode == Utils.KroneckerModeBroadcast:
+                    if kron_mode == constants.KroneckerModeBroadcast:
                         def __map(m):
                             for i in eo.value:
                                 yield m * shape_tmp[0] + i[0], m * shape_tmp[1] + i[1], i[2]
-                    elif kron_mode == Utils.KroneckerModeDump:
+                    elif kron_mode == constants.KroneckerModeDump:
                         def __map(m):
                             with fileinput.input(files=glob(path + '/part-*')) as f:
                                 for line in f:
@@ -418,10 +409,10 @@ class DiscreteTimeQuantumWalk:
                     # the pre-identity and evolution operators
                     #
                     # ... (X) Ii-1 (X) U
-                    if p < self._num_particles - 1:
+                    if p < self._state.num_particles - 1:
                         rdd_shape = (
-                            shape_tmp[0] ** (self._num_particles - 1 - p),
-                            shape_tmp[1] ** (self._num_particles - 1 - p)
+                            shape_tmp[0] ** (self._state.num_particles - 1 - p),
+                            shape_tmp[1] ** (self._state.num_particles - 1 - p)
                         )
 
                         def __map(m):
@@ -435,19 +426,20 @@ class DiscreteTimeQuantumWalk:
                         shape = (rdd_shape[0] * shape_tmp[0],
                                  rdd_shape[1] * shape_tmp[1])
 
-                num_partitions = Utils.get_num_partitions(
+                num_partitions = util.get_num_partitions(
                     self._spark_context,
-                    Utils.get_size_of_type(evolution_operator.data_type) *
+                    util.get_size_of_type(evolution_operator.data_type) *
                     evolution_operator.num_elements *
-                    evolution_operator.shape[0] ** (self._num_particles - 1)
+                    evolution_operator.shape[0] ** (
+                        self._state.num_particles - 1)
                 )
 
                 wo = Operator(rdd, shape).change_coordinate(
-                    Utils.MatrixCoordinateMultiplier
+                    constants.MatrixCoordinateMultiplier
                 ).partition_by(num_partitions=num_partitions).persist(storage_level)
 
-                if Utils.get_conf(
-                        self._spark_context, 'quantum.dtqw.walkOperator.checkpoint') == 'True':
+                if conf.get_conf(
+                        self._spark_context, 'sparkquantum.dtqw.walkOperator.checkpoint') == 'True':
                     wo = wo.checkpoint()
 
                 self._walk_operators.append(wo.materialize(storage_level))
@@ -460,8 +452,8 @@ class DiscreteTimeQuantumWalk:
 
             eo.unpersist()
 
-            if kron_mode == Utils.KroneckerModeDump:
-                Utils.remove_path(path)
+            if kron_mode == constants.KroneckerModeDump:
+                util.remove_path(path)
 
     def _destroy_coin_operator(self):
         """Call the :py:func:`sparkquantum.dtqw.operator.Operator.destroy` method."""
@@ -503,42 +495,42 @@ class DiscreteTimeQuantumWalk:
         configs = {}
 
         configs['checkpointing_frequency'] = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.checkpointingFrequency'
+                'sparkquantum.dtqw.walk.checkpointingFrequency'
             )
         )
 
         configs['dumping_frequency'] = int(
-            Utils.get_conf(
+            conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingFrequency'
+                'sparkquantum.dtqw.walk.dumpingFrequency'
             )
         )
 
         if configs['dumping_frequency'] >= 0:
-            configs['dumping_path'] = Utils.get_conf(
+            configs['dumping_path'] = conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingPath'
+                'sparkquantum.dtqw.walk.dumpingPath'
             )
 
             if not configs['dumping_path'].endswith('/'):
                 configs['dumping_path'] += '/'
 
-        configs['check_unitary'] = Utils.get_conf(
+        configs['check_unitary'] = conf.get_conf(
             self._spark_context,
-            'quantum.dtqw.walk.checkUnitary'
+            'sparkquantum.dtqw.walk.checkUnitary'
         )
 
-        configs['dump_states_probability_distributions'] = Utils.get_conf(
+        configs['dump_states_probability_distributions'] = conf.get_conf(
             self._spark_context,
-            'quantum.dtqw.walk.dumpStatesProbabilityDistributions'
+            'sparkquantum.dtqw.walk.dumpStatesProbabilityDistributions'
         )
 
         if configs['dump_states_probability_distributions'] == 'True':
-            configs['dumping_path'] = Utils.get_conf(
+            configs['dumping_path'] = conf.get_conf(
                 self._spark_context,
-                'quantum.dtqw.walk.dumpingPath'
+                'sparkquantum.dtqw.walk.dumpingPath'
             )
 
             if not configs['dumping_path'].endswith('/'):
@@ -563,11 +555,11 @@ class DiscreteTimeQuantumWalk:
         ------
         ValueError
             If `steps` is not valid or if the collision phase is not valid.
-            If the chosen 'quantum.dtqw.walkOperator.kroneckerMode' or 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.walkOperator.kroneckerMode' or 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
             If operators' shapes are incompatible for multiplication.
             If the final state of the system is not unitary. This exception is also raised in cases
-            where the 'quantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
-            the 'quantum.dtqw.walk.dumpStatesProbabilityDistribution' configuration is set to 'True' and the probability distribution of some of the intermediary states does not sum one.
+            where the 'sparkquantum.dtqw.walk.checkUnitary' configuration is set to 'True' and some of the intermediary states are not unitary or
+            the 'sparkquantum.dtqw.walk.dumpStatesProbabilityDistribution' configuration is set to 'True' and the probability distribution of some of the intermediary states does not sum one.
 
         """
         if steps < 0:
@@ -576,12 +568,12 @@ class DiscreteTimeQuantumWalk:
             raise ValueError(
                 "the number of steps must be greater than or equal to 0")
 
-        if not self._mesh.check_steps(steps):
+        if not self._state.mesh.check_steps(steps):
             self._logger.error(
                 "invalid number of steps for the chosen mesh")
             raise ValueError("invalid number of steps for the chosen mesh")
 
-        result = self._initial_state.materialize(self._storage_level)
+        result = self._state.materialize(self._storage_level)
 
         app_id = self._spark_context.applicationId
 
@@ -598,16 +590,16 @@ class DiscreteTimeQuantumWalk:
 
         # Building walk operators once if not simulating decoherence with
         # constant broken links
-        if not self._mesh.broken_links or self._mesh.broken_links.is_constant():
+        if not self._state.mesh.broken_links or self._state.mesh.broken_links.is_constant():
             self._create_walk_operators(self._storage_level)
 
-        if self._num_particles > 1 and self._interaction is not None and self._interaction_operator is None:
+        if self._state.num_particles > 1 and self._state.interaction is not None and self._interaction_operator is None:
             self._create_interaction_operator(self._storage_level)
 
         for i in range(1, steps + 1, 1):
             # When there is a non-constant broken links (e.g., random),
             # the walk operators will be built in each step of the walk
-            if self._mesh.broken_links and not self._mesh.broken_links.is_constant():
+            if self._state.mesh.broken_links and not self._state.mesh.broken_links.is_constant():
                 self._destroy_shift_operator()
                 self._destroy_walk_operators()
                 self._create_walk_operators(self._storage_level)
@@ -615,29 +607,29 @@ class DiscreteTimeQuantumWalk:
             t_tmp = datetime.now()
 
             result_tmp = result.change_coordinate(
-                Utils.MatrixCoordinateMultiplicand
+                constants.MatrixCoordinateMultiplicand
             )
 
-            if self._num_particles == 1:
+            if self._state.num_particles == 1:
                 result_tmp = self._walk_operators[0].multiply(result_tmp)
             else:
                 if self._interaction_operator is not None:
                     result_tmp = self._interaction_operator.multiply(result_tmp).change_coordinate(
-                        Utils.MatrixCoordinateMultiplicand
+                        constants.MatrixCoordinateMultiplicand
                     )
 
                 for wo in reversed(self._walk_operators):
                     result_tmp = wo.multiply(result_tmp).change_coordinate(
-                        Utils.MatrixCoordinateMultiplicand
+                        constants.MatrixCoordinateMultiplicand
                     )
 
                 result_tmp = result_tmp.change_coordinate(
-                    Utils.MatrixCoordinateDefault
+                    constants.MatrixCoordinateDefault
                 )
 
-            num_partitions = Utils.get_num_partitions(
+            num_partitions = util.get_num_partitions(
                 self._spark_context,
-                Utils.get_size_of_type(
+                util.get_size_of_type(
                     result_tmp.data_type) * result_tmp.num_elements
             )
 
@@ -661,7 +653,7 @@ class DiscreteTimeQuantumWalk:
                         "the state {} is not unitary".format(i))
 
             if configs['dump_states_probability_distributions'] == 'True':
-                if self._num_particles == 1:
+                if self._state.num_particles == 1:
                     result_tmp.measure().dump(
                         configs['dumping_path'] + "probability_distributions/" + str(i))
                 else:

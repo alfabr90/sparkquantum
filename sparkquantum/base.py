@@ -1,6 +1,6 @@
 from pyspark import RDD, StorageLevel
 
-from sparkquantum.utils.utils import Utils
+from sparkquantum import util
 
 __all__ = ['Base']
 
@@ -24,7 +24,7 @@ class Base:
         self._data = rdd
         self._num_elements = num_elements
 
-        self._logger = Utils.get_logger(
+        self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
         if not isinstance(rdd, RDD):

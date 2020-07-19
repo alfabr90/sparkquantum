@@ -1,10 +1,11 @@
 from pyspark import SparkContext, StorageLevel
 
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.coin.coin import is_coin
 from sparkquantum.dtqw.interaction.interaction import is_interaction
 from sparkquantum.dtqw.mesh.mesh import is_mesh
+from sparkquantum.math import util as mathutil
 from sparkquantum.math.matrix import Matrix
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['State', 'is_state']
 
@@ -13,7 +14,7 @@ class State(Matrix):
     """Class for the system state."""
 
     def __init__(self, rdd, shape, coin, mesh, num_particles, interaction=None,
-                 data_type=complex, coordinate_format=Utils.MatrixCoordinateDefault, num_elements=None):
+                 data_type=complex, coordinate_format=constants.MatrixCoordinateDefault, num_elements=None):
         """Build a state object.
 
         Parameters
@@ -33,7 +34,7 @@ class State(Matrix):
         data_type : type, optional
             The Python type of all values in this object. Default value is complex.
         coordinate_format : int, optional
-            The coordinate format of this object. Default value is :py:const:`sparkquantum.utils.Utils.MatrixCoordinateDefault`.
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
         num_elements : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
@@ -113,7 +114,7 @@ class State(Matrix):
 
         Notes
         -----
-        This method checks the dumping format by using the 'quantum.dtqw.state.dumpingFormat' configuration value.
+        This method checks the dumping format by using the 'sparkquantum.dtqw.state.dumpingFormat' configuration value.
         In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
         Depending on the chosen dumping mode, this method calls the :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
@@ -124,16 +125,16 @@ class State(Matrix):
             The path where the dumped RDD will be located at.
         glue : str, optional
             The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'quantum.dumpingGlue' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
         codec : str, optional
             Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'quantum.dumpingCompressionCodec' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
         filename : str, optional
             File name used when the dumping mode is in a single file. Default value is None.
             In this case, a temporary named file is generated inside the informed path.
         dumping_format : int, optional
             Printing format used to dump this state.
-            Default value is None. In this case, it uses the 'quantum.math.dumpingFormat' configuration value.
+            Default value is None. In this case, it uses the 'sparkquantum.math.dumpingFormat' configuration value.
 
         Raises
         ------
@@ -141,55 +142,57 @@ class State(Matrix):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If any of the chosen 'quantum.dtqw.state.dumpingFormat', 'quantum.math.dumpingMode' or
-            'quantum.dtqw.state.representationFormat' configuration is not valid.
+            If any of the chosen 'sparkquantum.dtqw.state.dumpingFormat', 'sparkquantum.math.dumpingMode' or
+            'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         """
         if glue is None:
-            glue = Utils.get_conf(self._spark_context, 'quantum.dumpingGlue')
+            glue = conf.get_conf(
+                self._spark_context,
+                'sparkquantum.dumpingGlue')
 
         if codec is None:
-            codec = Utils.get_conf(self._spark_context,
-                                   'quantum.dumpingCompressionCodec')
+            codec = conf.get_conf(self._spark_context,
+                                  'sparkquantum.dumpingCompressionCodec')
 
         if dumping_format is None:
-            dumping_format = int(Utils.get_conf(
-                self._spark_context, 'quantum.dtqw.state.dumpingFormat'))
+            dumping_format = int(conf.get_conf(
+                self._spark_context, 'sparkquantum.dtqw.state.dumpingFormat'))
 
-        dumping_mode = int(Utils.get_conf(
-            self._spark_context, 'quantum.math.dumpingMode'))
+        dumping_mode = int(conf.get_conf(
+            self._spark_context, 'sparkquantum.math.dumpingMode'))
 
-        rdd = Utils.remove_zeros(
-            Utils.change_coordinate(
+        rdd = mathutil.remove_zeros(
+            mathutil.change_coordinate(
                 self._data,
                 self._coordinate_format,
-                Utils.MatrixCoordinateDefault),
+                constants.MatrixCoordinateDefault),
             self._data_type,
-            Utils.MatrixCoordinateDefault)
+            constants.MatrixCoordinateDefault)
 
-        if dumping_format == Utils.StateDumpingFormatIndex:
-            if dumping_mode == Utils.DumpingModeUniqueFile:
+        if dumping_format == constants.StateDumpingFormatIndex:
+            if dumping_mode == constants.DumpingModeUniqueFile:
                 data = rdd.collect()
 
-                Utils.create_dir(path)
+                util.create_dir(path)
 
                 if not filename:
-                    filename = Utils.get_temp_path(path)
+                    filename = util.get_temp_path(path)
                 else:
-                    filename = Utils.append_slash_dir(path) + filename
+                    filename = util.append_slash(path) + filename
 
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
                             f.write(d + "\n")
-            elif dumping_mode == Utils.DumpingModePartFiles:
+            elif dumping_mode == constants.DumpingModePartFiles:
                 rdd.saveAsTextFile(path, codec)
             else:
                 self._logger.error("invalid dumping mode")
                 raise ValueError("invalid dumping mode")
-        elif dumping_format == Utils.StateDumpingFormatCoordinate:
-            repr_format = int(Utils.get_conf(
-                self._spark_context, 'quantum.dtqw.state.representationFormat'))
+        elif dumping_format == constants.StateDumpingFormatCoordinate:
+            repr_format = int(conf.get_conf(
+                self._spark_context, 'sparkquantum.dtqw.state.representationFormat'))
 
             if self._mesh.dimension == 1:
                 ndim = self._mesh.dimension
@@ -201,7 +204,7 @@ class State(Matrix):
 
                 mesh_offset = min(self._mesh.axis())
 
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(m):
                         ix = []
 
@@ -216,7 +219,7 @@ class State(Matrix):
                         ix.append(str(m[2]))
 
                         return glue.join(ix)
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == constants.StateRepresentationFormatPositionCoin:
                     def __map(m):
                         xi = []
 
@@ -247,7 +250,7 @@ class State(Matrix):
                 axis = self._mesh.axis()
                 mesh_offset_x, mesh_offset_y = axis[0][0][0], axis[1][0][0]
 
-                if repr_format == Utils.StateRepresentationFormatCoinPosition:
+                if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(m):
                         ijxy = []
 
@@ -266,7 +269,7 @@ class State(Matrix):
                         ijxy.append(str(m[2]))
 
                         return glue.join(ijxy)
-                elif repr_format == Utils.StateRepresentationFormatPositionCoin:
+                elif repr_format == constants.StateRepresentationFormatPositionCoin:
                     def __map(m):
                         xyij = []
 
@@ -292,21 +295,21 @@ class State(Matrix):
                 self._logger.error("mesh dimension not implemented")
                 raise NotImplementedError("mesh dimension not implemented")
 
-            if dumping_mode == Utils.DumpingModeUniqueFile:
+            if dumping_mode == constants.DumpingModeUniqueFile:
                 data = rdd.collect()
 
-                Utils.create_dir(path)
+                util.create_dir(path)
 
                 if not filename:
-                    filename = Utils.get_temp_path(path)
+                    filename = util.get_temp_path(path)
                 else:
-                    filename = Utils.append_slash_dir(path) + filename
+                    filename = util.append_slash(path) + filename
 
                 if len(data):
                     with open(filename, 'a') as f:
                         for d in data:
                             f.write(d + "\n")
-            elif dumping_mode == Utils.DumpingModePartFiles:
+            elif dumping_mode == constants.DumpingModePartFiles:
                 rdd.map(
                     __map
                 ).saveAsTextFile(path, codec)
@@ -404,7 +407,7 @@ class State(Matrix):
 
     @staticmethod
     def create(coin, mesh, positions, amplitudes, interaction=None,
-               data_type=complex, representationFormat=Utils.StateRepresentationFormatCoinPosition):
+               data_type=complex, representationFormat=constants.StateRepresentationFormatCoinPosition):
         """Create a system state.
 
         For system states with entangled particles, the state must be created
@@ -426,7 +429,7 @@ class State(Matrix):
             The Python type of all values in this object. Default value is complex.
         representationFormat : int, optional
             Indicate how the quantum system will be represented.
-            Default value is :py:const:`sparkquantum.utils.Utils.StateRepresentationFormatCoinPosition`.
+            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
 
         Returns
         -------
@@ -440,7 +443,7 @@ class State(Matrix):
 
         ValueError
             If the length of `positions` and `amplitudes` are not compatible (or invalid) or
-            if the chosen 'quantum.dtqw.state.representationFormat' configuration is not valid.
+            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid.
 
         TypeError
             If `coin` is not a :py:class:`sparkquantum.dtqw.coin.coin.Coin`,
@@ -450,7 +453,7 @@ class State(Matrix):
         """
         spark_context = SparkContext.getOrCreate()
 
-        logger = Utils.get_logger(spark_context, State.__name__)
+        logger = util.get_logger(spark_context, State.__name__)
 
         if not is_coin(coin):
             logger.error(
@@ -502,11 +505,11 @@ class State(Matrix):
         for p in range(num_particles):
             num_elements = len(amplitudes[p])
 
-            if representationFormat == Utils.StateRepresentationFormatCoinPosition:
+            if representationFormat == constants.StateRepresentationFormatCoinPosition:
                 state = (
                     (a * mesh_size + positions[p], 1, amplitudes[p][a]) for a in range(num_elements)
                 )
-            elif representationFormat == Utils.StateRepresentationFormatPositionCoin:
+            elif representationFormat == constants.StateRepresentationFormatPositionCoin:
                 state = (
                     (positions[p] * coin_size + a, 1, amplitudes[p][a]) for a in range(num_elements)
                 )

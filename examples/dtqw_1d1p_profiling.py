@@ -3,13 +3,13 @@ import logging
 
 from pyspark import SparkContext, SparkConf
 
+from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.dtqw.gauge.position_gauge import PositionGauge
+from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.mesh.mesh1d.line import Line
-from sparkquantum.dtqw.qw_profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.state import State
-from sparkquantum.utils.utils import Utils
 
 '''
     DTQW 1D - 1 particle
@@ -27,24 +27,24 @@ walk_path = "{}/{}_{}_{}_{}/".format(
     base_path, 'Line', 2 * size + 1, steps, num_particles
 )
 
-Utils.create_dir(walk_path)
+util.create_dir(walk_path)
 
-representationFormat = Utils.StateRepresentationFormatCoinPosition
-# representationFormat = Utils.StateRepresentationFormatPositionCoin
+representationFormat = constants.StateRepresentationFormatCoinPosition
+# representationFormat = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
-    'quantum.cluster.totalCores', num_cores
+    'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'quantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representationFormat
 ).set(
-    'quantum.logging.enabled', 'True'
+    'sparkquantum.logging.enabled', 'True'
 ).set(
-    'quantum.logging.level', logging.DEBUG
+    'sparkquantum.logging.level', logging.DEBUG
 ).set(
-    'quantum.logging.filename', walk_path + 'log.txt'
+    'sparkquantum.logging.filename', walk_path + 'log.txt'
 ).set(
-    'quantum.profiling.enabled', 'True'
+    'sparkquantum.profiling.enabled', 'True'
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
@@ -87,7 +87,12 @@ final_state = dtqw.walk(steps)
 gauge = PositionGauge()
 
 joint = gauge.measure(final_state)
-joint.plot(walk_path + 'joint_1d1p', dpi=300)
+
+axis = mesh.axis()
+data = joint.ndarray()
+labels = [v.name for v in joint.variables] + ['Probability']
+
+plot.line(axis, data, walk_path + 'joint_1d1p', labels=labels, dpi=300)
 
 # Exporting the profiling data
 dtqw.profiler.export(walk_path)

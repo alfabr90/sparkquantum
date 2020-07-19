@@ -4,10 +4,10 @@ sparkquantum.dtqw.interaction package
 Submodules
 ----------
 
-sparkquantum.dtqw.interaction.collision\_phase\_interaction module
-------------------------------------------------------------------
+sparkquantum.dtqw.interaction.collision\_phase module
+-----------------------------------------------------
 
-.. automodule:: sparkquantum.dtqw.interaction.collision_phase_interaction
+.. automodule:: sparkquantum.dtqw.interaction.collision_phase
    :members:
    :undoc-members:
    :show-inheritance:

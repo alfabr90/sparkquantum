@@ -1,21 +1,29 @@
 sparkquantum.math package
 =========================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   sparkquantum.math.statistics
-
 Submodules
 ----------
+
+sparkquantum.math.distribution module
+-------------------------------------
+
+.. automodule:: sparkquantum.math.distribution
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 sparkquantum.math.matrix module
 -------------------------------
 
 .. automodule:: sparkquantum.math.matrix
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+sparkquantum.math.util module
+-----------------------------
+
+.. automodule:: sparkquantum.math.util
    :members:
    :undoc-members:
    :show-inheritance:

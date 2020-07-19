@@ -1,7 +1,7 @@
 import random
 
+from sparkquantum import conf, util
 from sparkquantum.dtqw.mesh.broken_links.broken_links import BrokenLinks
-from sparkquantum.utils.utils import Utils
 
 __all__ = ['RandomBrokenLinks']
 
@@ -57,12 +57,12 @@ class RandomBrokenLinks(BrokenLinks):
         -------
         :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast`
             The :py:class:`pyspark.RDD` or :py:class:`pyspark.Broadcast` dict which keys are the numbered edges that are broken,
-            depending on the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration.
+            depending on the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration.
 
         Raises
         ------
         ValueError
-            If the chosen 'quantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
+            If the chosen 'sparkquantum.dtqw.mesh.brokenLinks.generationMode' configuration is not valid.
 
         """
         probability = self._probability
@@ -75,14 +75,14 @@ class RandomBrokenLinks(BrokenLinks):
             lambda m: m[1] is True
         )
 
-        generation_mode = Utils.get_conf(
+        generation_mode = conf.get_conf(
             self._spark_context,
-            'quantum.dtqw.mesh.brokenLinks.generationMode')
+            'sparkquantum.dtqw.mesh.brokenLinks.generationMode')
 
-        if generation_mode == Utils.BrokenLinksGenerationModeRDD:
+        if generation_mode == constants.BrokenLinksGenerationModeRDD:
             return rdd
-        elif generation_mode == Utils.BrokenLinksGenerationModeBroadcast:
-            return Utils.broadcast(self._spark_context, rdd.collectAsMap())
+        elif generation_mode == constants.BrokenLinksGenerationModeBroadcast:
+            return util.broadcast(self._spark_context, rdd.collectAsMap())
         else:
             self._logger.error("invalid broken links generation mode")
             raise ValueError("invalid broken links generation mode")
