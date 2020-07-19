@@ -19,14 +19,14 @@ class RandomVariable:
         return self._name
 
     def __str__(self):
-        return 'Random Variable of {}'.format(self._name)
+        return "Random Variable with name '{}'".format(self._name)
 
 
 class ProbabilityDistribution(Base):
-    """Top-level class for probability distributions."""
+    """Class for probability distributions."""
 
     def __init__(self, rdd, shape, variables, num_elements=None):
-        """Build a top-level object for a probability distribution.
+        """Build a probability distribution object.
 
         Parameters
         ----------
