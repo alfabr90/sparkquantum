@@ -19,7 +19,7 @@ def is_scalar(obj):
         True if argument is a scalar, False otherwise.
 
     """
-    return isinstance(obj, (int, float, complex))
+    return not isinstance(obj, bool) and isinstance(obj, (int, float, complex))
 
 
 def is_shape(shape):
@@ -37,7 +37,7 @@ def is_shape(shape):
 
     """
     return (isinstance(shape, (list, tuple)) and
-            len(shape) == 2 and shape[0] >= 0 and shape[1] >= 0)
+            len(shape) == 2 and shape[0] > 0 and shape[1] > 0)
 
 
 def change_coordinate(rdd, old_coordinate, new_coordinate):
