@@ -2,7 +2,7 @@ import unittest
 
 from tests.base import Base
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
-from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
+from sparkquantum.dtqw.mesh.broken_links.random import RandomBrokenLinks
 
 # TODO: implement test_generate
 

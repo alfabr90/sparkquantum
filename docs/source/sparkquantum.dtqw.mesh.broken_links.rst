@@ -12,18 +12,18 @@ sparkquantum.dtqw.mesh.broken\_links.broken\_links module
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.dtqw.mesh.broken\_links.permanent\_broken\_links module
---------------------------------------------------------------------
+sparkquantum.dtqw.mesh.broken\_links.permanent module
+-----------------------------------------------------
 
-.. automodule:: sparkquantum.dtqw.mesh.broken_links.permanent_broken_links
+.. automodule:: sparkquantum.dtqw.mesh.broken_links.permanent
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparkquantum.dtqw.mesh.broken\_links.random\_broken\_links module
------------------------------------------------------------------
+sparkquantum.dtqw.mesh.broken\_links.random module
+--------------------------------------------------
 
-.. automodule:: sparkquantum.dtqw.mesh.broken_links.random_broken_links
+.. automodule:: sparkquantum.dtqw.mesh.broken_links.random
    :members:
    :undoc-members:
    :show-inheritance:

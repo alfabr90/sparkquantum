@@ -8,7 +8,7 @@ from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 from sparkquantum.dtqw.gauge.position import PositionGauge
 from sparkquantum.dtqw.interaction.collision_phase import CollisionPhaseInteraction
 from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
-from sparkquantum.dtqw.mesh.broken_links.random_broken_links import RandomBrokenLinks
+from sparkquantum.dtqw.mesh.broken_links.random import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.profiler import QuantumWalkProfiler
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk

@@ -2,7 +2,7 @@ import unittest
 
 from tests.base import Base
 from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
-from sparkquantum.dtqw.mesh.broken_links.permanent_broken_links import PermanentBrokenLinks
+from sparkquantum.dtqw.mesh.broken_links.permanent import PermanentBrokenLinks
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.mesh.mesh1d.segment import Segment
 
