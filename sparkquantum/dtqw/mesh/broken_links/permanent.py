@@ -1,6 +1,6 @@
 import random
 
-from sparkquantum import conf, util
+from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.mesh.broken_links.broken_links import BrokenLinks
 
 __all__ = ['PermanentBrokenLinks']
