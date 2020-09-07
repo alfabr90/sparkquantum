@@ -45,8 +45,7 @@ class TestLattice(Base):
                          int((self.mesh.size[0] - 1) / 2) * self.mesh.size[1] + int((self.mesh.size[1] - 1) / 2))
 
     def test_center_coordinates(self):
-        self.assertEqual(self.mesh.center_coordinates(),
-                         (int((self.mesh.size[0] - 1) / 2), int((self.mesh.size[1] - 1) / 2)))
+        self.assertEqual(self.mesh.center_coordinates(), (0, 0))
 
     # def test_axis(self):
     #     center_x, center_y = self.mesh.center_coordinates()
@@ -58,6 +57,63 @@ class TestLattice(Base):
     #     )
 
     #     self.assertEqual(self.mesh.axis(), meshgrid)
+
+    def test_has_site(self):
+        sites = self.mesh.size[0] * self.mesh.size[1]
+        self.assertTrue(self.mesh.has_site(0))
+        self.assertTrue(self.mesh.has_site(sites - 1))
+        self.assertFalse(self.mesh.has_site(sites))
+
+    def test_has_coordinates(self):
+        size_x = int((self.mesh.size[0] - 1) / 2)
+        size_y = int((self.mesh.size[1] - 1) / 2)
+        self.assertTrue(self.mesh.has_coordinates((0, 0)))
+        self.assertTrue(self.mesh.has_coordinates((size_x, size_y)))
+        self.assertTrue(self.mesh.has_coordinates((size_x, -size_y)))
+        self.assertTrue(self.mesh.has_coordinates((-size_x, size_y)))
+        self.assertTrue(self.mesh.has_coordinates((-size_x, -size_y)))
+        self.assertFalse(self.mesh.has_coordinates((size_x, size_y + 1)))
+        self.assertFalse(self.mesh.has_coordinates((size_x + 1, size_y)))
+        self.assertFalse(self.mesh.has_coordinates((size_x + 1, size_y + 1)))
+        self.assertFalse(self.mesh.has_coordinates((size_x, -(size_y + 1))))
+        self.assertFalse(self.mesh.has_coordinates((-(size_x + 1), size_y)))
+        self.assertFalse(
+            self.mesh.has_coordinates((-(size_x + 1), -(size_y + 1))))
+
+    def test_to_site(self):
+        coord_x = int((self.mesh.size[0] - 1) / 2)
+        coord_y = int((self.mesh.size[1] - 1) / 2)
+        size = self.mesh.size[0] * self.mesh.size[1]
+
+        self.assertEqual(self.mesh.to_site((-coord_x, -coord_y)), 0)
+        self.assertEqual(self.mesh.to_site((-coord_x, 0)), coord_y)
+        self.assertEqual(
+            self.mesh.to_site(
+                (0, -coord_y)), int(size - 1) / 2 - coord_y)
+        self.assertEqual(
+            self.mesh.to_site(
+                (0, 0)), int(size - 1) / 2)
+        self.assertEqual(
+            self.mesh.to_site((0, coord_y)), int(size - 1) / 2 + coord_y)
+        self.assertEqual(self.mesh.to_site((coord_x, 0)), size - 1 - coord_y)
+        self.assertEqual(self.mesh.to_site((coord_x, coord_y)), size - 1)
+
+    def test_to_coordinates(self):
+        coord_x = int((self.mesh.size[0] - 1) / 2)
+        coord_y = int((self.mesh.size[1] - 1) / 2)
+        size = self.mesh.size[0] * self.mesh.size[1]
+
+        self.assertEqual(self.mesh.to_coordinates(0), (-coord_x, -coord_y))
+        self.assertEqual(self.mesh.to_coordinates(coord_y), (-coord_x, 0))
+        self.assertEqual(self.mesh.to_coordinates(
+            int(size - 1) / 2 - coord_y), (0, -coord_y))
+        self.assertEqual(self.mesh.to_coordinates(int(size - 1) / 2), (0, 0))
+        self.assertEqual(self.mesh.to_coordinates(
+            int(size - 1) / 2 + coord_y), (0, coord_y))
+        self.assertEqual(
+            self.mesh.to_coordinates(size - 1 - coord_y), (coord_x, 0))
+        self.assertEqual(
+            self.mesh.to_coordinates(size - 1), (coord_x, coord_y))
 
     def test_check_steps(self):
         self.assertFalse(self.mesh.check_steps(-1))

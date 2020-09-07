@@ -12,7 +12,7 @@ from sparkquantum.dtqw.mesh.mesh1d.line import Line
 class TestLine(Base):
     def setUp(self):
         super().setUp()
-        self.size = 10
+        self.size = (10, )
         self.steps = 10
         self.mesh = Line(self.size)
         self.mesh_bl = Line(self.size,
@@ -23,12 +23,12 @@ class TestLine(Base):
         self.assertTrue(is_mesh(self.mesh_bl))
 
     def test_size(self):
-        self.assertEqual(self.mesh.size, 2 * self.size + 1)
+        self.assertEqual(self.mesh.size, (2 * self.size[0] + 1, ))
 
     def test_num_edges(self):
-        self.assertEqual(self.mesh.num_edges, self.mesh.size)
+        self.assertEqual(self.mesh.num_edges, self.mesh.size[0])
 
-    def test_mesh_size(self):
+    def test_coin_size(self):
         self.assertEqual(self.mesh.coin_size, 2)
 
     def test_dimension(self):
@@ -38,16 +38,43 @@ class TestLine(Base):
         self.assertTrue(is_broken_links(self.mesh_bl.broken_links))
 
     def test_center(self):
-        self.assertEqual(self.mesh.center(), int((self.mesh.size - 1) / 2))
+        self.assertEqual(self.mesh.center(), int((self.mesh.size[0] - 1) / 2))
 
     def test_center_coordinates(self):
-        self.assertEqual(self.mesh.center_coordinates(),
-                         (int((self.mesh.size - 1) / 2), ))
+        self.assertEqual(self.mesh.center_coordinates(), (0, ))
 
     def test_axis(self):
         self.assertEqual(self.mesh.axis(),
                          range(- self.mesh.center(),
                                self.mesh.center() + 1))
+
+    def test_has_site(self):
+        self.assertTrue(self.mesh.has_site(0))
+        self.assertTrue(self.mesh.has_site(self.mesh.size[0] - 1))
+        self.assertFalse(self.mesh.has_site(self.mesh.size[0]))
+
+    def test_has_coordinates(self):
+        coord = int((self.mesh.size[0] - 1) / 2)
+        self.assertTrue(self.mesh.has_coordinates((0, )))
+        self.assertTrue(self.mesh.has_coordinates((coord, )))
+        self.assertTrue(self.mesh.has_coordinates((-coord, )))
+        self.assertFalse(self.mesh.has_coordinates((coord + 1, )))
+        self.assertFalse(self.mesh.has_coordinates((-(coord + 1), )))
+
+    def test_to_site(self):
+        self.assertEqual(self.mesh.to_site((-self.size[0], )), 0)
+        self.assertEqual(
+            self.mesh.to_site((0, )), int((self.mesh.size[0] - 1) / 2))
+        self.assertEqual(
+            self.mesh.to_site((self.size[0], )), self.mesh.size[0] - 1)
+
+    def test_to_coordinates(self):
+        self.assertEqual(
+            self.mesh.to_coordinates(0), (-self.size[0], ))
+        self.assertEqual(self.mesh.to_coordinates(
+            int((self.mesh.size[0] - 1) / 2)), (0, ))
+        self.assertEqual(
+            self.mesh.to_coordinates(self.mesh.size[0] - 1), (self.size[0], ))
 
     def test_check_steps(self):
         self.assertFalse(self.mesh.check_steps(-1))
