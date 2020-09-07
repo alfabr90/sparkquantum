@@ -197,7 +197,7 @@ class State(Matrix):
             if self._mesh.dimension == 1:
                 ndim = self._mesh.dimension
                 coin_size = self._mesh.coin_size
-                size = self._mesh.size
+                size = self._mesh.size[0]
                 num_particles = self._num_particles
                 size_per_coin = int(coin_size / ndim)
                 cs_size = size_per_coin * size
@@ -470,7 +470,7 @@ class State(Matrix):
         coin_size = coin.size
 
         if mesh.dimension == 1:
-            mesh_size = mesh.size
+            mesh_size = mesh.size[0]
         elif mesh.dimension == 2:
             mesh_size = mesh.size[0] * mesh.size[1]
         else:

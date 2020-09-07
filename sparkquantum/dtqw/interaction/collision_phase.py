@@ -73,7 +73,7 @@ class CollisionPhaseInteraction(Interaction):
         if self._mesh.dimension == 1:
             ndim = self._mesh.dimension
             coin_size = self._mesh.coin_size
-            size = self._mesh.size
+            size = self._mesh.size[0]
             cs_size = int(coin_size / ndim) * size
 
             rdd_range = cs_size ** num_particles

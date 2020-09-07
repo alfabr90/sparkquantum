@@ -29,14 +29,14 @@ walk_path = "{}/{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = constants.StateRepresentationFormatCoinPosition
-# representationFormat = constants.StateRepresentationFormatPositionCoin
+representation_format = constants.StateRepresentationFormatCoinPosition
+# representation_format = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
     'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'sparkquantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representation_format
 ).set(
     'sparkquantum.logging.enabled', 'True'
 ).set(
@@ -83,7 +83,7 @@ initial_state = State.create(
     mesh,
     positions,
     amplitudes,
-    representationFormat=representationFormat)
+    representationFormat=representation_format)
 
 # Instantiating the walk
 dtqw = DiscreteTimeQuantumWalk(initial_state)

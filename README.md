@@ -116,9 +116,9 @@ size = steps = 30
 
 # Choosing a coin and a mesh for the walk
 coin = Hadamard()
-mesh = Line(size)
+mesh = Line([size])
 
-mesh_size = mesh.size
+mesh_size = mesh.size[0]
 
 # Center of the mesh
 # Notice that we set a list with only one element

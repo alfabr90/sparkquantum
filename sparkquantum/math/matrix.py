@@ -888,7 +888,7 @@ class Matrix(Base):
         if not isinstance(size, int):
             raise TypeError("int expected, not {}".format(type(size)))
 
-        if not isinstance(value, (int, float, complex)):
+        if not mathutil.is_scalar(value):
             raise TypeError(
                 "int, float or complex expected, not {}".format(type(value)))
 

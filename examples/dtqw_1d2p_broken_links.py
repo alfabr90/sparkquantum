@@ -12,7 +12,6 @@ from sparkquantum.dtqw.mesh.mesh1d.line import Line
 from sparkquantum.dtqw.mesh.broken_links.random import RandomBrokenLinks
 from sparkquantum.dtqw.state import State
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-
 '''
     DTQW 1D - 2 particles
 '''
@@ -35,14 +34,14 @@ walk_path = "{}/{}_{}_{}_{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = constants.StateRepresentationFormatCoinPosition
-# representationFormat = constants.StateRepresentationFormatPositionCoin
+representation_format = constants.StateRepresentationFormatCoinPosition
+# representation_format = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
     'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'sparkquantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representation_format
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
@@ -52,10 +51,10 @@ broken_links = RandomBrokenLinks(bl_prob)
 
 # Choosing a coin and a mesh for the walk
 coin = Hadamard()
-mesh = Line(size, broken_links=broken_links)
+mesh = Line([size], broken_links=broken_links)
 
 coin_size = coin.size
-mesh_size = mesh.size
+mesh_size = mesh.size[0]
 
 interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
 
@@ -92,12 +91,12 @@ if not entangled:
         positions,
         amplitudes,
         interaction=interaction,
-        representationFormat=representationFormat)
+        representationFormat=representation_format)
 else:
     # Center of the mesh
     position = mesh.center()
 
-    if representationFormat == constants.StateRepresentationFormatCoinPosition:
+    if representation_format == constants.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
         state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
                  [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, -1.0 / math.sqrt(2)]]
@@ -105,7 +104,7 @@ else:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> + |0>|x1>|1>|x2>) / sqrt(2)
         # state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
         #          [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, 1.0 / math.sqrt(2)]]
-    elif representationFormat == constants.StateRepresentationFormatPositionCoin:
+    elif representation_format == constants.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
         state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1, 1.0 / math.sqrt(2)],
                  [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, 1, -1.0 / math.sqrt(2)]]

@@ -57,6 +57,43 @@ class TestTorus(Base):
 
     #     self.assertEqual(self.mesh.axis(), meshgrid)
 
+    def test_has_site(self):
+        sites = self.mesh.size[0] * self.mesh.size[1]
+        self.assertTrue(self.mesh.has_site(0))
+        self.assertTrue(self.mesh.has_site(sites - 1))
+        self.assertFalse(self.mesh.has_site(sites))
+
+    def test_has_coordinates(self):
+        size_x, size_y = self.mesh.size
+        self.assertTrue(self.mesh.has_coordinates((0, 0)))
+        self.assertTrue(self.mesh.has_coordinates((size_x - 1, size_y - 1)))
+        self.assertFalse(self.mesh.has_coordinates((size_x - 1, size_y)))
+        self.assertFalse(self.mesh.has_coordinates((size_x + 1, size_y - 1)))
+        self.assertFalse(self.mesh.has_coordinates((size_x, size_y)))
+
+    def test_to_site(self):
+        self.assertEqual(self.mesh.to_site((0, 0)), 0)
+        self.assertEqual(
+            self.mesh.to_site(
+                (0, self.mesh.size[1] - 1)), self.mesh.size[1] - 1)
+        self.assertEqual(
+            self.mesh.to_site(
+                (self.mesh.size[0] - 1, 0)), (self.mesh.size[0] - 1) * self.mesh.size[1])
+        self.assertEqual(
+            self.mesh.to_site(
+                (self.mesh.size[0] - 1, self.mesh.size[1] - 1)), self.mesh.size[0] * self.mesh.size[1] - 1)
+
+    def test_to_coordinates(self):
+        size = self.mesh.size[0] * self.mesh.size[1]
+        self.assertEqual(self.mesh.to_coordinates(0), (0, 0))
+        self.assertEqual(
+            self.mesh.to_coordinates(self.mesh.size[1] - 1), (0, self.mesh.size[1] - 1))
+        self.assertEqual(
+            self.mesh.to_coordinates(
+                (self.mesh.size[0] - 1) * self.mesh.size[1]), (self.mesh.size[0] - 1, 0))
+        self.assertEqual(
+            self.mesh.to_coordinates(size - 1), (self.mesh.size[0] - 1, self.mesh.size[1] - 1))
+
     def test_check_steps(self):
         self.assertFalse(self.mesh.check_steps(-1))
         self.assertTrue(self.mesh.check_steps(self.steps))

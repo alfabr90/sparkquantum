@@ -17,7 +17,7 @@ class Cycle(Mesh1D):
 
         Parameters
         ----------
-        size : int
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
@@ -53,7 +53,7 @@ class Cycle(Mesh1D):
         """
         coin_size = self._coin_size
         size_per_coin = int(coin_size / self._dimension)
-        size = self._size
+        size = self._size[0]
         num_edges = self._num_edges
         shape = (coin_size * size, coin_size * size)
         broken_links = None

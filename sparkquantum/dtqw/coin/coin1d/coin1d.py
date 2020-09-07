@@ -58,12 +58,9 @@ class Coin1D(Coin):
             raise ValueError("non correspondent coin and mesh dimensions")
 
         coin_size = self._size
-        mesh_size = mesh.size
-        shape = (
-            self._data.shape[0] *
-            mesh_size,
-            self._data.shape[1] *
-            mesh_size)
+        mesh_size = mesh.size[0]
+        shape = (self._data.shape[0] * mesh_size,
+                 self._data.shape[1] * mesh_size)
         data = util.broadcast(self._spark_context, self._data)
 
         num_elements = self._size ** 2 * mesh_size

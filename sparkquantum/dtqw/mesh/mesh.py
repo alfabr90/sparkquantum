@@ -16,7 +16,7 @@ class Mesh:
 
         Parameters
         ----------
-        size : int or tuple
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
@@ -33,14 +33,13 @@ class Mesh:
         self._logger = util.get_logger(
             self._spark_context, self.__class__.__name__)
 
-        if broken_links is not None:
-            if not is_broken_links(broken_links):
-                self._logger.error(
-                    "'BrokenLinks' instance expected, not '{}'".format(
-                        type(broken_links)))
-                raise TypeError(
-                    "'BrokenLinks' instance expected, not '{}'".format(
-                        type(broken_links)))
+        if broken_links is not None and not is_broken_links(broken_links):
+            self._logger.error(
+                "'BrokenLinks' instance expected, not '{}'".format(
+                    type(broken_links)))
+            raise TypeError(
+                "'BrokenLinks' instance expected, not '{}'".format(
+                    type(broken_links)))
 
     @property
     def spark_context(self):
@@ -140,6 +139,70 @@ class Mesh:
         """
         raise NotImplementedError
 
+    def has_site(self, site):
+        """Indicate whether this mesh comprises a site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Raises
+        -------
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
+
+        """
+        raise NotImplementedError
+
+    def has_coordinates(self, coordinate):
+        """Indicate whether the coordinates are inside this mesh.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Raises
+        -------
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
+
+        """
+        raise NotImplementedError
+
+    def to_site(self, coordinate):
+        """Get the site number from the correspondent coordinates.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Raises
+        -------
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
+
+        """
+        raise NotImplementedError
+
+    def to_coordinates(self, site):
+        """Get the coordinates from the correspondent site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Raises
+        -------
+        NotImplementedError
+            This method must not be called from this class, because the successor classes should implement it.
+
+        """
+        raise NotImplementedError
+
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
 
@@ -154,7 +217,7 @@ class Mesh:
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        return 0 <= steps
+        return steps >= 0
 
     def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Build the mesh operator.

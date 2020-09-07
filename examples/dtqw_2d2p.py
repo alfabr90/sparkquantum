@@ -32,14 +32,14 @@ walk_path = "{}/{}_{}_{}_{}_{}_{}/".format(
 
 util.create_dir(walk_path)
 
-representationFormat = constants.StateRepresentationFormatCoinPosition
-# representationFormat = constants.StateRepresentationFormatPositionCoin
+representation_format = constants.StateRepresentationFormatCoinPosition
+# representation_format = constants.StateRepresentationFormatPositionCoin
 
 # Initiallizing the SparkContext with some options
 sparkConf = SparkConf().set(
     'sparkquantum.cluster.totalCores', num_cores
 ).set(
-    'sparkquantum.dtqw.state.representationFormat', representationFormat
+    'sparkquantum.dtqw.state.representationFormat', representation_format
 )
 sparkContext = SparkContext(conf=sparkConf)
 sparkContext.setLogLevel('ERROR')
@@ -102,16 +102,16 @@ if not entangled:
         positions,
         amplitudes,
         interaction=interaction,
-        representationFormat=representationFormat)
+        representationFormat=representation_format)
 else:
     # Center of the mesh
     position = mesh.center()
 
-    if representationFormat == constants.StateRepresentationFormatCoinPosition:
+    if representation_format == constants.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
         state = [[(3 * mesh_size + position) * coin_size * mesh_size + (0 * mesh_size + position), 1, 1.0 / math.sqrt(2)],
                  [(0 * mesh_size + position) * coin_size * mesh_size + (3 * mesh_size + position), 1, -1.0 / math.sqrt(2)]]
-    elif representationFormat == constants.StateRepresentationFormatPositionCoin:
+    elif representation_format == constants.StateRepresentationFormatPositionCoin:
         # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|x1,y1>|1,1>|x2,y2>|0,0> - |x1,y1>|0,0>|x2,y2>|1,1>) / sqrt(2)
         state = [[(position * coin_size + 3) * mesh_size * coin_size + (position * coin_size + 0), 1, 1.0 / math.sqrt(2)],
                  [(position * coin_size + 0) * mesh_size * coin_size + (position * coin_size + 3), 1, -1.0 / math.sqrt(2)]]

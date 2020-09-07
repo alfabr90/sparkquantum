@@ -17,7 +17,7 @@ class Line(Mesh1D):
 
         Parameters
         ----------
-        size : int
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
@@ -38,7 +38,18 @@ class Line(Mesh1D):
 
     def _define_size(self, size):
         self._validate(size)
-        return 2 * size + 1
+        return (2 * size[0] + 1, )
+
+    def center_coordinates(self):
+        """Return the coordinates of the center site of this mesh.
+
+        Returns
+        -------
+        tuple
+            The coordinates of the center site.
+
+        """
+        return (0, )
 
     def axis(self):
         """Build a range with the axis of this mesh.
@@ -50,6 +61,75 @@ class Line(Mesh1D):
 
         """
         return range(- self.center(), self.center() + 1)
+
+    def has_coordinates(self, coordinate):
+        """Indicate whether the coordinates are inside this mesh.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        bool
+            True if this mesh comprises the coordinates, False otherwise.
+
+        """
+        return (coordinate[0] >= -self.center()
+                and coordinate[0] <= self.center())
+
+    def to_site(self, coordinate):
+        """Get the site number from the correspondent coordinates.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        int
+            The site number.
+
+        Raises
+        ------
+        ValueError
+            If the coordinates are out of the mesh boundaries.
+
+        """
+        site = coordinate[0] + self.center()
+
+        if site < 0 or site > self._size[0]:
+            self._logger.error("coordinates out of mesh boundaries")
+            raise ValueError("coordinates out of mesh boundaries")
+
+        return site
+
+    def to_coordinates(self, site):
+        """Get the coordinates from the correspondent site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Raises
+        -------
+        tuple or list
+            The coordinates.
+
+        Raises
+        ------
+        ValueError
+            If the site number is out of the mesh boundaries.
+
+        """
+        if site < 0 or site >= self._size[0]:
+            self._logger.error("site number out of mesh boundaries")
+            raise ValueError("site number out of mesh boundaries")
+
+        return (site - self.center(), )
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -84,7 +164,7 @@ class Line(Mesh1D):
         """
         coin_size = self._coin_size
         size_per_coin = int(coin_size / self._dimension)
-        size = self._size
+        size = self._size[0]
         num_edges = self._num_edges
         shape = (coin_size * size, coin_size * size)
         broken_links = None
