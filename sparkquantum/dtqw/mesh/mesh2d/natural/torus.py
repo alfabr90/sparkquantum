@@ -17,7 +17,7 @@ class Torus(Natural):
 
         Parameters
         ----------
-        size : tuple
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.

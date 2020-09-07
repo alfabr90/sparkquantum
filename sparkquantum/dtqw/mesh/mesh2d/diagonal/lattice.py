@@ -18,7 +18,7 @@ class Lattice(Diagonal):
 
         Parameters
         ----------
-        size : tuple
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
@@ -41,6 +41,17 @@ class Lattice(Diagonal):
         """
         return 'Diagonal Lattice {}'.format(self.__strcomp__())
 
+    def center_coordinates(self):
+        """Return the coordinates of the center site of this mesh.
+
+        Returns
+        -------
+        tuple or list
+            The coordinates of the center site.
+
+        """
+        return (0, 0)
+
     def axis(self):
         """Build a meshgrid with the sizes of this mesh.
 
@@ -50,13 +61,95 @@ class Lattice(Diagonal):
             The meshgrid with the sizes of this mesh.
 
         """
-        center_x, center_y = self.center_coordinates()
+        center_x = int((self._size[0] - 1) / 2)
+        center_y = int((self._size[1] - 1) / 2)
 
         return np.meshgrid(
             range(- center_x, center_x + 1),
             range(- center_y, center_y + 1),
             indexing='ij'
         )
+
+    def has_coordinates(self, coordinate):
+        """Indicate whether the coordinates are inside this mesh.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        bool
+            True if this mesh comprises the coordinates, False otherwise.
+
+        """
+        center_x = int((self._size[0] - 1) / 2)
+        center_y = int((self._size[1] - 1) / 2)
+
+        return (coordinate[0] >= -center_x and coordinate[0] <= center_x and
+                coordinate[1] >= -center_y and coordinate[1] <= center_y)
+
+    def to_site(self, coordinate):
+        """Get the site number from the correspondent coordinates.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        int
+            The site number.
+
+        Raises
+        ------
+        ValueError
+            If the coordinates are out of the mesh boundaries.
+
+        """
+        center_x = int((self._size[0] - 1) / 2)
+        center_y = int((self._size[1] - 1) / 2)
+
+        size_x = coordinate[0] + center_x
+        size_y = coordinate[1] + center_y
+
+        if (size_x < 0 or size_x > self._size[0]
+                or size_y < 0 or size_y > self._size[1]):
+            self._logger.error("coordinates out of mesh boundaries")
+            raise ValueError("coordinates out of mesh boundaries")
+
+        return size_x * self._size[1] + size_y
+
+    def to_coordinates(self, site):
+        """Get the coordinates from the correspondent site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Raises
+        -------
+        tuple or list
+            The coordinates.
+
+        Raises
+        ------
+        ValueError
+            If the site number is out of the mesh boundaries.
+
+        """
+        if site < 0 or site >= self._size[0] * self._size[1]:
+            self._logger.error("site number out of mesh boundaries")
+            raise ValueError("site number out of mesh boundaries")
+
+        center_x = int((self._size[0] - 1) / 2)
+        center_y = int((self._size[1] - 1) / 2)
+
+        return (int(site / self._size[1]) - center_x,
+                site % self._size[1] - center_y)
 
     def check_steps(self, steps):
         """Check if the number of steps is valid for the size of the mesh.
@@ -72,7 +165,8 @@ class Lattice(Diagonal):
             True if this number of steps is valid for the size of the mesh, False otherwise.
 
         """
-        center_x, center_y = self.center_coordinates()
+        center_x = int((self._size[0] - 1) / 2)
+        center_y = int((self._size[1] - 1) / 2)
 
         return super().check_steps(steps) and steps <= center_x and steps <= center_y
 

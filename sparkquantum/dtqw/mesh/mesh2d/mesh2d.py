@@ -17,7 +17,7 @@ class Mesh2D(Mesh):
 
         Parameters
         ----------
-        size : tuple
+        size : tuple or list of int
             Size of the mesh.
         broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
             A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
@@ -29,11 +29,8 @@ class Mesh2D(Mesh):
         self._dimension = 2
 
     def _validate(self, size):
-        if isinstance(size, (list, tuple)):
-            if len(size) != 2:
-                self._logger.error("invalid size")
-                raise ValueError("invalid size")
-        else:
+        if (not isinstance(size, (list, tuple)) or len(size) != 2
+                or size[0] <= 0 or size[1] <= 0):
             self._logger.error("invalid size")
             raise ValueError("invalid size")
 
@@ -89,3 +86,96 @@ class Mesh2D(Mesh):
             range(self._size[1]),
             indexing='ij'
         )
+
+    def has_site(self, site):
+        """Indicate whether this mesh comprises a site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Returns
+        -------
+        bool
+            True if this mesh comprises the site, False otherwise.
+
+        Raises
+        ------
+        ValueError
+            If `site` is invalid, i.e., has a negative value.
+
+        """
+        if site < 0:
+            self._logger.error("invalid site number")
+            raise ValueError("invalid site number")
+
+        return site < (self._size[0] * self._size[1])
+
+    def has_coordinates(self, coordinate):
+        """Indicate whether the coordinates are inside this mesh.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        bool
+            True if this mesh comprises the coordinates, False otherwise.
+
+        """
+        return (coordinate[0] >= 0 and coordinate[0] < self._size[0] and
+                coordinate[1] >= 0 and coordinate[1] < self._size[1])
+
+    def to_site(self, coordinate):
+        """Get the site number from the correspondent coordinates.
+
+        Parameters
+        ----------
+        coordinate : tuple or list
+            The coordinates.
+
+        Returns
+        -------
+        int
+            The site number.
+
+        Raises
+        ------
+        ValueError
+            If the coordinates are out of the mesh boundaries.
+
+        """
+        if (coordinate[0] < 0 or coordinate[0] >= self._size[0]
+                or coordinate[1] < 0 or coordinate[1] >= self._size[1]):
+            self._logger.error("coordinates out of mesh boundaries")
+            raise ValueError("coordinates out of mesh boundaries")
+
+        return coordinate[0] * self._size[1] + coordinate[1]
+
+    def to_coordinates(self, site):
+        """Get the coordinates from the correspondent site.
+
+        Parameters
+        ----------
+        site : int
+            Site number.
+
+        Raises
+        -------
+        tuple or list
+            The coordinates.
+
+        Raises
+        ------
+        ValueError
+            If the site number is out of the mesh boundaries.
+
+        """
+        if site < 0 or site >= self._size[0] * self._size[1]:
+            self._logger.error("site number out of mesh boundaries")
+            raise ValueError("site number out of mesh boundaries")
+
+        return (int(site / self._size[1]), site % self._size[1])
