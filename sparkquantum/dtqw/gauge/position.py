@@ -53,7 +53,7 @@ class PositionGauge(Gauge):
         if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
-            size = state.mesh.size
+            size = state.mesh.size[0]
             num_particles = state.num_particles
             ind = ndim * num_particles
             expected_elements = size
@@ -261,7 +261,7 @@ class PositionGauge(Gauge):
 
         if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
-            size = state.mesh.size
+            size = state.mesh.size[0]
             num_particles = state.num_particles
             ind = ndim * num_particles
             expected_elements = size
@@ -379,7 +379,7 @@ class PositionGauge(Gauge):
         if state.mesh.dimension == 1:
             ndim = state.mesh.dimension
             coin_size = state.mesh.coin_size
-            size = state.mesh.size
+            size = state.mesh.size[0]
             num_particles = state.num_particles
             expected_elements = size
             size_per_coin = int(coin_size / ndim)

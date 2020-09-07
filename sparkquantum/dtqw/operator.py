@@ -142,7 +142,7 @@ class Operator(Matrix):
         elif is_state(other):
             rdd, shape, data_type, num_elements = self._multiply_matrix(other)
 
-            return State(rdd, shape, other.mesh, other.particles,
+            return State(rdd, shape, other.coin, other.mesh, other.num_particles,
                          interaction=other.interaction, data_type=data_type, num_elements=num_elements)
         else:
             self._logger.error(
