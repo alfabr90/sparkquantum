@@ -61,7 +61,6 @@ sparkquantum.util module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 

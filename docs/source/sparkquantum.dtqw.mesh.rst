@@ -7,9 +7,8 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   sparkquantum.dtqw.mesh.broken_links
-   sparkquantum.dtqw.mesh.mesh1d
-   sparkquantum.dtqw.mesh.mesh2d
+   sparkquantum.dtqw.mesh.grid
+   sparkquantum.dtqw.mesh.percolation
 
 Submodules
 ----------
@@ -21,7 +20,6 @@ sparkquantum.dtqw.mesh.mesh module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------
