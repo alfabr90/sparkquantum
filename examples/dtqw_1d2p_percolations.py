@@ -1,6 +1,5 @@
 import math
 import cmath
-import logging
 
 from pyspark import SparkContext, SparkConf
 
@@ -9,6 +8,7 @@ from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.interaction.collision.phase import PhaseChange
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.mesh.percolation.random import Random
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
@@ -24,33 +24,27 @@ entangled = True
 steps = 30
 size = 2 * steps + 1
 
+# The mesh will have percolations with the following likelihood
+probability = 0.3
+
 # The particles will change their phase when colliding
 phase = 1.0 * cmath.pi
 
 # Choosing a directory to store plots and logs
-path = "{}/{}_{}_{}_{}_{}_{}_{}/".format(
-    base_path, 'hadamard', 'line', size, steps, particles, phase,
+path = "{}/{}_{}_{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'hadamard', 'line', size, probability, steps, particles, phase,
     'entangled' if entangled else 'not-entangled'
 )
 util.create_dir(path)
 
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set(
-    'sparkquantum.cluster.totalCores', cores
-).set(
-    'sparkquantum.logging.enabled', 'True'
-).set(
-    'sparkquantum.logging.level', logging.DEBUG
-).set(
-    'sparkquantum.logging.filename', path + 'log.txt'
-).set(
-    'sparkquantum.profiling.enabled', 'True'
-)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
-# Choosing a mesh and instantiating the interacting walk with it
-mesh = Line((size, ))
+# Choosing a mesh with a percolations generator and
+# instantiating the interacting walk with it
+mesh = Line((size, ), percolation=Random(probability))
 dtqw = DiscreteTimeQuantumWalk(
     mesh,
     interaction=PhaseChange(phase),
@@ -129,10 +123,6 @@ for p in range(particles):
               'Probability']
     marginal[p].plot(path + 'marginal_1d2p_particle{}'.format(p + 1),
                      labels=labels, dpi=300)
-
-# Exporting the profiling data
-dtqw.profiler.export(path)
-position.profiler.export(path)
 
 # Destroying the RDD and stopping the SparkContext
 state.destroy()

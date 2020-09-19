@@ -3,101 +3,74 @@ import math
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
-from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
-from sparkquantum.dtqw.gauge.position import PositionGauge
-from sparkquantum.dtqw.mesh.mesh2d.diagonal.lattice import Lattice
-from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
+from sparkquantum.dtqw.mesh.grid.twodim.diagonal.lattice import Lattice
+from sparkquantum.dtqw.observable.position import Position
+from sparkquantum.dtqw.particle import Particle
 
-'''
-    DTQW 2D - 1 particle
-'''
-base_path = './output/'
-num_cores = 4
+base_path = './output'
+cores = 4
 
-num_particles = 1
+particles = 1
+
+# In this example, the walk will last 30 steps.
+# As we chose a `Lattice` mesh, its size must be
+# 2 * steps + 1 sites
 steps = 30
-size = 30
+size = 2 * steps + 1
 
 # Choosing a directory to store plots and logs
-walk_path = "{}/{}_{}_{}_{}/".format(
-    base_path, 'DiagonalLattice', 2 * size + 1, steps, num_particles
+path = "{}/{}_{}_{}_{}_{}/".format(
+    base_path, 'hadamard', 'diagonal-lattice', size, steps, particles
 )
-
-util.create_dir(walk_path)
-
-representation_format = constants.StateRepresentationFormatCoinPosition
-# representation_format = constants.StateRepresentationFormatPositionCoin
+util.create_dir(path)
 
 # Initiallizing the SparkContext with some options
-sparkConf = SparkConf().set(
-    'sparkquantum.cluster.totalCores', num_cores
-).set(
-    'sparkquantum.dtqw.state.representationFormat', representation_format
-)
-sparkContext = SparkContext(conf=sparkConf)
-sparkContext.setLogLevel('ERROR')
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
+sc = SparkContext(conf=conf)
+sc.setLogLevel('ERROR')
 
-# Choosing a coin and a mesh for the walk
-coin = Hadamard()
+# Choosing a mesh and instantiating the walk with it
 mesh = Lattice((size, size))
+dtqw = DiscreteTimeQuantumWalk(mesh)
 
-mesh_size = mesh.size[0] * mesh.size[1]
+# To add particles to the walk, a coin must be instantiated with
+# the correspondent dimension of the chosen mesh
+coin = Hadamard(mesh.ndim)
 
-# Center of the mesh
-positions = [mesh.center()]
+# Instantiating a particle and giving it an identifier/name
+particle = Particle(coin, identifier='Electron')
 
-# Options of initial states
-# |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> - i|1,0>|x,y> + |1,1>|x,y>) / 2
-amplitudes = [[(1.0 + 0.0j) / 2,
-               (0.0 + 1.0j) / 2,
-               (0.0 - 1.0j) / 2,
-               (1.0 + 0.0j) / 2]]
+# Options of initial coin states for the particle
+# |i,j> --> (|0,0> + i|0,1> - i|1,0> + |1,1>) / 2
+cstate = (1 / 2, 1j / 2, -1j / 2, 1 / 2)
 
-# |i,j>|x,y> --> (|0,0>|x,y> + i|0,1>|x,y> + i|1,0>|x,y> - |1,1>|x,y>) / 2
-# amplitudes = [[(1.0 + 0.0j) / 2,
-#                (0.0 + 1.0j) / 2,
-#                (0.0 + 1.0j) / 2,
-#                (-1.0 - 0.0j) / 2]]
+# |i,j> --> (|0,0> + i|0,1> + i|1,0> - |1,1>) / 2
+# cstate = (1 / 2, 1j / 2, 1j / 2, -1 / 2)
 
-# |i,j>|x,y> --> (|0,0>|x,y> - |0,1>|x,y> - |1,0>|x,y> + |1,1>|x,y>) / 2
-# amplitudes = [[(1.0 + 0.0j) / 2,
-#                (-1.0 - 0.0j) / 2,
-#                (-1.0 - 0.0j) / 2,
-#                (1.0 + 0.0j) / 2]]
+# |i,j> --> (|0,0> - |0,1> - |1,0> + |1,1>) / 2
+# cstate = (1 / 2, -1 / 2, -1 / 2, 1 / 2)
 
-# Building the initial state
-initial_state = State.create(
-    coin,
-    mesh,
-    positions,
-    amplitudes,
-    representationFormat=representation_format)
-
-# Instantiating the walk
-dtqw = DiscreteTimeQuantumWalk(initial_state)
+# Adding the particle to the walk with its coin state and
+# position corresponding to the center site of the mesh
+dtqw.add_particle(particle, cstate, mesh.center())
 
 # Performing the walk
-final_state = dtqw.walk(steps)
+state = dtqw.walk(steps)
 
-# Measuring the state of the system and plotting its probability distribution
-gauge = PositionGauge()
+# Measuring the state of the system and plotting its distribution
+position = Position()
 
-joint = gauge.measure(final_state)
+joint = position.measure(state)
 
-axis = mesh.axis()
-data = joint.ndarray()
-labels = [v.name for v in joint.variables]
-
-plot.surface(axis, data, walk_path + 'joint_2d1p',
-             labels=labels + ['Probability'], dpi=300)
-plot.contour(axis, data, walk_path + 'joint_2d1p_contour',
-             labels=labels, dpi=300)
+labels = ["{}'s position x".format(particle.identifier),
+          "{}'s position y".format(particle.identifier),
+          'Probability']
+joint.plot(path + 'joint_2d1p', labels=labels, dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
-final_state.destroy()
-dtqw.destroy_operators()
-initial_state.destroy()
+state.destroy()
+dtqw.destroy()
 joint.destroy()
-sparkContext.stop()
+sc.stop()

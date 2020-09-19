@@ -6,6 +6,7 @@ from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.mesh.percolation.random import Random
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
@@ -20,9 +21,12 @@ particles = 1
 steps = 30
 size = 2 * steps + 1
 
+# The mesh will have percolations with the following likelihood
+probability = 0.3
+
 # Choosing a directory to store plots and logs
-path = "{}/{}_{}_{}_{}_{}/".format(
-    base_path, 'hadamard', 'line', size, steps, particles
+path = "{}/{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'hadamard', 'line', size, probability, steps, particles
 )
 util.create_dir(path)
 
@@ -31,8 +35,9 @@ conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
-# Choosing a mesh and instantiating the walk with it
-mesh = Line((size, ))
+# Choosing a mesh with a percolations generator and
+# instantiating the walk with it
+mesh = Line((size, ), percolation=Random(probability))
 dtqw = DiscreteTimeQuantumWalk(mesh)
 
 # To add particles to the walk, a coin must be instantiated with

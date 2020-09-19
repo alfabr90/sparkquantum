@@ -24,12 +24,15 @@ entangled = True
 steps = 5
 size = 2 * steps + 1
 
+# The mesh will have percolations with the following likelihood
+probability = 0.3
+
 # The particles will change their phase when colliding
 phase = 1.0 * cmath.pi
 
 # Choosing a directory to store plots and logs
-path = "{}/{}_{}_{}_{}_{}/".format(
-    base_path, 'hadamard', 'diagonal-lattice', size, steps, particles, phase,
+path = "{}/{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'hadamard', 'diagonal-lattice', size, probability, steps, particles, phase,
     'entangled' if entangled else 'not-entangled'
 )
 util.create_dir(path)
@@ -40,7 +43,7 @@ sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
 # Choosing a mesh and instantiating the interacting walk with it
-mesh = Lattice((size, size))
+mesh = Lattice((size, size), percolation=Random(probability))
 dtqw = DiscreteTimeQuantumWalk(
     mesh,
     interaction=PhaseChange(phase),
