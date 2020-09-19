@@ -1,9 +1,7 @@
-from datetime import datetime
+from pyspark import SparkContext
 
-from pyspark import SparkContext, StorageLevel
-
-from sparkquantum import util
-from sparkquantum.dtqw.mesh.broken_links.broken_links import is_broken_links
+from sparkquantum import constants, util
+from sparkquantum.dtqw.mesh.percolation.percolation import is_percolation
 
 __all__ = ['Mesh', 'is_mesh']
 
@@ -11,65 +9,35 @@ __all__ = ['Mesh', 'is_mesh']
 class Mesh:
     """Top-level class for meshes."""
 
-    def __init__(self, size, broken_links=None):
+    def __init__(self, percolation=None):
         """Build a top-level mesh object.
 
         Parameters
         ----------
-        size : tuple or list of int
-            Size of the mesh.
-        broken_links : :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`, optional
-            A :py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks` object.
+        percolation : :py:class:`sparkquantum.dtqw.mesh.percolation.Percolation`, optional
+            A percolation object.
 
         """
-        self._spark_context = SparkContext.getOrCreate()
-        self._size = self._define_size(size)
-        self._num_edges = self._define_num_edges(size)
-        self._coin_size = None
-        self._dimension = None
+        if percolation is not None and not is_percolation(percolation):
+            raise TypeError(
+                "'Percolation' instance expected, not '{}'".format(type(percolation)))
 
-        self._broken_links = broken_links
+        self._sc = SparkContext.getOrCreate()
+
+        self._percolation = percolation
 
         self._logger = util.get_logger(
-            self._spark_context, self.__class__.__name__)
-
-        if broken_links is not None and not is_broken_links(broken_links):
-            self._logger.error(
-                "'BrokenLinks' instance expected, not '{}'".format(
-                    type(broken_links)))
-            raise TypeError(
-                "'BrokenLinks' instance expected, not '{}'".format(
-                    type(broken_links)))
+            self._sc, self.__class__.__name__)
 
     @property
-    def spark_context(self):
+    def sc(self):
         """:py:class:`pyspark.SparkContext`"""
-        return self._spark_context
+        return self._sc
 
     @property
-    def size(self):
-        """int or tuple"""
-        return self._size
-
-    @property
-    def num_edges(self):
-        """int"""
-        return self._num_edges
-
-    @property
-    def broken_links(self):
-        """:py:class:`sparkquantum.dtqw.mesh.broken_links.BrokenLinks`"""
-        return self._broken_links
-
-    @property
-    def coin_size(self):
-        """int"""
-        return self._coin_size
-
-    @property
-    def dimension(self):
-        """int"""
-        return self._dimension
+    def percolation(self):
+        """:py:class:`sparkquantum.dtqw.mesh.percolation.Percolation`"""
+        return self._percolation
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -77,14 +45,6 @@ class Mesh:
         # Removing all its handlers, the object is reset.
         for h in self._logger.handlers:
             self._logger.removeHandler(h)
-
-    def __strcomp__(self):
-        broken_links = ''
-
-        if self._broken_links is not None:
-            broken_links = ' and {}'.format(self._broken_links)
-
-        return 'with dimension {}{}'.format(self._size, broken_links)
 
     def __str__(self):
         """Build a string representing this mesh.
@@ -95,49 +55,12 @@ class Mesh:
             The string representation of this mesh.
 
         """
-        return 'Mesh {}'.format(self.__strcomp__())
+        percolation = ''
 
-    def _validate(self, size):
-        raise NotImplementedError
+        if self._percolation is not None:
+            percolation = ' with {}'.format(self._percolation)
 
-    def _define_size(self, size):
-        raise NotImplementedError
-
-    def _define_num_edges(self, size):
-        raise NotImplementedError
-
-    def center(self):
-        """Return the site number of the center of this mesh.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
-    def center_coordinates(self):
-        """Return the coordinates of the center site of this mesh.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
-    def axis(self):
-        """Build a generator (or meshgrid) with the size(s) of this mesh.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
+        return '{}{}'.format(self.__class__.__name__, percolation)
 
     def has_site(self, site):
         """Indicate whether this mesh comprises a site.
@@ -155,77 +78,17 @@ class Mesh:
         """
         raise NotImplementedError
 
-    def has_coordinates(self, coordinate):
-        """Indicate whether the coordinates are inside this mesh.
+    def create_operator(self, cspace,
+                        repr_format=constants.StateRepresentationFormatCoinPosition):
+        """Build the shift operator for a quantum walk.
 
         Parameters
         ----------
-        coordinate : tuple or list
-            The coordinates.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
-    def to_site(self, coordinate):
-        """Get the site number from the correspondent coordinates.
-
-        Parameters
-        ----------
-        coordinate : tuple or list
-            The coordinates.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
-    def to_coordinates(self, site):
-        """Get the coordinates from the correspondent site.
-
-        Parameters
-        ----------
-        site : int
-            Site number.
-
-        Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
-
-        """
-        raise NotImplementedError
-
-    def check_steps(self, steps):
-        """Check if the number of steps is valid for the size of the mesh.
-
-        Parameters
-        ----------
-        steps : int
-            Number of steps of the walk.
-
-        Returns
-        -------
-        bool
-            True if this number of steps is valid for the size of the mesh, False otherwise.
-
-        """
-        return steps >= 0
-
-    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the mesh operator.
-
-        Parameters
-        ----------
-        storage_level : :py:class:`pyspark.StorageLevel`, optional
-            The desired storage level when materializing the RDD. Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
+        cspace : int
+            The size of the coin space.
+        repr_format : int, optional
+            Indicate how the quantum system is represented.
+            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
 
         Raises
         -------
