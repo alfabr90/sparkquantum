@@ -73,9 +73,9 @@ state = dtqw.walk(steps)
 Finally, the user can measure the final quantum state, obtaining the probability distribution of the possible particle's positions and plot it:
 
 ```python
-gauge = Position()
+position = Position()
 
-joint = gauge.measure(state)
+joint = position.measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
@@ -161,8 +161,8 @@ By default, the following coins have been implemented:
 
 - Coin:
   - `Hadamard`
-  - `Grover` - must be of two-dimensional or higher;
-  - `Fourier` - must be of two-dimensional or higher;
+  - `Grover` - must be two-dimensional or higher;
+  - `Fourier` - must be two-dimensional or higher;
 
 and meshes:
 
@@ -177,10 +177,10 @@ and meshes:
 
 #### Mesh Percolations
 
-The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`RandomBrokenLinks`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
+The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`Random`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
 
 ```python
-percolation = RandomBrokenLinks(0.05)
+percolation = Random(0.05)
 ```
 
 and assign it to the chosen mesh, as follows:
@@ -189,7 +189,7 @@ and assign it to the chosen mesh, as follows:
 mesh = Line(steps, percolation=percolation)
 ```
 
-The second one is represented by the `PermanentBrokenLinks` class. Its usage differs from the first variation only in the parameter it receives, which is a list with the number of each edge that is broken:
+The second one is represented by the `Permanent` class. Its usage differs from the first variation only in the parameter it receives, which is a collection with the number of each edge that is broken:
 
 ```python
 percolation = PermanentBrokenLinks([5, 55])
