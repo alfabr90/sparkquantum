@@ -1,9 +1,8 @@
-import math
 import unittest
 
 from tests.base import Base
 from sparkquantum.dtqw.coin.coin import is_coin
-from sparkquantum.dtqw.coin.coin2d.fourier import Fourier
+from sparkquantum.dtqw.coin.fourier import Fourier
 
 # TODO: implement test_create_operator
 
@@ -11,16 +10,17 @@ from sparkquantum.dtqw.coin.coin2d.fourier import Fourier
 class TestFourier(Base):
     def setUp(self):
         super().setUp()
-        self.coin = Fourier()
+        self.ndim = 2
+        self.coin = Fourier(self.ndim)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), 'Two-dimensional Fourier Coin')
+        self.assertEqual(str(self.coin), '{}d fourier coin'.format(self.ndim))
 
-    def test_size(self):
-        self.assertEqual(self.coin.size, 4)
+    def test_ndim(self):
+        self.assertEqual(self.coin.ndim, self.ndim)
 
     def test_data(self):
         value_r = (complex() + 1) / 2

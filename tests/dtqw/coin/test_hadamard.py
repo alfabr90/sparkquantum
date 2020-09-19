@@ -1,9 +1,8 @@
-import math
 import unittest
 
 from tests.base import Base
 from sparkquantum.dtqw.coin.coin import is_coin
-from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
+from sparkquantum.dtqw.coin.hadamard import Hadamard
 
 # TODO: implement test_create_operator
 
@@ -11,16 +10,17 @@ from sparkquantum.dtqw.coin.coin2d.hadamard import Hadamard
 class TestHadamard(Base):
     def setUp(self):
         super().setUp()
-        self.coin = Hadamard()
+        self.ndim = 2
+        self.coin = Hadamard(self.ndim)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), 'Two-dimensional Hadamard Coin')
+        self.assertEqual(str(self.coin), '{}d hadamard coin'.format(self.ndim))
 
-    def test_size(self):
-        self.assertEqual(self.coin.size, 4)
+    def test_ndim(self):
+        self.assertEqual(self.coin.ndim, self.ndim)
 
     def test_data(self):
         value = (complex() + 1) / 2.0

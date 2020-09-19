@@ -27,7 +27,7 @@ class TestUtil(Base):
         self.assertFalse(util.is_shape([0, 0]))
 
     def test_change_coordinate(self):
-        sc = self.spark_context
+        sc = self.sc
 
         items_default = [(1, 2, 3), (4, 5, 6)]
         items_multiplier = [(2, (1, 3)), (5, (4, 6))]
@@ -171,7 +171,7 @@ class TestUtil(Base):
         self.assertListEqual(items, items_indexed)
 
     def test_remove_zeros(self):
-        sc = self.spark_context
+        sc = self.sc
 
         items_initial = [(1, 2, 0), (4, 5, 6)]
         items_removed = [(4, 5, 6)]

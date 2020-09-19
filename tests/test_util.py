@@ -9,7 +9,7 @@ class TestUtil(Base):
         super().setUp()
 
     def test_broadcast(self):
-        sc = self.spark_context
+        sc = self.sc
         self.assertEqual(util.broadcast(sc, 1).value, 1)
         self.assertEqual(util.broadcast(sc, 1.0).value, 1.0)
         self.assertEqual(util.broadcast(sc, True).value, True)

@@ -1,9 +1,8 @@
-import math
 import unittest
 
 from tests.base import Base
 from sparkquantum.dtqw.coin.coin import is_coin
-from sparkquantum.dtqw.coin.coin2d.grover import Grover
+from sparkquantum.dtqw.coin.grover import Grover
 
 # TODO: implement test_create_operator
 
@@ -11,16 +10,17 @@ from sparkquantum.dtqw.coin.coin2d.grover import Grover
 class TestGrover(Base):
     def setUp(self):
         super().setUp()
-        self.coin = Grover()
+        self.ndim = 2
+        self.coin = Grover(self.ndim)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), 'Two-dimensional Grover Coin')
+        self.assertEqual(str(self.coin), '{}d grover coin'.format(self.ndim))
 
-    def test_size(self):
-        self.assertEqual(self.coin.size, 4)
+    def test_ndim(self):
+        self.assertEqual(self.coin.ndim, self.ndim)
 
     def test_data(self):
         value = (complex() + 1) / 2.0
