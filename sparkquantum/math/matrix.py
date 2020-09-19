@@ -13,8 +13,8 @@ __all__ = ['Matrix', 'is_matrix']
 class Matrix(Base):
     """Class for matrices."""
 
-    def __init__(self, rdd, shape, data_type=complex,
-                 coordinate_format=constants.MatrixCoordinateDefault, num_elements=None):
+    def __init__(self, rdd, shape,
+                 dtype=complex, coord_format=constants.MatrixCoordinateDefault, nelem=None):
         """Build a matrix object.
 
         Parameters
@@ -22,27 +22,27 @@ class Matrix(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this object. Must be a two-dimensional tuple.
-        data_type : type, optional
+            The shape of this object. Must be 2-dimensional.
+        dtype : type, optional
             The Python type of all values in this object. Default value is complex.
-        coordinate_format : int, optional
+        coord_format : int, optional
             The coordinate format of this object. Default value is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
-        num_elements : int, optional
+        nelem : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, num_elements=num_elements)
+        if not mathutil.is_shape(shape, ndim=2):
+            raise ValueError("invalid shape")
+
+        super().__init__(rdd, nelem=nelem)
 
         self._shape = shape
-        self._data_type = data_type
-        self._coordinate_format = coordinate_format
+        self._dtype = dtype
 
         self._size = self._shape[0] * self._shape[1]
 
-        if not mathutil.is_shape(shape):
-            self._logger.error("invalid shape")
-            raise ValueError("invalid shape")
+        self._coord_format = coord_format
 
     @property
     def shape(self):
@@ -50,19 +50,19 @@ class Matrix(Base):
         return self._shape
 
     @property
-    def data_type(self):
+    def dtype(self):
         """type"""
-        return self._data_type
-
-    @property
-    def coordinate_format(self):
-        """int"""
-        return self._coordinate_format
+        return self._dtype
 
     @property
     def size(self):
         """int"""
         return self._size
+
+    @property
+    def coord_format(self):
+        """int"""
+        return self._coord_format
 
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
@@ -108,26 +108,26 @@ class Matrix(Base):
 
         """
         if glue is None:
-            glue = conf.get_conf(
-                self._spark_context,
+            glue = conf.get(
+                self._sc,
                 'sparkquantum.dumpingGlue')
 
         if codec is None:
-            codec = conf.get_conf(
-                self._spark_context,
+            codec = conf.get(
+                self._sc,
                 'sparkquantum.dumpingCompressionCodec')
 
         dumping_mode = int(
-            conf.get_conf(
-                self._spark_context,
+            conf.get(
+                self._sc,
                 'sparkquantum.math.dumpingMode'))
 
         rdd = mathutil.remove_zeros(
             mathutil.change_coordinate(
                 self._data,
-                self._coordinate_format,
+                self._coord_format,
                 constants.MatrixCoordinateDefault),
-            self._data_type,
+            self._dtype,
             constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
@@ -155,7 +155,7 @@ class Matrix(Base):
             raise ValueError("invalid dumping mode")
 
     def ndarray(self):
-        """Create a numpy array containing this object's RDD data.
+        """Create a Numpy array containing this object's RDD data.
 
         Notes
         -----
@@ -165,33 +165,33 @@ class Matrix(Base):
         Returns
         -------
         :py:class:`numpy.ndarray`
-            The numpy array.
+            The Numpy array.
 
         """
         rdd = mathutil.remove_zeros(
             mathutil.change_coordinate(
                 self._data,
-                self._coordinate_format,
+                self._coord_format,
                 constants.MatrixCoordinateDefault),
-            self._data_type,
+            self._dtype,
             constants.MatrixCoordinateDefault)
 
         data = rdd.collect()
 
-        result = np.zeros(self._shape, dtype=self._data_type)
+        result = np.zeros(self._shape, dtype=self._dtype)
 
         for e in data:
             result[e[0], e[1]] = e[2]
 
         return result
 
-    def _change_coordinate(self, coordinate_format):
+    def _change_coordinate(self, coord_format):
         return mathutil.change_coordinate(
             self._data,
-            old_coordinate=self._coordinate_format,
-            new_coordinate=coordinate_format)
+            old_coordinate=self._coord_format,
+            new_coordinate=coord_format)
 
-    def change_coordinate(self, coordinate_format):
+    def change_coordinate(self, coord_format):
         """Change the coordinate format of this object.
 
         Notes
@@ -202,7 +202,7 @@ class Matrix(Base):
 
         Parameters
         ----------
-        coordinate_format : int
+        coord_format : int
             The new coordinate format of this object.
 
         Returns
@@ -211,18 +211,18 @@ class Matrix(Base):
             A new matrix object with the RDD in the desired coordinate format.
 
         """
-        rdd = self._change_coordinate(coordinate_format)
+        rdd = self._change_coordinate(coord_format)
 
-        return Matrix(rdd, self._shape, data_type=self._data_type,
-                      coordinate_format=coordinate_format, num_elements=self._num_elements)
+        return Matrix(rdd, self._shape,
+                      dtype=self._dtype, coord_format=coord_format, nelem=self._nelem)
 
     def _transpose(self):
         rdd = mathutil.remove_zeros(
             mathutil.change_coordinate(
                 self._data,
-                self._coordinate_format,
+                self._coord_format,
                 constants.MatrixCoordinateDefault),
-            self._data_type,
+            self._dtype,
             constants.MatrixCoordinateDefault)
 
         shape = (self._shape[1], self._shape[0])
@@ -244,32 +244,29 @@ class Matrix(Base):
         """
         rdd, shape = self._transpose()
 
-        return Matrix(rdd, shape, data_type=self._data_type,
-                      num_elements=self._num_elements)
+        return Matrix(rdd, shape,
+                      dtype=self._dtype, nelem=self._nelem)
 
     def _kron(self, other):
         other_shape = other.shape
-        new_shape = (
-            self._shape[0] *
-            other_shape[0],
-            self._shape[1] *
-            other_shape[1])
+        new_shape = (self._shape[0] * other_shape[0],
+                     self._shape[1] * other_shape[1])
 
-        data_type = util.get_precedent_type(self._data_type, other.data_type)
+        dtype = util.get_precedent_type(self._dtype, other.dtype)
 
         rdd = self._data
         other_rdd = other.data
 
         # TODO: improve
-        if self._num_elements is not None and other.num_elements is not None:
-            expected_elements = self._num_elements * other.num_elements
+        if self._nelem is not None and other.nelem is not None:
+            nelem = self._nelem * other.nelem
 
             num_partitions = util.get_num_partitions(
-                self._spark_context,
-                util.get_size_of_type(data_type) * expected_elements
+                self._sc,
+                util.get_size_of_type(dtype) * nelem
             )
         else:
-            expected_elements = None
+            nelem = None
 
             num_partitions = max(
                 rdd.getNumPartitions(),
@@ -292,9 +289,9 @@ class Matrix(Base):
         )
 
         rdd = mathutil.remove_zeros(
-            rdd, data_type, constants.MatrixCoordinateDefault)
+            rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, new_shape, data_type, expected_elements
+        return rdd, new_shape, dtype, nelem
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another matrix.
@@ -323,10 +320,9 @@ class Matrix(Base):
                 "'Matrix' instance expected, not '{}'".format(
                     type(other)))
 
-        rdd, shape, data_type, num_elements = self._kron(other)
+        rdd, shape, dtype, nelem = self._kron(other)
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=num_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     def trace(self):
         """Calculate the trace of this matrix.
@@ -349,7 +345,7 @@ class Matrix(Base):
 
         rdd = mathutil.change_coordinate(
             self._data,
-            self._coordinate_format,
+            self._coord_format,
             constants.MatrixCoordinateDefault)
 
         return rdd.filter(
@@ -370,12 +366,12 @@ class Matrix(Base):
         rdd = mathutil.remove_zeros(
             mathutil.change_coordinate(
                 self._data,
-                self._coordinate_format,
+                self._coord_format,
                 constants.MatrixCoordinateDefault),
-            self._data_type,
+            self._dtype,
             constants.MatrixCoordinateDefault)
 
-        if self._data_type == complex:
+        if self._dtype == complex:
             def __map(m):
                 return m[2].real ** 2 + m[2].imag ** 2
         else:
@@ -404,8 +400,8 @@ class Matrix(Base):
 
         """
         round_precision = int(
-            conf.get_conf(
-                self._spark_context,
+            conf.get(
+                self._sc,
                 'sparkquantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
@@ -419,21 +415,21 @@ class Matrix(Base):
                 "incompatible shapes {} and {}".format(
                     self._shape, other.shape))
 
-        data_type = util.get_precedent_type(
-            self._data_type, other.data_type)
+        dtype = util.get_precedent_type(
+            self._dtype, other.dtype)
 
         rdd = self._data
         other_rdd = other.data
 
-        if self._num_elements is not None and other.num_elements is not None:
-            expected_elements = self._num_elements + other.num_elements
+        if self._nelem is not None and other.nelem is not None:
+            nelem = self._nelem + other.nelem
 
             num_partitions = util.get_num_partitions(
-                self._spark_context,
-                util.get_size_of_type(data_type) * expected_elements
+                self._sc,
+                util.get_size_of_type(dtype) * nelem
             )
         else:
-            expected_elements = None
+            nelem = None
 
             num_partitions = max(
                 rdd.getNumPartitions(),
@@ -458,32 +454,32 @@ class Matrix(Base):
         )
 
         rdd = mathutil.remove_zeros(
-            rdd, data_type, constants.MatrixCoordinateDefault)
+            rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, self._shape, data_type, expected_elements
+        return rdd, self._shape, dtype, nelem
 
     def _sum_scalar(self, other, constant):
         if other == type(other)():
-            return self._data, self._data_type
+            return self._data, self._dtype
 
-        data_type = util.get_precedent_type(
-            self._data_type, type(other))
+        dtype = util.get_precedent_type(
+            self._dtype, type(other))
 
         rdd = self._data
 
-        other_rdd = self._spark_context.range(
+        other_rdd = self._sc.range(
             self._shape[0]
         ).cartesian(
-            self._spark_context.range(self._shape[1])
+            self._sc.range(self._shape[1])
         ).map(
             lambda m: (m, constant * other)
         )
 
-        expected_elements = self._size
+        nelem = self._size
 
         num_partitions = util.get_num_partitions(
-            self._spark_context,
-            util.get_size_of_type(data_type) * expected_elements
+            self._sc,
+            util.get_size_of_type(dtype) * nelem
         )
 
         def __map(m):
@@ -502,9 +498,9 @@ class Matrix(Base):
         )
 
         rdd = mathutil.remove_zeros(
-            rdd, data_type, constants.MatrixCoordinateDefault)
+            rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, self._shape, data_type, expected_elements
+        return rdd, self._shape, dtype, nelem
 
     def _sum(self, other, constant):
         if is_matrix(other):
@@ -536,10 +532,9 @@ class Matrix(Base):
             If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
 
         """
-        rdd, shape, data_type, num_elements = self._sum(other, 1)
+        rdd, shape, dtype, nelem = self._sum(other, 1)
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=num_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     def subtract(self, other):
         """Perform a subtraction with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
@@ -560,41 +555,38 @@ class Matrix(Base):
             If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
 
         """
-        rdd, shape, data_type, num_elements = self._sum(other, -1)
+        rdd, shape, dtype, nelem = self._sum(other, -1)
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=num_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     def _multiply_matrix(self, other):
         if self._shape[1] != other.shape[0]:
             self._logger.error(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+                "incompatible shapes {} and {}".format(self._shape, other.shape))
             raise ValueError(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+                "incompatible shapes {} and {}".format(self._shape, other.shape))
 
         new_shape = (self._shape[0], other.shape[1])
 
-        data_type = util.get_precedent_type(self._data_type, other.data_type)
+        dtype = util.get_precedent_type(self._dtype, other.dtype)
 
         rdd = self._data
         other_rdd = other.data
 
-        if self._num_elements is not None or other.num_elements is not None:
-            if self._num_elements is not None and other.num_elements is not None:
-                expected_elements = min(self._num_elements, other.num_elements)
-            elif self._num_elements is not None:
-                expected_elements = self._num_elements
+        if self._nelem is not None or other.nelem is not None:
+            if self._nelem is not None and other.nelem is not None:
+                nelem = min(self._nelem, other.nelem)
+            elif self._nelem is not None:
+                nelem = self._nelem
             else:
-                expected_elements = other.num_elements
+                nelem = other.nelem
 
             num_partitions = util.get_num_partitions(
-                self._spark_context,
-                util.get_size_of_type(data_type) * expected_elements
+                self._sc,
+                util.get_size_of_type(dtype) * nelem
             )
         else:
-            expected_elements = None
+            nelem = None
 
             num_partitions = max(
                 rdd.getNumPartitions(),
@@ -611,19 +603,19 @@ class Matrix(Base):
         )
 
         rdd = mathutil.remove_zeros(
-            rdd, data_type, constants.MatrixCoordinateDefault)
+            rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, new_shape, data_type, expected_elements
+        return rdd, new_shape, dtype, nelem
 
     def _multiply_scalar(self, other, constant):
         if isinstance(other, (int, float)):
             if other == 1.0:
-                return self._data, self._shape, self._data_type
+                return self._data, self._shape, self._dtype
             elif other == 0.0 and constant < 0:
                 # It is a division by zero operation
                 raise ZeroDivisionError
 
-        data_type = util.get_precedent_type(self._data_type, type(other))
+        dtype = util.get_precedent_type(self._dtype, type(other))
 
         rdd = self._data
 
@@ -632,9 +624,9 @@ class Matrix(Base):
         )
 
         rdd = mathutil.remove_zeros(
-            rdd, data_type, constants.MatrixCoordinateDefault)
+            rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, self._shape, data_type, self._num_elements
+        return rdd, self._shape, dtype, self._nelem
 
     def multiply(self, other):
         """Multiply this matrix by another one or by a scalar (number), i.e, int, float or complex.
@@ -664,16 +656,14 @@ class Matrix(Base):
 
         """
         if is_matrix(other):
-            rdd, shape, data_type, num_elements = self._multiply_matrix(other)
+            rdd, shape, dtype, nelem = self._multiply_matrix(other)
 
-            return Matrix(rdd, shape, data_type=data_type,
-                          num_elements=num_elements)
+            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
         elif mathutil.is_scalar(other):
-            rdd, shape, data_type, num_elements = self._multiply_scalar(
+            rdd, shape, dtype, nelem = self._multiply_scalar(
                 other, 1)
 
-            return Matrix(rdd, shape, data_type=data_type,
-                          num_elements=num_elements)
+            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
         else:
             self._logger.error(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
@@ -706,12 +696,11 @@ class Matrix(Base):
         if is_matrix(other):
             raise NotImplementedError
         elif mathutil.is_scalar(other):
-            rdd, shape, data_type, num_elements = self._multiply_scalar(
+            rdd, shape, dtype, nelem = self._multiply_scalar(
                 other, -1
             )
 
-            return Matrix(rdd, shape, data_type=data_type,
-                          num_elements=num_elements)
+            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
         else:
             self._logger.error(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
@@ -755,7 +744,7 @@ class Matrix(Base):
         result = matrix.data.collect()
 
         if len(result):
-            return matrix.data_type()
+            return matrix.dtype()
         else:
             return result[0]
 
@@ -838,7 +827,7 @@ class Matrix(Base):
         return matrix.shape[0] == 1
 
     @staticmethod
-    def is_columnvector(matrix):
+    def is_colvector(matrix):
         """Check whether matrix is a column vector, i.e., it has only one column.
 
         Parameters
@@ -895,24 +884,23 @@ class Matrix(Base):
         sc = SparkContext.getOrCreate()
 
         shape = (size, size)
-        data_type = type(value)
+        dtype = type(value)
 
-        expected_elements = shape[0]
+        nelem = shape[0]
 
-        if value == data_type():
+        if value == dtype():
             rdd = sc.emptyRDD()
         else:
             num_partitions = util.get_num_partitions(
                 sc,
-                util.get_size_of_type(data_type) * expected_elements
+                util.get_size_of_type(dtype) * nelem
             )
 
             rdd = sc.range(size, numSlices=num_partitions).map(
                 lambda m: (m, m, value)
             )
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=expected_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     @staticmethod
     def eye(size):
@@ -937,7 +925,7 @@ class Matrix(Base):
         return Matrix.diagonal(size, 1.0)
 
     @staticmethod
-    def zeros(shape, data_type=float):
+    def zeros(shape, dtype=float):
         """Create a matrix full of zeros.
 
         Notes
@@ -946,9 +934,9 @@ class Matrix(Base):
 
         Parameters
         ----------
-        shape : list or tuple
+        shape : tuple
             The shape of the matrix.
-        data_type : type, optional
+        dtype : type, optional
             The Python type of all values in this object. Default value is float.
 
         Returns
@@ -962,27 +950,26 @@ class Matrix(Base):
             If `shape` is not a valid shape.
 
         """
-        if not mathutil.is_shape(shape):
+        if not mathutil.is_shape(shape, ndim=2):
             raise ValueError("invalid shape")
 
         sc = SparkContext.getOrCreate()
 
-        expected_elements = shape[0] * shape[1]
+        nelem = shape[0] * shape[1]
 
         rdd = sc.emptyRDD()
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=expected_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     @staticmethod
-    def ones(shape, data_type=float):
+    def ones(shape, dtype=float):
         """Create a matrix full of ones.
 
         Parameters
         ----------
-        shape : list or tuple
+        shape : tuple
             The shape of the matrix.
-        data_type : type, optional
+        dtype : type, optional
             The Python type of all values in this object. Default value is float.
 
         Returns
@@ -996,18 +983,18 @@ class Matrix(Base):
             If `shape` is not a valid shape.
 
         """
-        if not mathutil.is_shape(shape):
+        if not mathutil.is_shape(shape, ndim=2):
             raise ValueError("invalid shape")
 
         sc = SparkContext.getOrCreate()
 
-        value = data_type() + 1
+        value = dtype() + 1
 
-        expected_elements = shape[0] * shape[1]
+        nelem = shape[0] * shape[1]
 
         num_partitions = util.get_num_partitions(
             sc,
-            util.get_size_of_type(data_type) * expected_elements
+            util.get_size_of_type(dtype) * nelem
         )
 
         rdd = sc.range(
@@ -1018,8 +1005,7 @@ class Matrix(Base):
             lambda m: (m[0], m[1], value)
         )
 
-        return Matrix(rdd, shape, data_type=data_type,
-                      num_elements=expected_elements)
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
 
 def is_matrix(obj):

@@ -1,31 +1,19 @@
 import math
+from datetime import datetime
 
 import numpy as np
 
+from sparkquantum import plot
 from sparkquantum.base import Base
+from sparkquantum.math.util import is_shape
 
-__all__ = [
-    'ProbabilityDistribution',
-    'RandomVariable',
-    'is_probability_distribution']
-
-
-class RandomVariable:
-    def __init__(self, name):
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name
-
-    def __str__(self):
-        return "Random Variable with name '{}'".format(self._name)
+__all__ = ['ProbabilityDistribution', 'is_distribution']
 
 
 class ProbabilityDistribution(Base):
     """Class for probability distributions."""
 
-    def __init__(self, rdd, shape, variables, num_elements=None):
+    def __init__(self, rdd, shape, domain, nelem=None):
         """Build a probability distribution object.
 
         Parameters
@@ -33,39 +21,25 @@ class ProbabilityDistribution(Base):
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
         shape : tuple
-            The shape of this object. Must be a n-dimensional tuple.
-        variables : list or tuple of :py:class:`sparkquantum.math.distribution.RandomVariable`
-            The random variables of this probability distribution.
-        num_elements : int, optional
+            The shape of this object. Must be 2-dimensional.
+        domain : array-like
+            The domain where the values of this probability distribution will settle.
+        nelem : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        super().__init__(rdd, num_elements=num_elements)
-
-        self._shape = shape
-        self._variables = variables
-        self._data_type = float
-
-        if not isinstance(shape, (list, tuple)):
-            self._logger.error("invalid shape")
+        if not is_shape(shape, ndim=2):
             raise ValueError("invalid shape")
 
-        self._size = 1
+        super().__init__(rdd, nelem=nelem)
 
-        for s in shape:
-            self._size *= s
+        self._shape = shape
+        self._domain = domain
 
-        if not isinstance(self._variables, (list, tuple)):
-            self._logger.error(
-                "list or tuple expected, not {}".format(type(self._variables)))
-            raise TypeError(
-                "list or tuple expected, not {}".format(type(self._variables)))
-        elif len(self._variables) < 1:
-            self._logger.error(
-                "invalid number of random variables. It must be greater than or equal to 1")
-            raise ValueError(
-                "invalid number of random variables. It must be greater than or equal to 1")
+        self._size = self._shape[0] * self._shape[1]
+
+        self._dtype = float
 
     @property
     def shape(self):
@@ -73,21 +47,26 @@ class ProbabilityDistribution(Base):
         return self._shape
 
     @property
-    def variables(self):
-        """list or tuple of :py:class:`sparkquantum.math.distribution.RandomVariable`"""
-        return self._variables
+    def domain(self):
+        """tuple of int, float or complex"""
+        return tuple(self._domain)
 
     @property
     def size(self):
         """int"""
         return self._size
 
+    @property
+    def dtype(self):
+        """type"""
+        return self._dtype
+
     def __str__(self):
-        return 'Probability Distribution of random variables {}'.format(
-            [v.name for v in self._variables])
+        return 'Probability distribution of random variables {}'.format(
+            self._variables)
 
     def ndarray(self):
-        """Create a numpy array containing this object's RDD data.
+        """Create a Numpy array containing this object's RDD data.
 
         Notes
         -----
@@ -97,12 +76,31 @@ class ProbabilityDistribution(Base):
         Returns
         -------
         :py:class:`numpy.ndarray`
-            The numpy array.
+            The Numpy array.
 
         """
+        ndim = len(self._domain)
+
+        if ndim == 1 and self._shape[1] == 2:
+            # One-dimensional grids with just one random variable
+            shape = (max(self._domain[0]) - min(self._domain[0]) + 1, 1)
+        elif ndim == 1 and self._shape[1] == 3:
+            # One-dimensional grids with two random variables
+            shape = (max(self._domain[0]) - min(self._domain[0]) + 1,
+                     max(self._domain[0]) - min(self._domain[0]) + 1)
+        elif ndim == 2 and self._shape[1] == 3:
+            # Two-dimensional grids with one random variable
+            shape = (max(self._domain[0]) - min(self._domain[0]) + 1,
+                     max(self._domain[1]) - min(self._domain[1]) + 1)
+        else:
+            self._logger.error(
+                "incompatible domain dimension and number of variables to create a Numpy array")
+            raise NotImplementedError(
+                "incompatible domain dimension and number of variables to create a Numpy array")
+
         data = self._data.collect()
 
-        result = np.zeros(self._shape, dtype=self._data_type)
+        result = np.zeros(shape, dtype=self._dtype)
 
         for e in data:
             result[e[0:-1]] = e[-1]
@@ -118,10 +116,10 @@ class ProbabilityDistribution(Base):
             The sum of the probabilities.
 
         """
-        data_type = self._data_type()
+        dtype = self._dtype()
 
         return self.data.filter(
-            lambda m: m[-1] != data_type
+            lambda m: m[-1] != dtype
         ).map(
             lambda m: m[-1]
         ).reduce(
@@ -137,10 +135,10 @@ class ProbabilityDistribution(Base):
             The norm of this probability distribution.
 
         """
-        data_type = self._data_type()
+        dtype = self._dtype()
 
         n = self.data.filter(
-            lambda m: m[-1] != data_type
+            lambda m: m[-1] != dtype
         ).map(
             lambda m: m[-1] ** 2
         ).reduce(
@@ -175,8 +173,64 @@ class ProbabilityDistribution(Base):
             lambda m: m[-1]
         ).min()
 
+    def plot(self, filename, title=None, labels=None, **kwargs):
+        """Plot this distribution.
 
-def is_probability_distribution(obj):
+        Parameters
+        ----------
+        axis: array-like
+            The domain values of the plot.
+        filename: str
+            The filename to save the plot. Must not have an extension.
+        title: str, optional
+            The title of the plot.
+        labels: tuple, optional
+            The labels of each axis. Default value is None.
+        \*\*kwargs
+            Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
+
+        """
+        ndim = len(self._domain)
+
+        if ndim == 1 and self._shape[1] == 2:
+            # One-dimensional grids with just one random variable
+            axis = self._domain[0]
+        elif ndim == 1 and self._shape[1] == 3:
+            # One-dimensional grids with just two random variables
+            axis = (self._domain[0], self._domain[0])
+        elif ndim == 2 and self._shape[1] == 3:
+            # Two-dimensional grids with just one random variable
+            axis = self._domain
+        else:
+            self._logger.error(
+                "incompatible domain dimension and number of variables to plot distribution")
+            raise NotImplementedError(
+                "incompatible domain dimension and number of variables to plot distribution")
+
+        if labels is None:
+            labels = [v for v in self._variables]
+            labels.append('Probability')
+
+        self._logger.info("starting plot of probabilities...")
+
+        time = datetime.now()
+
+        if self._shape[1] == 2:
+            plot.line(axis, self.ndarray(), filename,
+                      title=title, labels=labels, **kwargs)
+        else:
+            plot.surface(axis, self.ndarray(), filename,
+                         title=title, labels=labels, **kwargs)
+
+            plot.contour(axis, self.ndarray(), filename + '_contour',
+                         title=title, labels=labels, **kwargs)
+
+        time = (datetime.now() - time).total_seconds()
+
+        self._logger.info("plot was done in {}s".format(time))
+
+
+def is_distribution(obj):
     """Check whether argument is a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution` object.
 
     Parameters
