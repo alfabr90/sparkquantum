@@ -1,8 +1,6 @@
-from datetime import datetime
+from pyspark import SparkContext
 
-from pyspark import SparkContext, StorageLevel
-
-from sparkquantum import util
+from sparkquantum import constants, util
 
 __all__ = ['Interaction', 'is_interaction']
 
@@ -10,39 +8,17 @@ __all__ = ['Interaction', 'is_interaction']
 class Interaction:
     """Top-level class for interaction between particles."""
 
-    def __init__(self, num_particles, mesh):
-        """Build a top-level interaction object.
-
-        Parameters
-        ----------
-        num_particles : int
-            The number of particles present in the walk.
-        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
-            The mesh where the particles will walk over.
-
-        """
-        self._spark_context = SparkContext.getOrCreate()
-
-        self._num_particles = num_particles
-        self._mesh = mesh
+    def __init__(self):
+        """Build a top-level interaction object."""
+        self._sc = SparkContext.getOrCreate()
 
         self._logger = util.get_logger(
-            self._spark_context, self.__class__.__name__)
+            self._sc, self.__class__.__name__)
 
     @property
-    def spark_context(self):
+    def sc(self):
         """:py:class:`pyspark.SparkContext`"""
-        return self._spark_context
-
-    @property
-    def num_particles(self):
-        """int"""
-        return self._num_particles
-
-    @property
-    def mesh(self):
-        """:py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`"""
-        return self._mesh
+        return self._sc
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -62,8 +38,9 @@ class Interaction:
         """
         return self.__class__.__name__
 
-    def create_operator(self, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the interaction operator.
+    def create_operator(self, mesh, particles,
+                        repr_format=constants.StateRepresentationFormatCoinPosition):
+        """Build the interaction operator for a quantum walk.
 
         Raises
         -------
