@@ -67,12 +67,12 @@ def get_precedent_type(type1, type2):
     return int
 
 
-def get_size_of_type(data_type):
+def get_size_of_type(dtype):
     """Get the size in bytes of a Python type.
 
     Parameters
     ----------
-    data_type : type
+    dtype : type
         The Python type to have its size calculated.
 
     Returns
@@ -81,7 +81,7 @@ def get_size_of_type(data_type):
         The size of the Python type in bytes.
 
     """
-    return sys.getsizeof(data_type())
+    return sys.getsizeof(dtype())
 
 
 def get_num_partitions(spark_context, expected_size):
@@ -89,8 +89,7 @@ def get_num_partitions(spark_context, expected_size):
 
     Parameters
     ----------
-    spark_context : :py:class:`pyspark.SparkContext`
-        The :py:class:`pyspark.SparkContext` object.
+    spark_context : :py:class:`pyspark.SparkContext`confighe :py:class:`pyspark.SparkContext` object.
     expected_size : int
         The expected size in bytes of the RDD.
 
@@ -105,13 +104,13 @@ def get_num_partitions(spark_context, expected_size):
         If the number of cores is not informed.
 
     """
-    safety_factor = float(conf.get_conf(
+    safety_factor = float(conf.get(
         spark_context, 'sparkquantum.cluster.numPartitionsSafetyFactor'))
     num_partitions = None
 
-    if conf.get_conf(
+    if conf.get(
             spark_context, 'sparkquantum.cluster.useSparkDefaultNumPartitions') == 'False':
-        num_cores = conf.get_conf(
+        num_cores = conf.get(
             spark_context, 'sparkquantum.cluster.totalCores')
 
         if not num_cores:
@@ -119,7 +118,7 @@ def get_num_partitions(spark_context, expected_size):
                 "invalid number of total cores in the cluster: {}".format(num_cores))
 
         num_cores = int(num_cores)
-        max_partition_size = int(conf.get_conf(
+        max_partition_size = int(conf.get(
             spark_context, 'sparkquantum.cluster.maxPartitionSize'))
         num_partitions = math.ceil(
             safety_factor * expected_size / max_partition_size / num_cores) * num_cores
@@ -272,16 +271,16 @@ def get_logger(
     logger = logging.getLogger(name)
 
     if level is None:
-        level = int(conf.get_conf(sc, 'sparkquantum.logging.level'))
+        level = int(conf.get(sc, 'sparkquantum.logging.level'))
 
     logger.setLevel(level)
 
-    if conf.get_conf(sc, 'sparkquantum.logging.enabled') == 'True':
+    if conf.get(sc, 'sparkquantum.logging.enabled') == 'True':
         if filename is None:
-            filename = conf.get_conf(sc, 'sparkquantum.logging.filename')
+            filename = conf.get(sc, 'sparkquantum.logging.filename')
 
         if format is None:
-            format = conf.get_conf(sc, 'sparkquantum.logging.format')
+            format = conf.get(sc, 'sparkquantum.logging.format')
 
         formatter = logging.Formatter(format)
 

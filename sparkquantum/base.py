@@ -8,24 +8,24 @@ __all__ = ['Base']
 class Base:
     """Top-level class to act as a container of :py:class:`pyspark.RDD`."""
 
-    def __init__(self, rdd, num_elements=None):
+    def __init__(self, rdd, nelem=None):
         """Build a top-level object that acts as a container of :py:class:`pyspark.RDD`.
 
         Parameters
         ----------
         rdd : :py:class:`pyspark.RDD`
             The base RDD of this object.
-        num_elements : int, optional
+        nelem : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
 
         """
-        self._spark_context = rdd.context
+        self._sc = rdd.context
         self._data = rdd
-        self._num_elements = num_elements
+        self._nelem = nelem
 
         self._logger = util.get_logger(
-            self._spark_context, self.__class__.__name__)
+            self._sc, self.__class__.__name__)
 
         if not isinstance(rdd, RDD):
             self._logger.error(
@@ -36,14 +36,14 @@ class Base:
                     type(rdd)))
 
     @property
-    def spark_context(self):
+    def sc(self):
         """:py:class:`pyspark.SparkContext`"""
-        return self._spark_context
+        return self._sc
 
     @property
-    def num_elements(self):
+    def nelem(self):
         """int"""
-        return self._num_elements
+        return self._nelem
 
     @property
     def data(self):
@@ -212,7 +212,7 @@ class Base:
         """
         self.persist(storage_level=storage_level)
 
-        self._num_elements = self._data.count()
+        self._nelem = self._data.count()
 
         self._logger.info("RDD {} was materialized".format(self._data.id()))
 

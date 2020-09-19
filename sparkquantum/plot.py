@@ -1,12 +1,7 @@
-from datetime import datetime
-
 from matplotlib import cm
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from pyspark import SparkContext
-
-from sparkquantum import util
 
 __all__ = ['line', 'surface', 'contour']
 
@@ -24,18 +19,12 @@ def line(axis, data, filename, title=None, labels=None, **kwargs):
         The filename to save the plot.
     title: str, optional
         The title of the plot.
-    labels: tuple or list, optional
+    labels: tuple, optional
         The labels of each axis.
     \*\*kwargs
         Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
     """
-    logger = util.get_logger(SparkContext.getOrCreate(), 'Plot')
-
-    logger.info("starting plot of probabilities...")
-
-    t1 = datetime.now()
-
     plt.cla()
     plt.clf()
 
@@ -58,9 +47,6 @@ def line(axis, data, filename, title=None, labels=None, **kwargs):
     plt.cla()
     plt.clf()
 
-    logger.info("plot was done in {}s".format(
-        (datetime.now() - t1).total_seconds()))
-
 
 def surface(axis, data, filename, title=None, labels=None, **kwargs):
     """Plot a surface graph.
@@ -75,27 +61,23 @@ def surface(axis, data, filename, title=None, labels=None, **kwargs):
         The filename to save the plot.
     title: str, optional
         The title of the plot.
-    labels: tuple or list, optional
+    labels: tuple, optional
         The labels of each axis.
     \*\*kwargs
         Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
     """
-    logger = util.get_logger(SparkContext.getOrCreate(), 'Plot')
-
-    logger.info("starting plot of probabilities...")
-
-    t1 = datetime.now()
-
     plt.cla()
     plt.clf()
 
     figure = plt.figure()
     axes = figure.add_subplot(111, projection='3d')
 
+    meshgrid = np.meshgrid(axis[0], axis[1], indexing='ij')
+
     axes.plot_surface(
-        axis[0],
-        axis[1],
+        meshgrid[0],
+        meshgrid[1],
         data,
         rstride=1,
         cstride=1,
@@ -120,9 +102,6 @@ def surface(axis, data, filename, title=None, labels=None, **kwargs):
     plt.cla()
     plt.clf()
 
-    logger.info("plot was done in {}s".format(
-        (datetime.now() - t1).total_seconds()))
-
 
 def contour(axis, data, filename, title=None, labels=None, **kwargs):
     """Plot a contour graph.
@@ -137,18 +116,12 @@ def contour(axis, data, filename, title=None, labels=None, **kwargs):
         The filename to save the plot.
     title: str, optional
         The title of the plot.
-    labels: tuple or list, optional
+    labels: tuple, optional
         The labels of each axis.
     \*\*kwargs
         Keyword arguments being passed to `matplotlib <https://matplotlib.org>`_.
 
     """
-    logger = util.get_logger(SparkContext.getOrCreate(), 'Plot')
-
-    logger.info("starting plot of probabilities...")
-
-    t1 = datetime.now()
-
     plt.cla()
     plt.clf()
 
@@ -181,6 +154,3 @@ def contour(axis, data, filename, title=None, labels=None, **kwargs):
     plt.savefig(filename, **kwargs)
     plt.cla()
     plt.clf()
-
-    logger.info("contour plot was done in {}s".format(
-        (datetime.now() - t1).total_seconds()))

@@ -2,172 +2,143 @@ import math
 import cmath
 import logging
 
-import numpy as np
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
-from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
-from sparkquantum.dtqw.gauge.position import PositionGauge
-from sparkquantum.dtqw.interaction.collision_phase import CollisionPhaseInteraction
-from sparkquantum.dtqw.mesh.mesh1d.line import Line
-from sparkquantum.dtqw.state import State
-from sparkquantum.dtqw.profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-'''
-    DTQW 1D - 2 particles
-'''
-base_path = './output/'
-num_cores = 4
-profile = True
+from sparkquantum.dtqw.interaction.collision.phase import PhaseChange
+from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.observable.position import Position
+from sparkquantum.dtqw.particle import Particle
 
-num_particles = 2
-steps = 30
-size = 30
+base_path = './output'
+cores = 4
+
+particles = 2
 entangled = True
+
+# In this example, the walk will last 30 steps.
+# As we chose a `Line` mesh, its size must be
+# 2 * steps + 1 sites
+steps = 30
+size = 2 * steps + 1
+
+# The particles will change their phase when colliding
 phase = 1.0 * cmath.pi
 
 # Choosing a directory to store plots and logs
-walk_path = "{}/{}_{}_{}_{}_{}_{}/".format(
-    base_path, 'Line', 2 * size +
-    1, steps, num_particles, phase, 'entangled' if entangled else 'not entangled'
+path = "{}/{}_{}_{}_{}_{}_{}_{}/".format(
+    base_path, 'hadamard', 'line', size, steps, particles, phase,
+    'entangled' if entangled else 'not-entangled'
 )
-
-util.create_dir(walk_path)
-
-representation_format = constants.StateRepresentationFormatCoinPosition
-# representation_format = constants.StateRepresentationFormatPositionCoin
+util.create_dir(path)
 
 # Initiallizing the SparkContext with some options
-sparkConf = SparkConf().set(
-    'sparkquantum.cluster.totalCores', num_cores
-).set(
-    'sparkquantum.dtqw.state.representationFormat', representation_format
+conf = SparkConf().set(
+    'sparkquantum.cluster.totalCores', cores
 ).set(
     'sparkquantum.logging.enabled', 'True'
 ).set(
     'sparkquantum.logging.level', logging.DEBUG
 ).set(
-    'sparkquantum.logging.filename', walk_path + 'log.txt'
+    'sparkquantum.logging.filename', path + 'log.txt'
 ).set(
     'sparkquantum.profiling.enabled', 'True'
 )
-sparkContext = SparkContext(conf=sparkConf)
-sparkContext.setLogLevel('ERROR')
+sc = SparkContext(conf=conf)
+sc.setLogLevel('ERROR')
 
-# Choosing a coin and a mesh for the walk
-coin = Hadamard()
-mesh = Line([size])
+# Choosing a mesh and instantiating the interacting walk with it
+mesh = Line((size, ))
+dtqw = DiscreteTimeQuantumWalk(
+    mesh,
+    interaction=PhaseChange(phase),
+    repr_format=constants.StateRepresentationFormatCoinPosition)
 
-coin_size = coin.size
-mesh_size = mesh.size[0]
+# To add particles to the walk, a coin must be instantiated with
+# the correspondent dimension of the chosen mesh
+coin = Hadamard(mesh.ndim)
 
-interaction = CollisionPhaseInteraction(num_particles, mesh, phase)
+# Instantiating the particle and giving them an identifier/name
+particle1 = Particle(coin, identifier='Fermion')
+particle2 = Particle(coin, identifier='Boson')
 
-# Options of initial states
+# Options of initial coin states for the particle
+# |i> --> (|0> - i|1>) / sqrt(2)
+cstate = (1 / math.sqrt(2), 1j / math.sqrt(2))
+
+# |i> --> |0>
+# cstate = (1, 0)
+
+# |i> --> |1>
+# cstate = (0, 1)
+
+position = mesh.center()
+
 if not entangled:
-    # Center of the mesh
-    positions = [mesh.center(), mesh.center()]
-
-    amplitudes = []
-
-    # |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
-    amplitudes.append([(1.0 + 0.0j) / math.sqrt(2),
-                       (0.0 - 1.0j) / math.sqrt(2)])
-
-    # |i>|x> --> |0>|x>
-    # amplitudes.append([(1.0 + 0.0j), 0])
-
-    # |i>|x> --> |1>|x>
-    # amplitudes.append([0, (1.0 + 0.0j)])
-
-    # |i>|x> --> (|0>|x> - i|1>|x>) / sqrt(2)
-    amplitudes.append([(1.0 + 0.0j) / math.sqrt(2),
-                       (0.0 - 1.0j) / math.sqrt(2)])
-
-    # |i>|x> --> |0>|x>
-    # amplitudes.append([(1.0 + 0.0j), 0])
-
-    # |i>|x> --> |1>|x>
-    # amplitudes.append([0, (1.0 + 0.0j)])
-
-    initial_state = State.create(
-        coin,
-        mesh,
-        positions,
-        amplitudes,
-        interaction=interaction,
-        representationFormat=representation_format)
+    # Adding the particles to the walk, with their coin state and
+    # position corresponding to the center site of the mesh
+    dtqw.add_particle(particle1, cstate, position)
+    dtqw.add_particle(particle2, cstate, position)
 else:
-    # Center of the mesh
-    position = mesh.center()
+    # The coin space for one-dimensional grids has size of 2
+    cspace = 2
 
-    if representation_format == constants.StateRepresentationFormatCoinPosition:
+    # The position space has size corresponding to the number of sites
+    pspace = mesh.sites
+
+    if dtqw.repr_format == constants.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
-        state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
-                 [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, -1.0 / math.sqrt(2)]]
+        state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 1, 1.0 / math.sqrt(2)],
+                 [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 1, -1.0 / math.sqrt(2)]]
 
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> + |0>|x1>|1>|x2>) / sqrt(2)
-        # state = [[(1 * mesh_size + position) * coin_size * mesh_size + 0 * mesh_size + position, 1, 1.0 / math.sqrt(2)],
-        #          [(0 * mesh_size + position) * coin_size * mesh_size + 1 * mesh_size + position, 1, 1.0 / math.sqrt(2)]]
-    elif representation_format == constants.StateRepresentationFormatPositionCoin:
+        # state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 1, 1.0 / math.sqrt(2)],
+        #          [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 1, 1.0 / math.sqrt(2)]]
+    elif dtqw.repr_format == constants.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
-        state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1, 1.0 / math.sqrt(2)],
-                 [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, 1, -1.0 / math.sqrt(2)]]
+        state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 1, 1.0 / math.sqrt(2)],
+                 [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 1, -1.0 / math.sqrt(2)]]
 
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> + |x1>|0>|x2>|1>) / sqrt(2)
-        # state = [[(position * coin_size + 1) * mesh_size * coin_size + position * coin_size + 0, 1, 1.0 / math.sqrt(2)],
-        #          [(position * coin_size + 0) * mesh_size * coin_size + position * coin_size + 1, 1, 1.0 / math.sqrt(2)]]
+        # state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 1, 1.0 / math.sqrt(2)],
+        #          [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 1, 1.0 / math.sqrt(2)]]
 
-    rdd = sparkContext.parallelize(state)
-    shape = [(coin_size * mesh_size) ** num_particles, 1]
-    initial_state = State(
-        rdd,
-        shape,
-        coin,
-        mesh,
-        num_particles,
-        interaction=interaction)
-
-# Instantiating the walk
-dtqw = DiscreteTimeQuantumWalk(initial_state)
+    # Adding the entangled particles to the walk, informing their system state
+    dtqw.add_entanglement((particle1, particle2), state)
 
 # Performing the walk
-final_state = dtqw.walk(steps)
+state = dtqw.walk(steps)
 
-# Measuring the state of the system and plotting its probability distribution
-gauge = PositionGauge()
+# Measuring the state of the system and plotting its distribution
+position = Position()
 
-joint, collision, marginal = gauge.measure(final_state)
+joint, collision, marginal = position.measure(state)
 
-axis = np.meshgrid(mesh.axis(), mesh.axis(), indexing='ij')
-data = joint.ndarray()
-labels = [v.name for v in joint.variables]
+labels = ["{}'s position x".format(particle1.identifier),
+          "{}'s position x".format(particle2.identifier),
+          'Probability']
+joint.plot(path + 'joint_1d2p', labels=labels, dpi=300)
 
-plot.surface(axis, data, walk_path + 'joint_1d2p',
-             labels=labels + ['Probability'], dpi=300)
-plot.contour(axis, data, walk_path + 'joint_1d2p_contour',
-             labels=labels, dpi=300)
+labels = ["Particles' position x", 'Probability']
+collision.plot(path + 'collision_1d2p', labels=labels, dpi=300)
 
-axis = mesh.axis()
-data = collision.ndarray()
-labels = [v.name for v in collision.variables] + ['Probability']
-
-plot.line(axis, data, walk_path + 'collision_1d2p', labels=labels, dpi=300)
-
-for p in range(len(marginal)):
-    plot.line(axis, marginal[p].ndarray(), '{}marginal{}_1d2p'.format(walk_path, p + 1),
-              labels=[v.name for v in marginal[p].variables] + ['Probability'], dpi=300)
+for p in range(particles):
+    labels = ["{}'s position x".format(dtqw.particles[p].identifier),
+              'Probability']
+    marginal[p].plot(path + 'marginal_1d2p_particle{}'.format(p + 1),
+                     labels=labels, dpi=300)
 
 # Exporting the profiling data
-dtqw.profiler.export(walk_path)
-gauge.profiler.export(walk_path)
+dtqw.profiler.export(path)
+position.profiler.export(path)
 
 # Destroying the RDD and stopping the SparkContext
-final_state.destroy()
-dtqw.destroy_operators()
-initial_state.destroy()
+state.destroy()
+dtqw.destroy()
 joint.destroy()
 collision.destroy()
-for p in range(len(marginal)):
-    marginal[p].destroy()
-sparkContext.stop()
+for m in marginal:
+    m.destroy()
+sc.stop()

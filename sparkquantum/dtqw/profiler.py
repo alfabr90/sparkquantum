@@ -1,6 +1,7 @@
+from sparkquantum import util
 from sparkquantum.dtqw.operator import is_operator
 from sparkquantum.dtqw.state import is_state
-from sparkquantum.math.distribution import is_probability_distribution
+from sparkquantum.math.distribution import is_distribution
 from sparkquantum.profiler import Profiler
 
 __all__ = ['QuantumWalkProfiler']
@@ -21,7 +22,7 @@ class QuantumWalkProfiler(Profiler):
         self._times = None
         self._operators = None
         self._states = None
-        self._probability_distributions = None
+        self._distributions = None
 
         self._start()
 
@@ -36,7 +37,7 @@ class QuantumWalkProfiler(Profiler):
                 'size': 0, 'numElements': 0}
 
     @staticmethod
-    def _default_probability_distribution():
+    def _default_distribution():
         return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
                 'size': 0, 'numElements': 0}
 
@@ -50,7 +51,7 @@ class QuantumWalkProfiler(Profiler):
         self._times = {}
         self._operators = {}
         self._states = {}
-        self._probability_distributions = {}
+        self._distributions = {}
 
     def profile_time(self, name, value):
         """Store the execution or building time for a named quantum walk element.
@@ -106,7 +107,7 @@ class QuantumWalkProfiler(Profiler):
 
             self._operators[name].append(self._default_operator())
 
-            app_id = operator.spark_context.applicationId
+            app_id = operator.sc.applicationId
             rdd_id = operator.data.id()
             data = self.request_rdd(app_id, rdd_id)
 
@@ -117,7 +118,7 @@ class QuantumWalkProfiler(Profiler):
 
             self._operators[name][-1]['buildingTime'] = time
             self._operators[name][-1]['size'] = operator.size
-            self._operators[name][-1]['numElements'] = operator.num_elements
+            self._operators[name][-1]['numElements'] = operator.nelem
 
             return self._operators[name][-1]
 
@@ -159,7 +160,7 @@ class QuantumWalkProfiler(Profiler):
 
             self._states[name].append(self._default_state())
 
-            app_id = state.spark_context.applicationId
+            app_id = state.sc.applicationId
             rdd_id = state.data.id()
             data = self.request_rdd(app_id, rdd_id)
 
@@ -170,19 +171,19 @@ class QuantumWalkProfiler(Profiler):
 
             self._states[name][-1]['buildingTime'] = time
             self._states[name][-1]['size'] = state.size
-            self._states[name][-1]['numElements'] = state.num_elements
+            self._states[name][-1]['numElements'] = state.nelem
 
             return self._states[name][-1]
 
-    def profile_probability_distribution(
-            self, name, probability_distribution, time):
+    def profile_distribution(
+            self, name, distribution, time):
         """Store building time and resources information for a named measurement (probability distribution).
 
         Parameters
         ----------
         name : str
-            A name for the probability_distribution.
-        probability_distribution : :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`
+            A name for the distribution.
+        distribution : :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`
             The probability distribution object.
         time : float
             The measured building time of the probability distribution.
@@ -195,39 +196,39 @@ class QuantumWalkProfiler(Profiler):
         Raises
         -----
         TypeError
-            If `probability_distribution` is not a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`.
+            If `distribution` is not a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`.
 
         """
         if self._enabled:
             self._logger.info(
                 "profiling probability distribution data for '{}'...".format(name))
 
-            if not is_probability_distribution(probability_distribution):
+            if not is_distribution(distribution):
                 self._logger.error(
-                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(probability_distribution)))
+                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(distribution)))
                 raise TypeError(
-                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(probability_distribution)))
+                    "'ProbabilityDistribution' instance expected, not '{}'".format(type(distribution)))
 
-            if name not in self._probability_distributions:
-                self._probability_distributions[name] = []
+            if name not in self._distributions:
+                self._distributions[name] = []
 
-            self._probability_distributions[name].append(
-                self._default_probability_distribution())
+            self._distributions[name].append(
+                self._default_distribution())
 
-            app_id = probability_distribution.spark_context.applicationId
-            rdd_id = probability_distribution.data.id()
+            app_id = distribution.sc.applicationId
+            rdd_id = distribution.data.id()
             data = self.request_rdd(app_id, rdd_id)
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._default_probability_distribution():
-                        self._probability_distributions[name][-1][k] = v
+                    if k in self._default_distribution():
+                        self._distributions[name][-1][k] = v
 
-            self._probability_distributions[name][-1]['buildingTime'] = time
-            self._probability_distributions[name][-1]['size'] = probability_distribution.size
-            self._probability_distributions[name][-1]['numElements'] = probability_distribution.num_elements
+            self._distributions[name][-1]['buildingTime'] = time
+            self._distributions[name][-1]['size'] = distribution.size
+            self._distributions[name][-1]['numElements'] = distribution.nelem
 
-            return self._probability_distributions[name][-1]
+            return self._distributions[name][-1]
 
     def get_times(self, name=None):
         """Get the measured time of all elements or of the named one.
@@ -312,7 +313,7 @@ class QuantumWalkProfiler(Profiler):
                 "no resources information for states have been obtained")
             return {}
 
-    def get_probability_distributions(self, name=None):
+    def get_distributions(self, name=None):
         """Get the resources information of all probability distributions or
         of the one with the provided name.
 
@@ -328,15 +329,15 @@ class QuantumWalkProfiler(Profiler):
             a list of the resources information of the named probability distribution.
 
         """
-        if len(self._probability_distributions):
+        if len(self._distributions):
             if name is None:
-                return self._probability_distributions.copy()
+                return self._distributions.copy()
             else:
-                if name not in self._probability_distributions:
+                if name not in self._distributions:
                     self._logger.warning(
                         "no resources information for probability distribution '{}'".format(name))
                     return {}
-                return self._probability_distributions[name]
+                return self._distributions[name]
         else:
             self._logger.warning(
                 "no resources information for probability distributions have been obtained")
@@ -365,8 +366,8 @@ class QuantumWalkProfiler(Profiler):
         self._logger.info("exporting times in {} format...".format(extension))
 
         if len(self._times):
-            self._export_values(
-                [self._times], self._times.keys(), path + 'times', extension)
+            self._export_values([self._times], self._times.keys(),
+                                util.append_slash(path) + 'times', extension)
 
             self._logger.info("times successfully exported")
         else:
@@ -403,8 +404,8 @@ class QuantumWalkProfiler(Profiler):
                     operator.append(i.copy())
                     operator[-1]['name'] = k
 
-            self._export_values(
-                operator, operator[-1].keys(), path + 'operators', extension)
+            self._export_values(operator, operator[-1].keys(),
+                                util.append_slash(path) + 'operators', extension)
 
             self._logger.info("operator's resources successfully exported")
         else:
@@ -442,15 +443,15 @@ class QuantumWalkProfiler(Profiler):
                     states.append(i.copy())
                     states[-1]['name'] = k
 
-            self._export_values(
-                states, states[-1].keys(), path + 'states', extension)
+            self._export_values(states, states[-1].keys(),
+                                util.append_slash(path) + 'states', extension)
 
             self._logger.info("states' resources successfully exported")
         else:
             self._logger.warning(
                 "no measurement of states' resources has been done")
 
-    def export_probability_distributions(self, path, extension='csv'):
+    def export_distributions(self, path, extension='csv'):
         """Export all stored probability distributions' resources.
 
         Notes
@@ -473,16 +474,16 @@ class QuantumWalkProfiler(Profiler):
         self._logger.info(
             "exporting probability distributions' resources in {} format...".format(extension))
 
-        if len(self._probability_distributions):
-            probability_distributions = []
+        if len(self._distributions):
+            distributions = []
 
-            for k, v in self._probability_distributions.items():
+            for k, v in self._distributions.items():
                 for i in v:
-                    probability_distributions.append(i.copy())
-                    probability_distributions[-1]['name'] = k
+                    distributions.append(i.copy())
+                    distributions[-1]['name'] = k
 
-            self._export_values(
-                probability_distributions, probability_distributions[-1].keys(), path + 'probability_distributions', extension)
+            self._export_values(distributions, distributions[-1].keys(),
+                                util.append_slash(path) + 'distributions', extension)
 
             self._logger.info(
                 "probability distributions' resources successfully exported")
@@ -515,4 +516,4 @@ class QuantumWalkProfiler(Profiler):
         self.export_times(path, extension)
         self.export_operators(path, extension)
         self.export_states(path, extension)
-        self.export_probability_distributions(path, extension)
+        self.export_distributions(path, extension)

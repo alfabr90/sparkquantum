@@ -2,7 +2,11 @@ from pyspark import RDD
 
 from sparkquantum import constants
 
-__all__ = ['is_scalar', 'is_shape', 'change_coordinate', 'remove_zeros']
+__all__ = [
+    'is_scalar',
+    'is_shape',
+    'change_coordinate',
+    'remove_zeros']
 
 
 def is_scalar(obj):
@@ -22,13 +26,15 @@ def is_scalar(obj):
     return not isinstance(obj, bool) and isinstance(obj, (int, float, complex))
 
 
-def is_shape(shape):
-    """Check if an object is a shape, i.e., a list or a tuple of length 2 and positive values.
+def is_shape(obj, ndim=None):
+    """Check if an object is a shape, i.e., a n-dimension (n positive) tuple with positive values.
 
     Parameters
     ----------
-    shape : list or tuple
+    obj : tuple
         The object to be checked if it is a shape.
+    ndim : int, optional
+        The expected number of dimensions. Default value is None.
 
     Returns
     -------
@@ -36,8 +42,20 @@ def is_shape(shape):
         True if argument is a shape, False otherwise.
 
     """
-    return (isinstance(shape, (list, tuple)) and
-            len(shape) == 2 and shape[0] > 0 and shape[1] > 0)
+    if not isinstance(obj, tuple):
+        return False
+
+    if len(obj) == 0:
+        return False
+
+    if ndim is not None and len(obj) != ndim:
+        return False
+
+    for n in obj:
+        if n <= 0:
+            return False
+
+    return True
 
 
 def change_coordinate(rdd, old_coordinate, new_coordinate):
@@ -64,8 +82,7 @@ def change_coordinate(rdd, old_coordinate, new_coordinate):
 
     """
     if not isinstance(rdd, RDD):
-        raise TypeError("'RDD' instance expected, not '{}'".format(
-            type(rdd)))
+        raise TypeError("'RDD' instance expected, not '{}'".format(type(rdd)))
 
     if old_coordinate == new_coordinate:
         return rdd
@@ -105,7 +122,7 @@ def change_coordinate(rdd, old_coordinate, new_coordinate):
     return rdd
 
 
-def remove_zeros(rdd, data_type, coordinate_format):
+def remove_zeros(rdd, dtype, coordinate_format):
     """Remove zeros of a :py:class:`sparkquantum.math.matrix.Matrix` object's RDD.
 
     Notes
@@ -116,7 +133,7 @@ def remove_zeros(rdd, data_type, coordinate_format):
     ----------
     rdd : :py:class:`pyspark.RDD`
         The :py:class:`sparkquantum.math.matrix.Matrix` object's RDD to have its zeros removed.
-    data_type : type
+    dtype : type
         The Python type of all values in the RDD.
     coordinate_format : int
         The coordinate format of the :py:class:`sparkquantum.math.matrix.Matrix` object's RDD.
@@ -128,15 +145,14 @@ def remove_zeros(rdd, data_type, coordinate_format):
 
     """
     if not isinstance(rdd, RDD):
-        raise TypeError("'RDD' instance expected, not '{}'".format(
-            type(rdd)))
+        raise TypeError("'RDD' instance expected, not '{}'".format(type(rdd)))
 
     rdd = change_coordinate(
         rdd,
         coordinate_format,
         constants.MatrixCoordinateDefault)
 
-    zero = data_type()
+    zero = dtype()
 
     rdd = rdd.filter(
         lambda m: m[2] != zero

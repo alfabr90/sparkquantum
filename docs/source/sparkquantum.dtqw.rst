@@ -8,9 +8,9 @@ Subpackages
    :maxdepth: 4
 
    sparkquantum.dtqw.coin
-   sparkquantum.dtqw.gauge
    sparkquantum.dtqw.interaction
    sparkquantum.dtqw.mesh
+   sparkquantum.dtqw.observable
 
 Submodules
 ----------
@@ -55,6 +55,13 @@ sparkquantum.dtqw.state module
    :undoc-members:
    :show-inheritance:
 
+sparkquantum.dtqw.util module
+-----------------------------
+
+.. automodule:: sparkquantum.dtqw.util
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

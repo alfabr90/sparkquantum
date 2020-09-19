@@ -1,16 +1,16 @@
 sparkquantum.dtqw.interaction package
 =====================================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   sparkquantum.dtqw.interaction.collision
+
 Submodules
 ----------
-
-sparkquantum.dtqw.interaction.collision\_phase module
------------------------------------------------------
-
-.. automodule:: sparkquantum.dtqw.interaction.collision_phase
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 sparkquantum.dtqw.interaction.interaction module
 ------------------------------------------------
@@ -19,7 +19,6 @@ sparkquantum.dtqw.interaction.interaction module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

@@ -26,66 +26,59 @@ The `dtqw` module of the simulator allows the user to simulate DTQW composed by 
 
 #### A Simple Example
 
-In order to simulate, for instance, a particle walking over a line, the user must, first of all, choose a coin:
+In order to simulate, for instance, a particle walking over a line (one-dimensional grid), the user must, first of all, instantiate this mesh's corresponding class informing its size (shape):
 
 ```python
-coin = Hadamard()
+mesh = Line((2 * steps + 1, ))
 ```
 
-and a mesh:
+Particularly for the line (one-dimensional) grid, its size comprehends a central site where the particle **must**, initially, be located at, and the number of steps to the left and to the right of that central site. This avoids the particles walking besides the boundaries of the mesh.
+
+Notice that, due to the mesh being a one-dimensional grid, its shape must be defined by a one-element tuple. For other dimensions, e.g. two-dimensional, the correspondent shape must be defined by a two-elements tuple.
+
+Next, the user must instantiate a `DiscreteTimeQuantumWalk` object with the previously chosen mesh:
 
 ```python
-mesh = Line(steps)
+dtqw = DiscreteTimeQuantumWalk(mesh)
 ```
 
-Particularly for a `Line` mesh, the number of steps of the walk can be passed in as a parameter. This class is responsible to build a line mesh with size comprehending a central site where the particle **must**, initially, be located at, and the number of steps to the left and to the right of that central site. This avoids the particles walking besides the boundaries of the mesh.
-
-Next, the user must provide the initial position of the particle:
+From now on, particles can be added to the quantum walk, but first, a coin must be instantiated with the mesh's correspondent dimension number:
 
 ```python
-positions = [mesh.center()]
+coin = Hadamard(mesh.ndim)
 ```
 
-Remember that, for line meshes, its center **must** be the initial position of the particle. Besides, as the simulator allows DTQW with _n_ particles, the `positions` variable must be an array-like structure, similarly to the following `amplitudes` variable, containing the amplitudes of the initial quantum state:
+When instantiating a particle, the user can assign an identifier to it:
 
 ```python
-amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
-               (0.0 - 1.0j) / math.sqrt(2)]]
+particle = Particle(coin, identifier='Electron')
 ```
 
-In this example, the above amplitude and position values correspond to the initial quantum state, in Dirac's notation:
+In this example, suppose the user needs to simulate the following initial quantum state, in Dirac's notation:
 
 `|c>|p> --> (|0> - i|1>)|p> / sqrt(2) = (|0>|p> - i|1>|p>) / sqrt(2)`,
 
-where `c` is the coin state and `p` is the position state.
-
-Thus, the initial state can be built using the static `State.create` method with all the previous data:
+where `c` is the coin state and `p` is the position state. In order to do so, the user need to add the particle to the quantum walk, informing the its coin state and position as follows:
 
 ```python
-initial_state = State.create(coin, mesh, positions, amplitudes)
+dtqw.add_particle(particle, (1 / math.sqrt(2), 1j / math.sqrt(2)), mesh.center())
 ```
 
-To perform the walk, the user must instantiate a `DiscreteTimeQuantumWalk` object with the recently built quantum state:
+To perform the walk, the user must call the `DiscreteTimeQuantumWalk.walk` method, informing the desired number of steps:
 
 ```python
-dtqw = DiscreteTimeQuantumWalk(initial_state)
-```
-
-and call its `walk` method, informing the desired number of steps:
-
-```python
-final_state = dtqw.walk(steps)
+state = dtqw.walk(steps)
 ```
 
 Finally, the user can measure the final quantum state, obtaining the probability distribution of the possible particle's positions and plot it:
 
 ```python
-gauge = PositionGauge()
+gauge = Position()
 
-joint = gauge.measure(final_state)
+joint = gauge.measure(state)
 
-plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
-          labels=['Position', 'Probability'])
+labels = ["{}'s position x".format(particle.identifier), 'Probability']
+joint.plot(path + 'joint_1d1p', labels=labels)
 
 ```
 
@@ -96,66 +89,67 @@ import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import plot, util
-from sparkquantum.dtqw.coin.coin1d.hadamard import Hadamard
+from sparkquantum import constants, plot, util
+from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
-from sparkquantum.dtqw.gauge.position import PositionGauge
-from sparkquantum.dtqw.mesh.mesh1d.line import Line
-from sparkquantum.dtqw.state import State
+from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.observable.position import Position
+from sparkquantum.dtqw.particle import Particle
 
 # Initiallizing the SparkContext with some options
 num_cores = 4
 
-sparkConf = SparkConf().set('sparkquantum.cluster.totalCores', num_cores)
-sparkContext = SparkContext(conf=sparkConf)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
+sc = SparkContext(conf=conf)
 
-# In this example, the walk will last 30 steps
-# As we chose a `Line` mesh, its size will be
-# automatically calculated, i.e., 2 * size + 1 sites
-size = steps = 30
+# In this example, the walk will last 30 steps.
+# As we chose a `Line` mesh, its size must be
+# 2 * steps + 1 sites
+steps = 30
+size = 2 * steps + 1
 
-# Choosing a coin and a mesh for the walk
-coin = Hadamard()
-mesh = Line([size])
+# Choosing a mesh and instantiating the walk with the chosen mesh
+mesh = Line((size, ))
+dtqw = DiscreteTimeQuantumWalk(mesh)
 
-mesh_size = mesh.size[0]
+# To add particles to the walk, a coin must be instantiated with
+# the correspondent dimension of the chosen mesh
+coin = Hadamard(mesh.ndim)
 
-# Center of the mesh
-# Notice that we set a list with only one element
-# as we are simulating a DTQW with one particle
-positions = [mesh.center()]
+# Instantiating a particle and giving it a name
+particle = Particle(coin, identifier='Electron')
 
-# Options of initial states
-# Notice that we set a list with only one element
-# as we are simulating a DTQW with one particle
-# |c>|p> --> (|0>|p> - i|1>|p>) / sqrt(2)
-amplitudes = [[(1.0 + 0.0j) / math.sqrt(2),
-               (0.0 - 1.0j) / math.sqrt(2)]]
+# Options of initial coin states
+# |i> --> (|0> - i|1>) / sqrt(2)
+cstate = (1 / math.sqrt(2), 1j / math.sqrt(2))
 
-# Building the initial state
-initial_state = State.create(coin, mesh, positions, amplitudes)
+# |i> --> |0>
+# cstate = (1, 0)
 
-# Instantiating the walk
-dtqw = DiscreteTimeQuantumWalk(initial_state)
+# |i> --> |1>
+# cstate = (0, 1)
+
+# Adding the particle to the walk with its coin state and
+# position corresponding to the center site of the mesh
+dtqw.add_particle(particle, cstate, mesh.center())
 
 # Performing the walk
-final_state = dtqw.walk(steps)
+state = dtqw.walk(steps)
 
-# Measuring the state of the system and plotting its probability distribution
-gauge = PositionGauge()
+# Measuring the state of the system and plotting its distribution
+position = Position()
 
-joint = gauge.measure(final_state)
+joint = position.measure(state)
 
-plot.line(mesh.axis(), joint.ndarray(), 'joint_1d1p',
-          labels=['Position', 'Probability'])
+labels = ["{}'s position x".format(particle.identifier), 'Probability']
+joint.plot(path + 'joint_1d1p', labels=labels)
 
 # Destroying the RDD and stopping the SparkContext
+state.destroy()
+dtqw.destroy()
 joint.destroy()
-final_state.destroy()
-dtqw.destroy_operators()
-initial_state.destroy()
 
-sparkContext.stop()
+sc.stop()
 
 ```
 
@@ -163,46 +157,45 @@ For more detailed examples (e.g., of how to use profiling and mesh percolations)
 
 #### Coins and Meshes
 
-By default, the following coins and meshes have already been implemented:
+By default, the following coins have been implemented:
+
+- Coin:
+  - `Hadamard`
+  - `Grover` - must be of two-dimensional or higher;
+  - `Fourier` - must be of two-dimensional or higher;
+
+and meshes:
 
 - For one-dimensional walks:
-  - Coin:
-    - `Hadamard`
-  - Mesh:
-    - `Line`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation;
-    - `Segment`: a line-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each border. The particles can start their walk at any site of the mesh;
-    - `Cycle`: a line-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each border. The particles can start their walk at any site of the mesh
-- For two-dimensional walks:
-  - Coin:
-    - `Hadamard`
-    - `Grover`
-    - `Fourier`
-  - Mesh (each one with diagonal and natural variants):
-    - `Lattice`: a mesh based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the mesh, its size is the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the `Line`'s two-dimension counterpart;
-    - `Box`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with reflective sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the `Segment`'s two-dimension counterpart;
-    - `Torus`: a lattice-based mesh (although there is no relation between the size of the mesh and the number of steps of the walk) with cyclic sites on each coordinates' border. The particles can start their walk at any site of the mesh. It's the `Cycle`'s two-dimension counterpart
+  - `Line`: a grid based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the grid, its size must be the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation;
+  - `Segment`: a line-based grid (although there is no relation between the size of the grid and the number of steps of the walk) with reflective sites on each border. The particles can start their walk at any site of the grid;
+  - `Cycle`: a line-based grid (although there is no relation between the size of the grid and the number of steps of the walk) with cyclic sites on each border. The particles can start their walk at any site of the grid;
+- For two-dimensional walks (each one with diagonal and natural variants):
+  - `Lattice`: a grid based on the number of steps of the walk. To avoid the particles walking besides the boundaries of the grid, its size must be the double of the number of steps plus a center site where the particles **must** be located initially for a flawless simulation. It's the `Line`'s two-dimension counterpart;
+  - `Box`: a lattice-based grid (although there is no relation between the size of the grid and the number of steps of the walk) with reflective sites on each coordinates' border. The particles can start their walk at any site of the grid. It's the `Segment`'s two-dimension counterpart;
+  - `Torus`: a lattice-based grid (although there is no relation between the size of the grid and the number of steps of the walk) with cyclic sites on each coordinates' border. The particles can start their walk at any site of the grid. It's the `Cycle`'s two-dimension counterpart.
 
 #### Mesh Percolations
 
 The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`RandomBrokenLinks`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
 
 ```python
-broken_links = RandomBrokenLinks(0.05)
+percolation = RandomBrokenLinks(0.05)
 ```
 
 and assign it to the chosen mesh, as follows:
 
 ```python
-mesh = Line(steps, broken_links)
+mesh = Line(steps, percolation=percolation)
 ```
 
 The second one is represented by the `PermanentBrokenLinks` class. Its usage differs from the first variation only in the parameter it receives, which is a list with the number of each edge that is broken:
 
 ```python
-broken_links = PermanentBrokenLinks([5, 55])
+percolation = PermanentBrokenLinks([5, 55])
 ```
 
-In order to correctly inform the number of the edges, the user must know how the simulator numbers them: starting with the one-dimensional meshes, the edges are incrementally numbered following a left-to-right direction, starting with the leftmost edge. The last edge has the same number of the first one, as if it was a cycled mesh, to consider the border extrapolation:
+In order to correctly inform the number of the edges, the user must know how the simulator numbers them: starting with the one-dimensional grids, the edges are incrementally numbered following a left-to-right direction, starting with the leftmost edge. The last edge has the same number of the first one, as if it was a cycled mesh, to consider the border extrapolation:
 
 ```
 — o — o — o — o — o —
@@ -210,7 +203,7 @@ In order to correctly inform the number of the edges, the user must know how the
           x
 ```
 
-For two-dimensional meshes, the previous principle is also used, although some adaptations must be performed. When considering the diagonal mesh, as the particle moves only diagonally, the number of sites that can be occupied by the particle is inferior than the sites of the mathematical mesh. Also, notice that the number of edges traversed by the particle equals the number of positions of the grid:
+For two-dimensional grids, the previous principle is also used, although some adaptations must be performed. When considering the diagonal mesh, as the particle moves only diagonally, the number of sites that can be occupied by the particle is inferior than the sites of the mathematical grid. Also, notice that the number of edges traversed by the particle equals the number of positions of the grid:
 
 ```
 \     / \     / \     /
@@ -270,7 +263,7 @@ When a natural mesh is considered, all the possible positions that the particle 
 
 #### Custom Elements
 
-TODO: explain how the user can implement custom coins, meshes and custom mesh percolations.
+TODO: explain how the user can implement custom coins, meshes and custom mesh percolations and interactions between particles.
 
 ## Configuration Parameters
 
@@ -286,15 +279,15 @@ Below, there is a list of the current configuration parameters that the user can
 | sparkquantum.dtqw.mesh.brokenLinks.generationMode         |  `constants.BrokenLinksGenerationModeBroadcast`   | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken.                      |
 | sparkquantum.dtqw.profiler.logExecutors                   |                       False                       | Whether to log executors' data if a profiler was provided.                                                                                                       |
 | sparkquantum.dtqw.state.dumpingFormat                     |        `constants.StateDumpingFormatIndex`        | Whether the system state has each of its elements dumped as vector indexes followed by their values or as mesh/cartesian coordinates followed by their values.   |
-| sparkquantum.dtqw.state.representationFormat              | `constants.StateRepresentationFormatCoinPosition` | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces.                     |
+| sparkquantum.dtqw.stateRepresentationFormat               | `constants.StateRepresentationFormatCoinPosition` | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces.                     |
 | sparkquantum.dtqw.walk.checkpointingFrequency             |                        -1                         | The frequency to checkpoint the states. A state will be checkpointed at every _n_ steps. When -1, it never checkpoints the state.                                |
 | sparkquantum.dtqw.walk.checkUnitary                       |                       False                       | Whether to check if each state is unitary.                                                                                                                       |
 | sparkquantum.dtqw.walk.dumpingFrequency                   |                        -1                         | The frequency of dumping the states to disk. A state will be dumped at every _n_ steps. When -1, it never dumps the state.                                       |
-| sparkquantum.dtqw.walk.dumpingPath                        |                       "./"                        | The directory to save the dumps.                                                                                                                                 |
+| sparkquantum.dumpingPath                                  |                       "./"                        | The directory to save the dumps.                                                                                                                                 |
 | sparkquantum.dtqw.walk.dumpStatesProbabilityDistributions |                       False                       | Whether to dump to disk the probability distribution of each state.                                                                                              |
-| sparkquantum.dtqw.walkOperator.checkpoint                 |                       False                       | Whether to checkpoint the walk operator(s).                                                                                                                      |
-| sparkquantum.dtqw.walkOperator.kroneckerMode              |        `constants.KroneckerModeBroadcast`         | The kronecker product mode to build the walk operator(s). For now, can be as a broadcast variable or a RDD.                                                      |
-| sparkquantum.dtqw.walkOperator.tempPath                   |                       "./"                        | The temporary directory to save the walk operators' dump. Considered only when the kronecker mode is `constants.KroneckerModeDump`.                              |
+| sparkquantum.dtqw.evolutionOperator.checkpoint            |                       False                       | Whether to checkpoint the walk operator(s).                                                                                                                      |
+| sparkquantum.dtqw.evolutionOperator.kroneckerMode         |        `constants.KroneckerModeBroadcast`         | The kronecker product mode to build the walk operator(s). For now, can be as a broadcast variable or a RDD.                                                      |
+| sparkquantum.dtqw.evolutionOperator.tempPath              |                       "./"                        | The temporary directory to save the walk operators' dump. Considered only when the kronecker mode is `constants.KroneckerModeDump`.                              |
 | sparkquantum.dumpingCompressionCodec                      |                       None                        | Compression codec class used by Spark when dumping each RDD's data disk.                                                                                         |
 | sparkquantum.dumpingGlue                                  |                        " "                        | A string to connect the coordinates of each RDD's element when dumping its data.                                                                                 |
 | sparkquantum.logging.enabled                              |                       False                       | Whether the application must use [Python's logging facility](https://docs.python.org/3/library/logging.html).                                                    |
