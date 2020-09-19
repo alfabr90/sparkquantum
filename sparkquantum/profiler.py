@@ -7,7 +7,7 @@ from pyspark import SparkContext
 
 from sparkquantum import conf, util
 
-__all__ = ['Profiler']
+__all__ = ['Profiler', 'is_profiler']
 
 
 class Profiler:
@@ -20,7 +20,7 @@ class Profiler:
 
     def __init__(self):
         """Build a profiler object."""
-        self._spark_context = SparkContext.getOrCreate()
+        self._sc = SparkContext.getOrCreate()
 
         self._data = None
         self._resources = None
@@ -30,7 +30,7 @@ class Profiler:
         self._enabled = self._is_enabled()
 
         self._logger = util.get_logger(
-            self._spark_context, self.__class__.__name__)
+            self._sc, self.__class__.__name__)
 
         self._start()
 
@@ -82,12 +82,12 @@ class Profiler:
             self._base_url)
 
     def _is_enabled(self):
-        return conf.get_conf(self._spark_context,
-                             'sparkquantum.profiling.enabled') == 'True'
+        return conf.get(self._sc,
+                        'sparkquantum.profiling.enabled') == 'True'
 
     def _get_baseurl(self):
-        return conf.get_conf(self._spark_context,
-                             'sparkquantum.profiling.baseUrl')
+        return conf.get(self._sc,
+                        'sparkquantum.profiling.baseUrl')
 
     def _start(self):
         self._data = {}
@@ -604,7 +604,8 @@ class Profiler:
                 tmp['rdd'] = k
                 rdd.append(tmp)
 
-            self._export_values(rdd, rdd[-1].keys(), path + 'rdd', extension)
+            self._export_values(rdd, rdd[-1].keys(),
+                                util.append_slash(path) + 'rdd', extension)
 
             self._logger.info("RDD resources successfully exported")
         else:
@@ -650,8 +651,8 @@ class Profiler:
 
                 resources.append(tmp)
 
-            self._export_values(
-                resources, resources[-1].keys(), path + 'resources', extension)
+            self._export_values(resources, resources[-1].keys(),
+                                util.append_slash(path) + 'resources', extension)
 
             self._logger.info("resources successfully exported")
         else:
@@ -698,8 +699,8 @@ class Profiler:
 
                     executors.append(tmp)
 
-                self._export_values(
-                    executors, executors[-1].keys(), "{}executor_{}".format(path, k1), extension)
+                self._export_values(executors, executors[-1].keys(),
+                                    "{}executor_{}".format(util.append_slash(path), k1), extension)
 
             self._logger.info("executors resources successfully exported")
         else:

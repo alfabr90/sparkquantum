@@ -42,7 +42,7 @@ class Permanent(Percolation):
         return 'Permanent percolations generator with {}'.format(percolation)
 
     def generate(self, edges,
-                 perc_mode=constants.PercolationGenerationModeBroadcast):
+                 perc_mode=constants.PercolationsGenerationModeBroadcast):
         """Generate mesh percolations based on its probability to have a percolation.
 
         Parameters
@@ -51,7 +51,7 @@ class Permanent(Percolation):
             Number of edges of the mesh.
         perc_mode : int, optional
             Indicate how the percolations will be generated.
-            Default value is :py:const:`sparkquantum.constants.PercolationGenerationModeBroadcast`.
+            Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Returns
         -------
@@ -87,9 +87,9 @@ class Permanent(Percolation):
             lambda m: (m, True)
         )
 
-        if perc_mode == constants.PercolationGenerationModeRDD:
+        if perc_mode == constants.PercolationsGenerationModeRDD:
             return rdd
-        elif perc_mode == constants.PercolationGenerationModeBroadcast:
+        elif perc_mode == constants.PercolationsGenerationModeBroadcast:
             return util.broadcast(self._sc, rdd.collectAsMap())
         else:
             self._logger.error("invalid percolation generation mode")

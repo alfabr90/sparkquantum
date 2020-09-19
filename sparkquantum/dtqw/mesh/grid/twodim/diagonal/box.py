@@ -39,7 +39,7 @@ class Box(Diagonal):
             self._shape, percolation)
 
     def create_operator(self,
-                        repr_format=constants.StateRepresentationFormatCoinPosition, perc_mode=constants.PercolationGenerationModeBroadcast):
+                        repr_format=constants.StateRepresentationFormatCoinPosition, perc_mode=constants.PercolationsGenerationModeBroadcast):
         """Build the shift operator for a quantum walk.
 
         Parameters
@@ -49,7 +49,7 @@ class Box(Diagonal):
             Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
         perc_mode : int, optional
             Indicate how the percolation will be represented.
-            Default value is :py:const:`sparkquantum.constants.PercolationGenerationModeBroadcast`.
+            Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Returns
         -------
@@ -73,7 +73,7 @@ class Box(Diagonal):
         if self._percolation is not None:
             percolation = self._percolation.generate(self._edges)
 
-            if perc_mode == constants.PercolationGenerationModeRDD:
+            if perc_mode == constants.PercolationsGenerationModeRDD:
                 if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
@@ -152,7 +152,7 @@ class Box(Diagonal):
                 ).flatMap(
                     __map
                 )
-            elif perc_mode == constants.PercolationGenerationModeBroadcast:
+            elif perc_mode == constants.PercolationsGenerationModeBroadcast:
                 percolation = util.broadcast(percolation)
 
                 if repr_format == constants.StateRepresentationFormatCoinPosition:

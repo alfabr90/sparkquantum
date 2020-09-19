@@ -1,32 +1,30 @@
 import logging
 
-from pyspark import RDD
-
 from sparkquantum import constants
 
-__all__ = ['get_conf']
+__all__ = ['get']
 
 
-_config_defaults = {
+_defaults = {
     'sparkquantum.cluster.maxPartitionSize': 64 * 10 ** 6,
     'sparkquantum.cluster.numPartitionsSafetyFactor': 1.3,
     'sparkquantum.cluster.totalCores': 1,
     'sparkquantum.cluster.useSparkDefaultNumPartitions': 'False',
+    'sparkquantum.dtqw.checkpointingFrequency': -1,
+    'sparkquantum.dtqw.checkUnitary': 'False',
+    'sparkquantum.dtqw.dumpingFrequency': -1,
+    'sparkquantum.dtqw.dumpStatesProbabilityDistributions': 'False',
+    'sparkquantum.dtqw.evolutionOperator.checkpoint': 'False',
+    'sparkquantum.dtqw.evolutionOperator.kroneckerMode': constants.KroneckerModeBroadcast,
+    'sparkquantum.dtqw.evolutionOperator.tempPath': './',
     'sparkquantum.dtqw.interactionOperator.checkpoint': 'False',
-    'sparkquantum.dtqw.mesh.brokenLinks.generationMode': constants.BrokenLinksGenerationModeBroadcast,
+    'sparkquantum.dtqw.mesh.percolation.generationMode': constants.PercolationsGenerationModeBroadcast,
     'sparkquantum.dtqw.profiler.logExecutors': 'False',
-    'sparkquantum.dtqw.walk.checkpointingFrequency': -1,
-    'sparkquantum.dtqw.walk.checkUnitary': 'False',
-    'sparkquantum.dtqw.walk.dumpingFrequency': -1,
-    'sparkquantum.dtqw.walk.dumpingPath': './',
-    'sparkquantum.dtqw.walk.dumpStatesProbabilityDistributions': 'False',
-    'sparkquantum.dtqw.walkOperator.checkpoint': 'False',
-    'sparkquantum.dtqw.walkOperator.kroneckerMode': constants.KroneckerModeBroadcast,
-    'sparkquantum.dtqw.walkOperator.tempPath': './',
+    'sparkquantum.dtqw.stateRepresentationFormat': constants.StateRepresentationFormatCoinPosition,
     'sparkquantum.dtqw.state.dumpingFormat': constants.StateDumpingFormatIndex,
-    'sparkquantum.dtqw.state.representationFormat': constants.StateRepresentationFormatCoinPosition,
     'sparkquantum.dumpingCompressionCodec': None,
     'sparkquantum.dumpingGlue': ' ',
+    'sparkquantum.dumpingPath': './',
     'sparkquantum.logging.enabled': 'False',
     'sparkquantum.logging.filename': './log.txt',
     'sparkquantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
@@ -41,14 +39,14 @@ Dict with the default values for all accepted configurations of the package.
 """
 
 
-def get_conf(sc, config_str):
+def get(sc, config):
     """Get a configuration value from the :py:class:`pyspark.SparkContext` object.
 
     Parameters
     ----------
     sc : :py:class:`pyspark.SparkContext`
         The :py:class:`pyspark.SparkContext` object.
-    config_str : str
+    config : str
         The configuration string to have its correspondent value obtained.
 
     Returns
@@ -57,11 +55,11 @@ def get_conf(sc, config_str):
         The configuration value or None if the configuration is not found.
 
     """
-    c = sc.getConf().get(config_str)
+    c = sc.getConf().get(config)
 
     if not c:
-        if config_str not in _config_defaults:
+        if config not in _defaults:
             return None
-        return _config_defaults[config_str]
+        return _defaults[config]
 
     return c

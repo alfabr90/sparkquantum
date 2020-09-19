@@ -38,7 +38,7 @@ class Segment(OneDimensional):
         return 'Segment grid with shape {}{}'.format(self._shape, percolation)
 
     def create_operator(self,
-                        repr_format=constants.StateRepresentationFormatCoinPosition, perc_mode=constants.PercolationGenerationModeBroadcast):
+                        repr_format=constants.StateRepresentationFormatCoinPosition, perc_mode=constants.PercolationsGenerationModeBroadcast):
         """Build the shift operator for a quantum walk.
 
         Parameters
@@ -48,7 +48,7 @@ class Segment(OneDimensional):
             Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
         perc_mode : int, optional
             Indicate how the percolation will be represented.
-            Default value is :py:const:`sparkquantum.constants.PercolationGenerationModeBroadcast`.
+            Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Returns
         -------
@@ -70,7 +70,7 @@ class Segment(OneDimensional):
         if self._percolation:
             percolation = self._percolation.generate(self._edges)
 
-            if perc_mode == constants.PercolationGenerationModeRDD:
+            if perc_mode == constants.PercolationsGenerationModeRDD:
                 if repr_format == constants.StateRepresentationFormatCoinPosition:
                     def __map(e):
                         """e = (edge, (edge, broken or not))"""
@@ -122,7 +122,7 @@ class Segment(OneDimensional):
                 ).flatMap(
                     __map
                 )
-            elif perc_mode == constants.PercolationGenerationModeBroadcast:
+            elif perc_mode == constants.PercolationsGenerationModeBroadcast:
                 percolation = util.broadcast(
                     self._sc, percolation)
 

@@ -41,7 +41,7 @@ class Percolation():
         return 'Percolations generator'
 
     def generate(self, edges,
-                 perc_mode=constants.PercolationGenerationModeBroadcast):
+                 perc_mode=constants.PercolationsGenerationModeBroadcast):
         """Generate mesh percolations.
 
         Parameters
@@ -50,7 +50,7 @@ class Percolation():
             Number of edges of a mesh.
         perc_mode : int, optional
             Indicate how the percolations will be generated.
-            Default value is :py:const:`sparkquantum.constants.PercolationGenerationModeBroadcast`.
+            Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Raises
         -------
