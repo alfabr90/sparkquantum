@@ -61,7 +61,7 @@ class OneDimensional(Grid):
             Indicate how the quantum system is represented.
             Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
         perc_mode : int, optional
-            Indicate how the percolation will be represented.
+            Indicate how the percolations will be generated.
             Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Returns
