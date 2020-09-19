@@ -73,9 +73,9 @@ state = dtqw.walk(steps)
 Finally, the user can measure the final quantum state, obtaining the probability distribution of the possible particle's positions and plot it:
 
 ```python
-gauge = Position()
+position = Position()
 
-joint = gauge.measure(state)
+joint = position.measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
@@ -161,8 +161,8 @@ By default, the following coins have been implemented:
 
 - Coin:
   - `Hadamard`
-  - `Grover` - must be of two-dimensional or higher;
-  - `Fourier` - must be of two-dimensional or higher;
+  - `Grover` - must be two-dimensional or higher;
+  - `Fourier` - must be two-dimensional or higher;
 
 and meshes:
 
@@ -177,10 +177,10 @@ and meshes:
 
 #### Mesh Percolations
 
-The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`RandomBrokenLinks`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
+The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`Random`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
 
 ```python
-percolation = RandomBrokenLinks(0.05)
+percolation = Random(0.05)
 ```
 
 and assign it to the chosen mesh, as follows:
@@ -189,10 +189,10 @@ and assign it to the chosen mesh, as follows:
 mesh = Line(steps, percolation=percolation)
 ```
 
-The second one is represented by the `PermanentBrokenLinks` class. Its usage differs from the first variation only in the parameter it receives, which is a list with the number of each edge that is broken:
+The second one is represented by the `Permanent` class. Its usage differs from the first variation only in the parameter it receives, which is a collection with the number of each edge that is broken:
 
 ```python
-percolation = PermanentBrokenLinks([5, 55])
+percolation = Permanent([5, 55])
 ```
 
 In order to correctly inform the number of the edges, the user must know how the simulator numbers them: starting with the one-dimensional grids, the edges are incrementally numbered following a left-to-right direction, starting with the leftmost edge. The last edge has the same number of the first one, as if it was a cycled mesh, to consider the border extrapolation:
@@ -276,7 +276,7 @@ Below, there is a list of the current configuration parameters that the user can
 | sparkquantum.cluster.totalCores                           |                         1                         | Total number of cores used by the application. Necessary to calculate the best possible number of partitions of each RDD produced by the application             |
 | sparkquantum.cluster.useSparkDefaultNumPartitions         |                       False                       | Whether to use the default number of partitions defined by Spark when partitioning the RDD produced by the application.                                          |
 | sparkquantum.dtqw.interactionOperator.checkpoint          |                       False                       | Whether to checkpoint the interaction operator. Considered only on interacting multiparticle walks.                                                              |
-| sparkquantum.dtqw.mesh.brokenLinks.generationMode         |  `constants.BrokenLinksGenerationModeBroadcast`   | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken.                      |
+| sparkquantum.dtqw.mesh.percolation.generationMode         |  `constants.PercolationsGenerationModeBroadcast`  | The broken links generation mode. For now, can be as a broadcast variable or a RDD, both ways containing the edges numbers that are broken.                      |
 | sparkquantum.dtqw.profiler.logExecutors                   |                       False                       | Whether to log executors' data if a profiler was provided.                                                                                                       |
 | sparkquantum.dtqw.state.dumpingFormat                     |        `constants.StateDumpingFormatIndex`        | Whether the system state has each of its elements dumped as vector indexes followed by their values or as mesh/cartesian coordinates followed by their values.   |
 | sparkquantum.dtqw.stateRepresentationFormat               | `constants.StateRepresentationFormatCoinPosition` | Whether the system state is represented by a kronecker product between the coin and position spaces or between the position and coin spaces.                     |
