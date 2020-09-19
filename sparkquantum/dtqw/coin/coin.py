@@ -1,36 +1,40 @@
-from pyspark import SparkContext, StorageLevel
+from pyspark import SparkContext
 
-from sparkquantum import util
+from sparkquantum import constants, util
+from sparkquantum.dtqw.operator import Operator
 
-__all__ = ['Coin', 'is_coin']
+__all__ = ['Coin']
 
 
 class Coin:
     """Top-level class for coins."""
 
     def __init__(self):
-        """Build a top-level coin object."""
-        self._spark_context = SparkContext.getOrCreate()
-        self._size = None
+        """Build a top-level coin object.
+
+        """
+        self._sc = SparkContext.getOrCreate()
+
         self._data = None
+        self._ndim = None
 
         self._logger = util.get_logger(
-            self._spark_context, self.__class__.__name__)
+            self._sc, self.__class__.__name__)
 
     @property
-    def spark_context(self):
+    def sc(self):
         """:py:class:`pyspark.SparkContext`"""
-        return self._spark_context
-
-    @property
-    def size(self):
-        """int"""
-        return self._size
+        return self._sc
 
     @property
     def data(self):
-        """:py:class:`pyspark.RDD`"""
+        """tuple"""
         return self._data
+
+    @property
+    def ndim(self):
+        """int"""
+        return self._ndim
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -50,17 +54,66 @@ class Coin:
         """
         return self.__class__.__name__
 
-    def create_operator(
-            self, mesh, storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Build the coin operator.
+    def create_operator(self, pspace,
+                        repr_format=constants.StateRepresentationFormatCoinPosition):
+        """Build a coin operator for a quantum walk, multiplying this coin data by
+        an identity matrix representing the position space.
+
+            ``C = C0 (X) I`` or ``C = I (X) C0``
+
+        Parameters
+        ----------
+        pspace : int
+            The size of the position space.
+        repr_format : int, optional
+            Indicate how the quantum system is represented.
+            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The created operator using this coin.
 
         Raises
-        -------
-        NotImplementedError
-            This method must not be called from this class, because the successor classes should implement it.
+        ------
+        ValueError
+            If `repr_format` is not valid.
 
         """
-        raise NotImplementedError
+        cspace = 2 ** self._ndim
+        shape = (cspace * pspace, cspace * pspace)
+
+        data = util.broadcast(self._sc, self._data)
+
+        nelem = cspace ** 2 * pspace
+
+        if repr_format == constants.StateRepresentationFormatCoinPosition:
+            # The coin operator is built by applying a tensor product between
+            # the chosen coin and an identity matrix representing the position
+            # space.
+            def __map(p):
+                for i in range(cspace):
+                    for j in range(cspace):
+                        yield (i * pspace + p, j * pspace + p, data.value[i][j])
+        elif repr_format == constants.StateRepresentationFormatPositionCoin:
+            # The coin operator is built by applying a tensor product between
+            # an identity matrix representing the position space and the chosen
+            # coin.
+            def __map(p):
+                for i in range(cspace):
+                    for j in range(cspace):
+                        yield (p * cspace + i, p * cspace + j, data.value[i][j])
+        else:
+            self._logger.error("invalid representation format")
+            raise ValueError("invalid representation format")
+
+        rdd = self._sc.range(
+            pspace
+        ).flatMap(
+            __map
+        )
+
+        return Operator(rdd, shape, nelem=nelem)
 
 
 def is_coin(obj):
