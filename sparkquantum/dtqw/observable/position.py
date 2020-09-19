@@ -3,18 +3,20 @@ from datetime import datetime
 from pyspark import StorageLevel
 
 from sparkquantum import conf, constants, util
-from sparkquantum.dtqw.gauge.gauge import Gauge
+from sparkquantum.dtqw.state import is_state
+from sparkquantum.dtqw.observable.observable import Observable
+from sparkquantum.dtqw.particle import is_particle
 from sparkquantum.math import util as mathutil
-from sparkquantum.math.distribution import ProbabilityDistribution, RandomVariable, is_probability_distribution
+from sparkquantum.math.distribution import ProbabilityDistribution
 
-__all__ = ['PositionGauge']
+__all__ = ['Position']
 
 
-class PositionGauge(Gauge):
-    """Top-level class for system state's positions measurements (gauge)."""
+class Position(Observable):
+    """Class for observables of particle's positions."""
 
     def __init__(self):
-        """Build a top-level system state's positions measurement (gauge) object."""
+        """Build an observable object of particle's positions."""
         super().__init__()
 
     def measure_system(self, state,
@@ -39,53 +41,52 @@ class PositionGauge(Gauge):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration
+            If the chosen 'sparkquantum.dtqw.stateRepresentationFormat' configuration
             is not valid or if the sum of the calculated probability distribution is not equal to one.
 
         """
+        if not is_state(state):
+            self._logger.error(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+            raise TypeError(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+
         self._logger.info("measuring the state of the system...")
 
-        initial_time = datetime.now()
+        time = datetime.now()
 
-        repr_format = int(conf.get_conf(self._spark_context,
-                                        'sparkquantum.dtqw.state.representationFormat'))
+        ndim = state.mesh.ndim
+        particles = len(state.particles)
+        csubspace = 2
+        cspace = csubspace ** ndim
+        psubspace = state.mesh.shape
+        pspace = state.mesh.sites
+        cpspace = cspace * pspace
+        repr_format = state.repr_format
 
-        if state.mesh.dimension == 1:
-            ndim = state.mesh.dimension
-            coin_size = state.mesh.coin_size
-            size = state.mesh.size[0]
-            num_particles = state.num_particles
-            ind = ndim * num_particles
-            expected_elements = size
-            size_per_coin = int(coin_size / ndim)
-            cs_size = size_per_coin * size
+        ind = particles * ndim
 
-            if state.num_particles == 1:
-                dims = [size, 1]
-                random_variables = [RandomVariable('Position')]
-            else:
-                dims = [size for p in range(ind)]
-                random_variables = [RandomVariable("Particle {}'s Position".format(p + 1))
-                                    for p in range(ind)]
+        shape = (pspace, particles * ndim + 1)
 
-            shape = tuple(dims)
+        nelem = shape[0] * shape[1]
 
+        if ndim == 1:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = []
 
-                    for p in range(num_particles):
+                    for p in range(particles):
                         x.append(
-                            int(m[0] / (cs_size ** (num_particles - 1 - p))) % size)
+                            int(m[0] / (cpspace ** (particles - 1 - p))) % pspace)
 
                     return tuple(x), (abs(m[2]) ** 2).real
             elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     x = []
 
-                    for p in range(num_particles):
+                    for p in range(particles):
                         x.append(
-                            int(m[0] / (cs_size ** (num_particles - 1 - p) * size_per_coin)) % size)
+                            int(m[0] / (cpspace ** (particles - 1 - p) * csubspace)) % pspace)
 
                     return tuple(x), (abs(m[2]) ** 2).real
             else:
@@ -93,65 +94,35 @@ class PositionGauge(Gauge):
                 raise ValueError("invalid representation format")
 
             def __unmap(m):
-                a = []
+                x = []
 
-                for p in range(num_particles):
-                    a.append(m[0][p])
+                for p in range(particles):
+                    x.append(m[0][p])
 
-                a.append(m[1])
+                x.append(m[1])
 
-                return tuple(a)
-        elif state.mesh.dimension == 2:
-            ndim = state.mesh.dimension
-            coin_size = state.mesh.coin_size
-            size_x, size_y = state.mesh.size
-            num_particles = state.num_particles
-            ind = ndim * num_particles
-            expected_elements = size_x * size_y
-            size_per_coin = int(coin_size / ndim)
-            cs_size_x = size_per_coin * size_x
-            cs_size_y = size_per_coin * size_y
-            cs_size_xy = cs_size_x * cs_size_y
-            dims = []
-
-            for p in range(0, ind, ndim):
-                dims.append(state.mesh.size[0])
-                dims.append(state.mesh.size[1])
-
-            if state.num_particles == 1:
-                random_variables = [RandomVariable('Position x'),
-                                    RandomVariable('Position y')]
-            else:
-                random_variables = []
-
-                for p in range(0, ind, ndim):
-                    random_variables.append(RandomVariable(
-                        "Particle {}'s Position x".format(p + 1)))
-                    random_variables.append(RandomVariable(
-                        "Particle {}'s Position y".format(p + 1)))
-
-            shape = tuple(dims)
-
+                return tuple(x)
+        elif ndim == 2:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = []
 
-                    for p in range(num_particles):
+                    for p in range(particles):
                         xy.append(
-                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * size_y)) % size_x)
+                            int(m[0] / (cpspace ** (particles - 1 - p) * psubspace[1])) % psubspace[0])
                         xy.append(
-                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p))) % size_y)
+                            int(m[0] / (cpspace ** (particles - 1 - p))) % psubspace[1])
 
                     return tuple(xy), (abs(m[2]) ** 2).real
             elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = []
 
-                    for p in range(num_particles):
+                    for p in range(particles):
                         xy.append(
-                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size * size_y)) % size_x)
+                            int(m[0] / (cpspace ** (particles - 1 - p) * cspace * psubspace[1])) % psubspace[0])
                         xy.append(
-                            int(m[0] / (cs_size_xy ** (num_particles - 1 - p) * coin_size)) % size_y)
+                            int(m[0] / (cpspace ** (particles - 1 - p) * cspace)) % psubspace[1])
 
                     return tuple(xy), (abs(m[2]) ** 2).real
             else:
@@ -172,16 +143,16 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = util.get_size_of_type(float) * expected_elements
+        expected_size = util.get_size_of_type(float) * nelem
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
         rdd = mathutil.change_coordinate(
             mathutil.remove_zeros(
                 state.data,
-                state.data_type,
-                state.coordinate_format),
-            state.coordinate_format,
+                state.dtype,
+                state.coord_format),
+            state.coord_format,
             constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
@@ -192,26 +163,26 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        probability_distribution = ProbabilityDistribution(
-            rdd, shape, random_variables, num_elements=expected_elements
+        distribution = ProbabilityDistribution(
+            rdd, shape, state.mesh.axis(), nelem=nelem
         ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(conf.get_conf(
-            self._spark_context, 'sparkquantum.math.roundPrecision'))
+        round_precision = int(conf.get(
+            self._sc, 'sparkquantum.math.roundPrecision'))
 
-        if round(probability_distribution.sum(), round_precision) != 1.0:
+        if round(distribution.sum(), round_precision) != 1.0:
             self._logger.error("Probability distributions must sum one")
             raise ValueError("Probability distributions must sum one")
 
-        self._profile_probability_distribution(
-            'systemMeasurement',
-            'system measurement',
-            probability_distribution,
-            initial_time)
+        time = (datetime.now() - time).total_seconds()
 
-        return probability_distribution
+        self._profile_distribution(
+            'systemMeasurement', 'system measurement',
+            distribution, time)
+
+        return distribution
 
     def measure_collision(self, state, system_measurement,
                           storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -238,20 +209,17 @@ class PositionGauge(Gauge):
         NotImplementedError
             If the dimension of the mesh is not valid or if the system is composed by only one particle.
 
-        TypeError
-            If `system_measurement` is not valid.
-
         """
-        if state.num_particles <= 1:
+        if not is_state(state):
+            self._logger.error(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+            raise TypeError(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+
+        if len(state.particles) <= 1:
             self._logger.error(
                 "the measurement of collision cannot be performed for quantum walks with only one particle")
-            raise NotImplementedError(
-                "the measurement of collision cannot be performed for quantum walks with only one particle")
-
-        self._logger.info(
-            "measuring the state of the system considering that the particles are at the same positions...")
-
-        initial_time = datetime.now()
+            return None
 
         if not isinstance(system_measurement, ProbabilityDistribution):
             self._logger.error(
@@ -259,35 +227,38 @@ class PositionGauge(Gauge):
             raise TypeError("'PositionJointProbabilityDistribution' instance expected, not '{}'".format(
                 type(system_measurement)))
 
-        if state.mesh.dimension == 1:
-            ndim = state.mesh.dimension
-            size = state.mesh.size[0]
-            num_particles = state.num_particles
-            ind = ndim * num_particles
-            expected_elements = size
-            shape = (size, 1)
+        self._logger.info(
+            "measuring the state of the system considering the particles that are at the same positions...")
 
-            random_variables = [RandomVariable('Position')]
+        time = datetime.now()
 
+        ndim = state.mesh.ndim
+        particles = len(state.particles)
+        csubspace = 2
+        cspace = csubspace ** ndim
+        psubspace = state.mesh.shape
+        pspace = state.mesh.sites
+        cpspace = cspace * pspace
+        repr_format = state.repr_format
+
+        ind = particles * ndim
+
+        shape = (pspace, ndim + 1)
+
+        nelem = shape[0] * ndim
+
+        variables = []
+
+        if ndim == 1:
             def __filter(m):
-                for p in range(num_particles):
+                for p in range(particles):
                     if m[0] != m[p]:
                         return False
                 return True
 
             def __map(m):
                 return m[0], m[ind]
-        elif state.mesh.dimension == 2:
-            ndim = state.mesh.dimension
-            size_x, size_y = state.mesh.size
-            num_particles = state.num_particles
-            ind = ndim * num_particles
-            expected_elements = size_x * size_y
-            shape = (size_x, size_y)
-
-            random_variables = [RandomVariable('Position x'),
-                                RandomVariable('Position y')]
-
+        elif ndim == 2:
             def __filter(m):
                 for p in range(0, ind, ndim):
                     if m[0] != m[p] or m[1] != m[p + 1]:
@@ -300,7 +271,7 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = util.get_size_of_type(float) * expected_elements
+        expected_size = util.get_size_of_type(float) * nelem
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
@@ -312,27 +283,27 @@ class PositionGauge(Gauge):
             num_partitions
         )
 
-        probability_distribution = ProbabilityDistribution(
-            rdd, shape, random_variables, num_elements=expected_elements
+        distribution = ProbabilityDistribution(
+            rdd, shape, state.mesh.axis(), nelem=nelem
         )
 
-        norm = probability_distribution.norm()
+        norm = distribution.norm()
 
         rdd.map(
             lambda m: m[-1] / norm
         )
 
-        probability_distribution = ProbabilityDistribution(
-            rdd, shape, random_variables, num_elements=expected_elements
+        distribution = ProbabilityDistribution(
+            rdd, shape, state.mesh.axis(), nelem=nelem
         ).materialize(storage_level)
 
-        self._profile_probability_distribution(
-            'collisionMeasurement',
-            'collision measurement',
-            probability_distribution,
-            initial_time)
+        time = (datetime.now() - time).total_seconds()
 
-        return probability_distribution
+        self._profile_distribution(
+            'collisionMeasurement', 'collision measurement',
+            distribution, time)
+
+        return distribution
 
     def measure_particle(self, state, particle,
                          storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -342,8 +313,8 @@ class PositionGauge(Gauge):
         ----------
         state : :py:class:`sparkquantum.dtqw.state.State`
             A system state.
-        particle : int
-            The desired particle to be measured. The particle number starts by 0.
+        particle : :py:class:`sparkquantum.dtqw.particle.Particle`
+            The desired particle to be measured.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
 
@@ -360,43 +331,61 @@ class PositionGauge(Gauge):
 
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
-            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.stateRepresentationFormat' configuration is not valid or
             if the sum of the calculated probability distribution is not equal to one.
 
         """
-        if particle < 0 or particle >= state.num_particles:
-            self._logger.error("invalid particle number")
-            raise ValueError("invalid particle number")
+        if not is_state(state):
+            self._logger.error(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+            raise TypeError(
+                "'State' instance expected, not '{}'".format(type(self._state)))
+
+        if not is_particle(particle):
+            self._logger.error(
+                "'Particle' instance expected, not '{}'".format(type(particle)))
+            raise TypeError(
+                "'Particle' instance expected, not '{}'".format(type(particle)))
 
         self._logger.info(
-            "measuring the state of the system for particle {}...".format(particle + 1))
+            "measuring the state of the system for particle {}...".format(particle.identifier))
 
-        initial_time = datetime.now()
+        time = datetime.now()
 
-        repr_format = int(conf.get_conf(self._spark_context,
-                                        'sparkquantum.dtqw.state.representationFormat'))
+        ndim = state.mesh.ndim
+        particles = len(state.particles)
+        csubspace = 2
+        cspace = csubspace ** ndim
+        psubspace = state.mesh.shape
+        pspace = state.mesh.sites
+        cpspace = cspace * pspace
+        repr_format = state.repr_format
 
-        if state.mesh.dimension == 1:
-            ndim = state.mesh.dimension
-            coin_size = state.mesh.coin_size
-            size = state.mesh.size[0]
-            num_particles = state.num_particles
-            expected_elements = size
-            size_per_coin = int(coin_size / ndim)
-            cs_size = size_per_coin * size
-            shape = (size, 1)
+        shape = (pspace, ndim + 1)
 
-            random_variables = [RandomVariable('Position')]
+        nelem = shape[0]
 
+        pind = None
+
+        for p in range(particles):
+            if state.particles[p].identifier == particle.identifier:
+                pind = p
+                break
+
+        if pind is None:
+            self._logger.error("particle not found")
+            raise ValueError("particle not found")
+
+        if ndim == 1:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     x = int(
-                        m[0] / (cs_size ** (num_particles - 1 - particle))) % size
+                        m[0] / (cpspace ** (particles - 1 - pind))) % pspace
                     return x, (abs(m[2]) ** 2).real
             elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
-                    x = int(m[0] / (cs_size ** (num_particles -
-                                                1 - particle) * size_per_coin)) % size
+                    x = int(m[0] / (cpspace ** (particles -
+                                                1 - pind) * csubspace)) % pspace
                     return x, (abs(m[2]) ** 2).real
             else:
                 self._logger.error("invalid representation format")
@@ -404,37 +393,23 @@ class PositionGauge(Gauge):
 
             def __unmap(m):
                 return m
-        elif state.mesh.dimension == 2:
-            ndim = state.mesh.dimension
-            coin_size = state.mesh.coin_size
-            size_x, size_y = state.mesh.size
-            num_particles = state.num_particles
-            expected_elements = size_x * size_y
-            size_per_coin = int(coin_size / ndim)
-            cs_size_x = size_per_coin * size_x
-            cs_size_y = size_per_coin * size_y
-            cs_size_xy = cs_size_x * cs_size_y
-            shape = (size_x, size_y)
-
-            random_variables = [RandomVariable('Position x'),
-                                RandomVariable('Position y')]
-
+        elif ndim == 2:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(m):
                     xy = (
-                        int(m[0] / (cs_size_xy ** (num_particles -
-                                                   1 - particle) * size_y)) % size_x,
-                        int(m[0] / (cs_size_xy **
-                                    (num_particles - 1 - particle))) % size_y
+                        int(m[0] / (cpspace ** (particles -
+                                                1 - pind) * psubspace[1])) % psubspace[0],
+                        int(m[0] / (cpspace **
+                                    (particles - 1 - pind))) % psubspace[1]
                     )
                     return xy, (abs(m[2]) ** 2).real
             elif repr_format == constants.StateRepresentationFormatPositionCoin:
                 def __map(m):
                     xy = (
-                        int(m[0] / (cs_size_xy ** (num_particles - 1 -
-                                                   particle) * coin_size * size_y)) % size_x,
-                        int(m[0] / (cs_size_xy ** (num_particles -
-                                                   1 - particle) * coin_size)) % size_y
+                        int(m[0] / (cpspace ** (particles - 1 -
+                                                pind) * cspace * psubspace[1])) % psubspace[0],
+                        int(m[0] / (cpspace ** (particles -
+                                                1 - pind) * cspace)) % psubspace[1]
                     )
                     return xy, (abs(m[2]) ** 2).real
             else:
@@ -447,16 +422,16 @@ class PositionGauge(Gauge):
             self._logger.error("mesh dimension not implemented")
             raise NotImplementedError("mesh dimension not implemented")
 
-        expected_size = util.get_size_of_type(float) * expected_elements
+        expected_size = util.get_size_of_type(float) * nelem
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
         rdd = mathutil.change_coordinate(
             mathutil.remove_zeros(
                 state.data,
-                state.data_type,
-                state.coordinate_format),
-            state.coordinate_format,
+                state.dtype,
+                state.coord_format),
+            state.coord_format,
             constants.MatrixCoordinateDefault)
 
         rdd = rdd.map(
@@ -467,28 +442,25 @@ class PositionGauge(Gauge):
             __unmap
         )
 
-        probability_distribution = ProbabilityDistribution(
-            rdd, shape, random_variables, num_elements=expected_elements
+        distribution = ProbabilityDistribution(
+            rdd, shape, state.mesh.axis(), nelem=nelem
         ).materialize(storage_level)
 
         self._logger.info("checking if the probabilities sum one...")
 
-        round_precision = int(conf.get_conf(
-            self._spark_context, 'sparkquantum.math.roundPrecision'))
+        round_precision = int(conf.get(
+            self._sc, 'sparkquantum.math.roundPrecision'))
 
-        if round(probability_distribution.sum(), round_precision) != 1.0:
+        if round(distribution.sum(), round_precision) != 1.0:
             self._logger.error("Probability distributions must sum one")
             raise ValueError("Probability distributions must sum one")
 
-        self._profile_probability_distribution(
-            'partialMeasurementParticle{}'.format(
-                particle + 1),
-            'partial measurement for particle {}'.format(
-                particle + 1),
-            probability_distribution,
-            initial_time)
+        self._profile_distribution(
+            'partialMeasurementParticle{}'.format(pind + 1),
+            'partial measurement for particle {}'.format(pind + 1),
+            distribution, time)
 
-        return probability_distribution
+        return distribution
 
     def measure_particles(
             self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
@@ -513,12 +485,12 @@ class PositionGauge(Gauge):
 
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
-            if the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
+            if the chosen 'sparkquantum.dtqw.stateRepresentationFormat' configuration is not valid or
             if the sum of the calculated probability distribution is not equal to one.
 
         """
         return [self.measure_particle(state, p, storage_level)
-                for p in range(state.num_particles)]
+                for p in state.particles]
 
     def measure(self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform the measurement of the system state.
@@ -546,16 +518,15 @@ class PositionGauge(Gauge):
             If the dimension of the mesh is not valid.
 
         ValueError
-            If the chosen 'sparkquantum.dtqw.state.representationFormat' configuration is not valid or
+            If the chosen 'sparkquantum.dtqw.stateRepresentationFormat' configuration is not valid or
             if the sum of the calculated probability distributions is not equal to one.
 
         """
-        if state.num_particles == 1:
+        if len(state.particles) == 1:
             return self.measure_system(state, storage_level)
         else:
-            system_measurement = self.measure_system(state, storage_level)
-            collision_measurement = self.measure_collision(
-                state, system_measurement, storage_level)
-            partial_measurements = self.measure_particles(state, storage_level)
+            system = self.measure_system(state, storage_level)
+            collision = self.measure_collision(state, system, storage_level)
+            partials = self.measure_particles(state, storage_level)
 
-            return system_measurement, collision_measurement, partial_measurements
+            return system, collision, partials
