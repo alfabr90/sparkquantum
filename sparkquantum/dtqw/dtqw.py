@@ -1,8 +1,9 @@
-import math
 import fileinput
-from glob import glob
+import math
 from datetime import datetime
+from glob import glob
 
+import numpy as np
 from pyspark import RDD, SparkContext, StorageLevel
 
 from sparkquantum import conf, constants, util
@@ -574,7 +575,7 @@ class DiscreteTimeQuantumWalk:
         ----------
         particle : :py:class:`sparkquantum.dtqw.particle.Particle`
             A particle to be present in the quantum walk.
-        cstate : array-like
+        cstate : :py:class:`pyspark.RDD` or array-like
             The amplitudes of the coin state of the particle.
         position : int
             The particle's position (site number) over the mesh.
@@ -585,19 +586,11 @@ class DiscreteTimeQuantumWalk:
             A reference to this object.
 
         """
-        ndim = self._mesh.ndim
-        cspace = 2 ** ndim
-        pspace = self._mesh.sites
-
         if not is_particle(particle):
             self._logger.error(
                 "'Particle' instance expected, not '{}'".format(type(particle)))
             raise TypeError(
                 "'Particle' instance expected, not '{}'".format(type(particle)))
-
-        if len(cstate) != cspace:
-            self._logger.error("invalid amplitudes for coin state")
-            raise ValueError("invalid amplitudes for coin state")
 
         if not self._mesh.has_site(position):
             self._logger.error("position out of mesh boundaries")
@@ -612,18 +605,45 @@ class DiscreteTimeQuantumWalk:
         self.reset()
         self._destroy_interaction_operator()
 
+        ndim = self._mesh.ndim
+        cspace = 2 ** ndim
+        pspace = self._mesh.sites
+
         shape = (cspace * pspace, 1)
 
-        nelem = len(cstate)
+        if isinstance(cstate, RDD):
+            if self._repr_format == constants.StateRepresentationFormatCoinPosition:
+                rdd = cstate.map(
+                    lambda m: (m[0] * pspace + position, 0, m[-1])
+                )
+            elif self._repr_format == constants.StateRepresentationFormatPositionCoin:
+                rdd = cstate.map(
+                    lambda m: (position * cspace + m[0], 0, m[-1])
+                )
 
-        if self._repr_format == constants.StateRepresentationFormatCoinPosition:
-            data = (
-                (a * pspace + position, 1, cstate[a]) for a in range(nelem)
-            )
-        elif self._repr_format == constants.StateRepresentationFormatPositionCoin:
-            data = (
-                (position * cspace + a, 1, cstate[a]) for a in range(nelem)
-            )
+            nelem = None
+        elif isinstance(cstate, np.ndarray):
+            if (len(cstate.shape) != 2 or
+                    cstate.shape[0] != cstate or cstate.shape[1] != 1):
+                self._logger.error("invalid coin state")
+                raise ValueError("invalid coin state")
+
+            rdd = self._sc.parallelize(
+                ((nz, 0, cstate[nz][0]) for nz in cstate.nonzero()[0]))
+            nelem = cstate.size
+        else:
+            nelem = len(cstate)
+
+            if self._repr_format == constants.StateRepresentationFormatCoinPosition:
+                data = (
+                    (a * pspace + position, 0, cstate[a]) for a in range(nelem)
+                )
+            elif self._repr_format == constants.StateRepresentationFormatPositionCoin:
+                data = (
+                    (position * cspace + a, 0, cstate[a]) for a in range(nelem)
+                )
+
+            rdd = self._sc.parallelize(cstate)
 
         rdd = self._sc.parallelize(data)
 
@@ -671,18 +691,28 @@ class DiscreteTimeQuantumWalk:
         self.reset()
         self._destroy_interaction_operator()
 
-        if isinstance(estate, RDD):
-            rdd = estate
-            nelem = None
-        else:
-            rdd = self._sc.parallelize(estate)
-            nelem = len(estate)
-
         ndim = self._mesh.ndim
         cspace = 2 ** ndim
         pspace = self._mesh.sites
 
         shape = ((cspace * pspace) ** len(particles), 1)
+
+        if isinstance(estate, RDD):
+            rdd = estate
+            nelem = None
+        elif isinstance(estate, np.ndarray):
+            if len(estate.shape) != 2 or estate.shape[1] != 1:
+                self._logger.error("invalid entangled state")
+                raise ValueError("invalid entangled state")
+
+            rdd = self._sc.parallelize(
+                [(nz, 0, estate[nz][0]) for nz in estate.nonzero()[0]])
+            nelem = estate.size
+        else:
+            nelem = len(estate)
+
+            rdd = self._sc.parallelize(
+                ((e, 0, estate[e]) for e in range(nelem)))
 
         state = State(rdd, shape, self._mesh, particles,
                       repr_format=self._repr_format, nelem=nelem)
