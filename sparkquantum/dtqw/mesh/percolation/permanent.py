@@ -92,8 +92,8 @@ class Permanent(Percolation):
         elif perc_mode == constants.PercolationsGenerationModeBroadcast:
             return util.broadcast(self._sc, rdd.collectAsMap())
         else:
-            self._logger.error("invalid percolation generation mode")
-            raise ValueError("invalid percolation generation mode")
+            self._logger.error("invalid percolations generation mode")
+            raise ValueError("invalid percolations generation mode")
 
 
 def is_permanent(obj):

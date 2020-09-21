@@ -84,20 +84,20 @@ else:
 
     if dtqw.repr_format == constants.StateRepresentationFormatCoinPosition:
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> - |0>|x1>|1>|x2>) / sqrt(2)
-        state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 1, 1.0 / math.sqrt(2)],
-                 [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 1, -1.0 / math.sqrt(2)]]
+        state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 0, 1.0 / math.sqrt(2)],
+                 [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 0, -1.0 / math.sqrt(2)]]
 
         # |i1>|x1>|i2>|x2> --> (|1>|x1>|0>|x2> + |0>|x1>|1>|x2>) / sqrt(2)
-        # state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 1, 1.0 / math.sqrt(2)],
-        #          [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 1, 1.0 / math.sqrt(2)]]
+        # state = [[(1 * pspace + position) * cspace * pspace + 0 * pspace + position, 0, 1.0 / math.sqrt(2)],
+        #          [(0 * pspace + position) * cspace * pspace + 1 * pspace + position, 0, 1.0 / math.sqrt(2)]]
     elif dtqw.repr_format == constants.StateRepresentationFormatPositionCoin:
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> - |x1>|0>|x2>|1>) / sqrt(2)
-        state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 1, 1.0 / math.sqrt(2)],
-                 [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 1, -1.0 / math.sqrt(2)]]
+        state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 0, 1.0 / math.sqrt(2)],
+                 [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 0, -1.0 / math.sqrt(2)]]
 
         # |x1>|i1>|x2>|i2> --> (|x1>|1>|x2>|0> + |x1>|0>|x2>|1>) / sqrt(2)
-        # state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 1, 1.0 / math.sqrt(2)],
-        #          [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 1, 1.0 / math.sqrt(2)]]
+        # state = [[(position * cspace + 1) * pspace * cspace + position * cspace + 0, 0, 1.0 / math.sqrt(2)],
+        #          [(position * cspace + 0) * pspace * cspace + position * cspace + 1, 0, 1.0 / math.sqrt(2)]]
 
     # Adding the entangled particles to the walk, informing their system state
     dtqw.add_entanglement((particle1, particle2), state)

@@ -89,12 +89,12 @@ else:
 
     if dtqw.repr_format == constants.StateRepresentationFormatCoinPosition:
         # |i1,j1>|x1,y1>|i2,j2>|x2,y2> --> (|1,1>|x1,y1>|0,0>|x2,y2> - |0,0>|x1,y1>|1,1>|x2,y2>) / sqrt(2)
-        state = [[(3 * pspace + position) * cspace * pspace + (0 * pspace + position), 1, 1.0 / math.sqrt(2)],
-                 [(0 * pspace + position) * cspace * pspace + (3 * pspace + position), 1, -1.0 / math.sqrt(2)]]
+        state = [[(3 * pspace + position) * cspace * pspace + (0 * pspace + position), 0, 1.0 / math.sqrt(2)],
+                 [(0 * pspace + position) * cspace * pspace + (3 * pspace + position), 0, -1.0 / math.sqrt(2)]]
     elif dtqw.repr_format == constants.StateRepresentationFormatPositionCoin:
         # |x1,y1>|i1,j1>|x2,y2>|i2,j2> --> (|x1,y1>|1,1>|x2,y2>|0,0> - |x1,y1>|0,0>|x2,y2>|1,1>) / sqrt(2)
-        state = [[(position * cspace + 3) * pspace * cspace + (position * cspace + 0), 1, 1.0 / math.sqrt(2)],
-                 [(position * cspace + 0) * pspace * cspace + (position * cspace + 3), 1, -1.0 / math.sqrt(2)]]
+        state = [[(position * cspace + 3) * pspace * cspace + (position * cspace + 0), 0, 1.0 / math.sqrt(2)],
+                 [(position * cspace + 0) * pspace * cspace + (position * cspace + 3), 0, -1.0 / math.sqrt(2)]]
 
     # Adding the entangled particles to the walk, informing the system state
     dtqw.add_entanglement([particle1, particle2], state)

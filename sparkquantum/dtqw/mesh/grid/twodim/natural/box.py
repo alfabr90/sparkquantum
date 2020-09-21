@@ -261,8 +261,8 @@ class Box(Natural):
                     __map
                 )
             else:
-                self._logger.error("invalid percolation generation mode")
-                raise ValueError("invalid percolation generation mode")
+                self._logger.error("invalid percolations generation mode")
+                raise ValueError("invalid percolations generation mode")
         else:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
                 def __map(xy):

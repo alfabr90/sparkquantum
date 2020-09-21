@@ -99,17 +99,17 @@ class Grid(Mesh):
         if coord:
             return tuple([self.center(d) for d in range(self._ndim)])
         else:
-            def __center(dim):
-                if dim == 1:
-                    return self.center(dim=dim - 1)
+            def __center(ndim):
+                if ndim == 1:
+                    return self.center(dim=ndim - 1)
                 else:
                     accsites = 1
 
-                    for d in range(dim - 1):
+                    for d in range(ndim - 1):
                         accsites *= self._shape[d]
 
                     return accsites * \
-                        self.center(dim=dim - 1) + __center(dim - 1)
+                        self.center(dim=ndim - 1) + __center(ndim - 1)
 
             return __center(self._ndim)
 
@@ -184,16 +184,16 @@ class Grid(Mesh):
                 self._logger.error("coordinates out of grid boundaries")
                 raise ValueError("coordinates out of grid boundaries")
 
-        def __to_site(dim):
-            if dim == 1:
-                return coord[dim - 1]
+        def __to_site(ndim):
+            if ndim == 1:
+                return coord[ndim - 1]
             else:
                 accsites = 1
 
-                for d in range(dim - 1):
+                for d in range(ndim - 1):
                     accsites *= self._shape[d]
 
-                return coord[dim - 1] * accsites + __to_site(dim - 1)
+                return coord[ndim - 1] * accsites + __to_site(ndim - 1)
 
         return __to_site(self._ndim)
 
@@ -220,27 +220,19 @@ class Grid(Mesh):
             self._logger.error("site number out of grid boundaries")
             raise ValueError("site number out of grid boundaries")
 
-        def __to_coordinate(dim):
-            if dim == 1:
-                return (site, )
+        def __to_coordinate(ndim):
+            if ndim == 1:
+                return (site % self._shape[ndim - 1], )
             else:
                 accsites = 1
 
-                for d in range(dim - 1):
+                for d in range(ndim - 1):
                     accsites *= self._shape[d]
 
-                return (int(site / self._shape[dim - 1]), ) + \
-                    __to_coordinate(dim - 1)
+                return (int(site / accsites) % self._shape[ndim - 1], ) + \
+                    __to_coordinate(ndim - 1)
 
-        if self._ndim == 1:
-            return (site, )
-        elif self._ndim == 2:
-            return (site % self._shape[0], int(site / self._shape[0]))
-        else:
-            # TODO
-            return None
-
-        # return __to_coordinate(self._ndim)
+        return tuple(reversed(__to_coordinate(self._ndim)))
 
     def axis(self):
         """Get the ranges corresponding to coordinates of this grid.
