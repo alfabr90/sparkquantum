@@ -751,10 +751,11 @@ class DiscreteTimeQuantumWalk:
 
         self._curstate = self._inistate
 
-        # Building evolution operators once if not simulating decoherence with
-        # permanent percolations
+        # Building evolution operators once if not simulating decoherence or
+        # simulating decoherence with permanent percolations
         if (len(self._evolution_operators) == 0 and
-                not is_permanent(self._mesh.percolation)):
+                (self._mesh.percolation is None or
+                    is_permanent(self._mesh.percolation))):
             self._create_evolution_operators()
 
         if (len(self._particles) > 1 and

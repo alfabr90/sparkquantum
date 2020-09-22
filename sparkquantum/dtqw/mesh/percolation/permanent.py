@@ -62,17 +62,15 @@ class Permanent(Percolation):
         Raises
         ------
         ValueError
-            If `edges` is out of the bounds of the number of edges of the mesh or
+            If some edge of this object is out of the bounds of the number of edges of the mesh or
             if the chosen 'sparkquantum.dtqw.mesh.percolation.generationMode' configuration is not valid.
 
         """
-        max_edge = max(self._edges)
-
-        if max_edge >= edges:
+        if max(self._edges) >= edges:
             self._logger.error(
-                "this mesh supports edges from {} to {}".format(0, max_edge))
+                "this mesh supports edges from {} to {}".format(0, edges - 1))
             raise ValueError(
-                "this mesh supports edges from {} to {}".format(0, max_edge))
+                "this mesh supports edges from {} to {}".format(0, edges - 1))
 
         if isinstance(self._edges, range):
             rdd = self._sc.range(
