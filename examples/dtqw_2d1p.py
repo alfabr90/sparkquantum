@@ -9,30 +9,33 @@ from sparkquantum.dtqw.mesh.grid.twodim.diagonal.lattice import Lattice
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
-base_path = './output'
-cores = 4
-
-particles = 1
-
-# In this example, the walk will last 30 steps.
-# As we chose a `Lattice` mesh, its size must be
-# 2 * steps + 1 sites
-steps = 30
-size = 2 * steps + 1
-
-# Choosing a directory to store plots and logs
-path = "{}/{}_{}_{}_{}_{}/".format(
-    base_path, 'hadamard', 'diagonal-lattice', size, steps, particles
-)
+# Choosing a directory to store plots and logs, if enabled
+path = './output/dtqw_2d1p/'
 util.create_dir(path)
 
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', 4)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
+# In this example, the walk will last 50 steps.
+steps = 50
+
+# As we chose a `Line` mesh, its size must be
+# 2 * steps + 1 sites
+size = 2 * steps + 1
+
+percolation = None
+
+# The mesh will have percolations with the following likelihood
+#percolation = Random(0.3)
+
+# or even have permanent percolations
+# percolation = Permanent([math.floor((size - 1) / 4),
+#                         math.ceil(3 * (size - 1) / 4 + 1)])
+
 # Choosing a mesh and instantiating the walk with it
-mesh = Lattice((size, size))
+mesh = Lattice((size, size), percolation=percolation)
 dtqw = DiscreteTimeQuantumWalk(mesh)
 
 # To add particles to the walk, a coin must be instantiated with
@@ -60,9 +63,7 @@ dtqw.add_particle(particle, cstate, mesh.center())
 state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its distribution
-position = Position()
-
-joint = position.measure(state)
+joint = Position().measure(state)
 
 labels = ["{}'s position x".format(particle.identifier),
           "{}'s position y".format(particle.identifier),
@@ -73,4 +74,6 @@ joint.plot(path + 'joint_2d1p', labels=labels, dpi=300)
 state.destroy()
 dtqw.destroy()
 joint.destroy()
+
+# Stopping the SparkContext
 sc.stop()
