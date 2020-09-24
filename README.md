@@ -98,8 +98,11 @@ from sparkquantum.dtqw.particle import Particle
 path = './output/dtqw/'
 util.create_dir(path)
 
+# Supposing the machine/cluster has 4 cores
+cores = 4
+
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set('sparkquantum.cluster.totalCores', 4)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
 sc = SparkContext(conf=conf)
 
 # In this example, the walk will last 100 steps.
@@ -294,6 +297,8 @@ position.profiler.export(path)
 ```
 
 where `dtqw` and `position` are, respectively, the discrete time quantum walk and position observable objects.
+
+The profiling data comprehend building times and memory/disk usage of each entity in the DTQW: operators, states and distributions. Also, some summarized data about resource usage of Spark workers node (and the driver node) are exported.
 
 #### Custom Elements
 
