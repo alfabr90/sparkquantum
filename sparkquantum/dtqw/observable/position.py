@@ -173,8 +173,8 @@ class Position(Observable):
             self._sc, 'sparkquantum.math.roundPrecision'))
 
         if round(distribution.sum(), round_precision) != 1.0:
-            self._logger.error("Probability distributions must sum one")
-            raise ValueError("Probability distributions must sum one")
+            self._logger.error("probability distributions must sum one")
+            raise ValueError("probability distributions must sum one")
 
         time = (datetime.now() - time).total_seconds()
 
@@ -452,8 +452,8 @@ class Position(Observable):
             self._sc, 'sparkquantum.math.roundPrecision'))
 
         if round(distribution.sum(), round_precision) != 1.0:
-            self._logger.error("Probability distributions must sum one")
-            raise ValueError("Probability distributions must sum one")
+            self._logger.error("probability distributions must sum one")
+            raise ValueError("probability distributions must sum one")
 
         self._profile_distribution(
             'partialMeasurementParticle{}'.format(pind + 1),
