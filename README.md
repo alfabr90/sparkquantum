@@ -2,7 +2,7 @@
 
 The idea of this project (perhaps it's still needed a better name for it) is to provide to the community a quantum algorithms simulator written in [Python](https://www.python.org/) using [Apache Spark](https://spark.apache.org/).
 
-As they evolve, some quantum algorithms simulations acquire characteristics of a Big Data application due to the exponential grow suffered by their data structures. Thus, employing a framework like Apache Spark is a good approach, making it possible to execute larger simulations in high-performance computing (HPC) environments than when using single-processors, general purpose computers, allowing such data to be generated and processed at a reduced time in a parallel/distributed way.
+As they evolve, some quantum algorithms simulations acquire characteristics of a Big Data application due to the exponential growth suffered by their data structures. Thus, employing a framework like Apache Spark is a good approach, making it possible to execute larger simulations in high-performance computing (HPC) environments than when using single-processors, general purpose computers, allowing such data to be generated and processed at a reduced time in a parallel/distributed way.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ The [pyspark](https://pypi.org/project/pyspark/) package is also required, but i
 
 In contrast to other simulators, this one expects a programmatic way to input the initial conditions of the simulations, but its use is still easy and simple, requiring few steps to start using it.
 
-For now, the user can only simulate discrete time quantum walks (DTQW), but simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
+For now, the user can only simulate discrete time quantum walks (DTQW), even though _sparkquantum_ allows the simulation of any unitary sequence of operations. Simulations of Grover's search and Shor's integer factorizarion algorithms are planned to be implemented soon.
 
 To check all source code documentation (Python docstrings), visit this project's page in [Read the Docs](https://sparkquantum.readthedocs.io/en/latest/).
 
@@ -32,9 +32,9 @@ In order to simulate, for instance, a particle walking over a line (one-dimensio
 mesh = Line((2 * steps + 1, ))
 ```
 
-Particularly for the line (one-dimensional) grid, its size comprehends a central site where the particle **must**, initially, be located at, and the number of steps to the left and to the right of that central site. This avoids the particles walking besides the boundaries of the mesh.
+Particularly for the line (one-dimensional) grid, its size comprehends a central site where the particle **must**, initially, be located at, and the number of steps to the left and to the right of that central site. This avoids the particle walking besides the boundaries of the mesh.
 
-Notice that, due to the mesh being a one-dimensional grid, its shape must be defined by a one-element tuple. For other dimensions, e.g. two-dimensional, the correspondent shape must be defined by a two-elements tuple.
+Notice that, due to the mesh being a one-dimensional grid, its shape must be defined by a one-element tuple. For other dimensions, e.g. two-dimensional, the correspondent shape must be defined by a two-elements tuple and so on.
 
 Next, the user must instantiate a `DiscreteTimeQuantumWalk` object with the previously chosen mesh:
 
@@ -58,7 +58,7 @@ In this example, suppose the user needs to simulate the following initial quantu
 
 `|c>|p> --> (|0> - i|1>)|p> / sqrt(2) = (|0>|p> - i|1>|p>) / sqrt(2)`,
 
-where `c` is the coin state and `p` is the position state. In order to do so, the user need to add the particle to the quantum walk, informing the its coin state and position as follows:
+where `c` is the coin state and `p` is the position state. In order to do so, the user need to add the particle to the quantum walk, informing its coin state and position as follows:
 
 ```python
 dtqw.add_particle(particle, (1 / math.sqrt(2), 1j / math.sqrt(2)), mesh.center())
@@ -73,9 +73,7 @@ state = dtqw.walk(steps)
 Finally, the user can measure the final quantum state, obtaining the probability distribution of the possible particle's positions and plot it:
 
 ```python
-position = Position()
-
-joint = position.measure(state)
+joint = Position().measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
@@ -96,16 +94,19 @@ from sparkquantum.dtqw.mesh.grid.onedim.line import Line
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
-# Initiallizing the SparkContext with some options
-num_cores = 4
+# Choosing a directory to store plots
+path = './output/dtqw/'
+util.create_dir(path)
 
-conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
+# Initiallizing the SparkContext with some options
+conf = SparkConf().set('sparkquantum.cluster.totalCores', 4)
 sc = SparkContext(conf=conf)
 
-# In this example, the walk will last 30 steps.
+# In this example, the walk will last 100 steps.
+steps = 100
+
 # As we chose a `Line` mesh, its size must be
 # 2 * steps + 1 sites
-steps = 30
 size = 2 * steps + 1
 
 # Choosing a mesh and instantiating the walk with the chosen mesh
@@ -137,9 +138,7 @@ dtqw.add_particle(particle, cstate, mesh.center())
 state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its distribution
-position = Position()
-
-joint = position.measure(state)
+joint = Position().measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
@@ -149,11 +148,12 @@ state.destroy()
 dtqw.destroy()
 joint.destroy()
 
+# Stopping the SparkContext
 sc.stop()
 
 ```
 
-For more detailed examples (e.g., of how to use profiling and mesh percolations), the user may refer to the files in the `examples` directory.
+For more detailed examples, the user may refer to the files in the `examples` directory.
 
 #### Coins and Meshes
 
@@ -177,7 +177,7 @@ and meshes:
 
 #### Mesh Percolations
 
-The simulator lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`Random`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
+_sparkquantum_ lets the user simulate DTQWs with some mesh percolations. The already implemented variations are "random" and "permanent". For the former, the user must instantiate its corresponding class (`Random`) passing in the probability value that will be used to generate the broken edges of the mesh in a random fashion:
 
 ```python
 percolation = Random(0.05)
@@ -261,6 +261,40 @@ When a natural mesh is considered, all the possible positions that the particle 
                          x
 ```
 
+#### Enabling Logging and Profiling
+
+In some cases, the user may want to know how a long lasting simulation is being executed. To accomplish that, _sparkquantum_ optionally exposes a log file that keeps being filled with some messages and/or data related to each simulation step. This log file is generated and filled using [Python's logging facility](https://docs.python.org/3/library/logging.html).
+
+To enable logging, set the `sparkquantum.logging.enabled` configuration parameter with `'True'` as follows:
+
+```python
+conf = SparkConf() \
+    # other configurations
+    .set('sparkquantum.logging.enabled', 'True')
+    # other configurations
+```
+
+_sparkquantum_ allows customizing some Python's logging options the same way as above. The possible configurations are described in the table in the end of this documentation.
+
+Besides logging, the simulator can also gathers data about the resource usage during the simulations and exports them in CSV files. Similarly as the previous feature, the user may enable profiling through setting one configuration parameter, namely `sparkquantum.profiling.enabled`:
+
+```python
+conf = SparkConf() \
+    # other configurations
+    .set('sparkquantum.profiling.enabled', 'True')
+    # other configurations
+```
+
+To export all gathered profiling data, the user just need to call, at the end of the simulation, the method `export` of the profiler that is automatically attached to the `DiscreteTimeQuantumWalk` and `Position` (`Observable`) classes:
+
+```python
+# Exporting the profiling data
+dtqw.profiler.export(path)
+position.profiler.export(path)
+```
+
+where `dtqw` and `position` are, respectively, the discrete time quantum walk and position observable objects.
+
 #### Custom Elements
 
 TODO: explain how the user can implement custom coins, meshes and custom mesh percolations and interactions between particles.
@@ -290,7 +324,7 @@ Below, there is a list of the current configuration parameters that the user can
 | sparkquantum.dtqw.evolutionOperator.tempPath              |                       "./"                        | The temporary directory to save the walk operators' dump. Considered only when the kronecker mode is `constants.KroneckerModeDump`.                              |
 | sparkquantum.dumpingCompressionCodec                      |                       None                        | Compression codec class used by Spark when dumping each RDD's data disk.                                                                                         |
 | sparkquantum.dumpingGlue                                  |                        " "                        | A string to connect the coordinates of each RDD's element when dumping its data.                                                                                 |
-| sparkquantum.logging.enabled                              |                       False                       | Whether the application must use [Python's logging facility](https://docs.python.org/3/library/logging.html).                                                    |
+| sparkquantum.logging.enabled                              |                       False                       | Whether the application must generate and fill a log file.                                                                                                       |
 | sparkquantum.logging.filename                             |                    './log.txt'                    | The filename (with relative or absolute path) where all log data will be written by Python's logging facility.                                                   |
 | sparkquantum.logging.format                               | '%(levelname)s:%(name)s:%(asctime)s:%(message)s'  | Python's logging.Formatter acceptable format which each log record will be at.                                                                                   |
 | sparkquantum.logging.level                                |                 `logging.WARNING`                 | Python's logging facility acceptable severity level.                                                                                                             |

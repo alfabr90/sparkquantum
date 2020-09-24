@@ -133,9 +133,11 @@ def contour(axis, data, filename, title=None, labels=None, **kwargs):
 
         levels = np.linspace(0, max_level, 41)
 
+    meshgrid = np.meshgrid(axis[0], axis[1], indexing='ij')
+
     plt.contourf(
-        axis[0],
-        axis[1],
+        meshgrid[0],
+        meshgrid[1],
         data,
         levels=levels,
         **kwargs)

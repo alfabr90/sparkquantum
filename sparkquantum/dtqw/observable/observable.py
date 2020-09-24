@@ -38,7 +38,7 @@ class Observable:
             self._logger.info(
                 "{} was done in {}s".format(log_title, info['buildingTime']))
             self._logger.info(
-                "Probability distribution with {} is consuming {} bytes in memory and {} bytes in disk".format(
+                "probability distribution with {} is consuming {} bytes in memory and {} bytes in disk".format(
                     log_title, info['memoryUsed'], info['diskUsed']
                 )
             )

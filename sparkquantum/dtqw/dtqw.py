@@ -709,10 +709,8 @@ class DiscreteTimeQuantumWalk:
                 [(nz, 0, estate[nz][0]) for nz in estate.nonzero()[0]])
             nelem = estate.size
         else:
+            rdd = self._sc.parallelize(((e[0], 0, e[-1]) for e in estate))
             nelem = len(estate)
-
-            rdd = self._sc.parallelize(
-                ((e, 0, estate[e]) for e in range(nelem)))
 
         state = State(rdd, shape, self._mesh, particles,
                       repr_format=self._repr_format, nelem=nelem)
@@ -753,10 +751,11 @@ class DiscreteTimeQuantumWalk:
 
         self._curstate = self._inistate
 
-        # Building evolution operators once if not simulating decoherence with
-        # permanent percolations
+        # Building evolution operators once if not simulating decoherence or
+        # simulating decoherence with permanent percolations
         if (len(self._evolution_operators) == 0 and
-                not is_permanent(self._mesh.percolation)):
+                (self._mesh.percolation is None or
+                    is_permanent(self._mesh.percolation))):
             self._create_evolution_operators()
 
         if (len(self._particles) > 1 and
@@ -824,7 +823,7 @@ class DiscreteTimeQuantumWalk:
                 constants.MatrixCoordinateMultiplicand
             )
 
-        for eo in reversed(self._evolution_operators):
+        for eo in self._evolution_operators:
             result_tmp = eo.multiply(result_tmp).change_coordinate(
                 constants.MatrixCoordinateMultiplicand
             )
