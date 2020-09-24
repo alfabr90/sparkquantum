@@ -1,8 +1,9 @@
+import logging
 import math
 
 from pyspark import SparkContext, SparkConf
 
-from sparkquantum import constants, plot, util
+from sparkquantum import util
 from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
@@ -10,14 +11,24 @@ from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
 # Choosing a directory to store plots and logs, if enabled
-path = './output/dtqw_1d1p/'
+path = './output/dtqw_logging_profiling/'
 util.create_dir(path)
 
 # Supposing the machine/cluster has 4 cores
 cores = 4
 
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
+conf = SparkConf().set(
+    'sparkquantum.cluster.totalCores', cores
+).set(
+    'sparkquantum.logging.enabled', 'True'
+).set(
+    'sparkquantum.logging.level', logging.DEBUG
+).set(
+    'sparkquantum.logging.filename', path + 'log.txt'
+).set(
+    'sparkquantum.profiling.enabled', 'True'
+)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
@@ -28,17 +39,8 @@ steps = 100
 # 2 * steps + 1 sites
 size = 2 * steps + 1
 
-percolation = None
-
-# The mesh will have percolations with the following likelihood
-#percolation = Random(0.3)
-
-# or even have permanent percolations
-# percolation = Permanent([math.floor((size - 1) / 4),
-#                         math.ceil(3 * (size - 1) / 4 + 1)])
-
 # Choosing a mesh and instantiating the walk with it
-mesh = Line((size, ), percolation=percolation)
+mesh = Line((size, ))
 dtqw = DiscreteTimeQuantumWalk(mesh)
 
 # To add particles to the walk, a coin must be instantiated with
@@ -66,10 +68,15 @@ dtqw.add_particle(particle, cstate, mesh.center())
 state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its distribution
-joint = Position().measure(state)
+position = Position()
+joint = position.measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint', labels=labels, dpi=300)
+
+# Exporting the profiling data
+dtqw.profiler.export(path)
+position.profiler.export(path)
 
 # Destroying the RDD to remove them from memory and disk
 state.destroy()

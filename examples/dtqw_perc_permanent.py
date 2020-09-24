@@ -1,16 +1,18 @@
 import math
 
+import numpy as np
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.mesh.percolation.permanent import Permanent
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
 # Choosing a directory to store plots and logs, if enabled
-path = './output/dtqw_1d1p/'
+path = './output/dtqw_perc_permanent/'
 util.create_dir(path)
 
 # Supposing the machine/cluster has 4 cores
@@ -28,16 +30,11 @@ steps = 100
 # 2 * steps + 1 sites
 size = 2 * steps + 1
 
-percolation = None
+percolation = Permanent([math.floor((size - 1) / 4),
+                         math.ceil(3 * (size - 1) / 4) + 1])
 
-# The mesh will have percolations with the following likelihood
-#percolation = Random(0.3)
-
-# or even have permanent percolations
-# percolation = Permanent([math.floor((size - 1) / 4),
-#                         math.ceil(3 * (size - 1) / 4 + 1)])
-
-# Choosing a mesh and instantiating the walk with it
+# Choosing a mesh with permanent percolations and instantiating the walk
+# with it
 mesh = Line((size, ), percolation=percolation)
 dtqw = DiscreteTimeQuantumWalk(mesh)
 

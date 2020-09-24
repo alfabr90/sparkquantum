@@ -13,8 +13,11 @@ from sparkquantum.dtqw.particle import Particle
 path = './output/dtqw_2d1p/'
 util.create_dir(path)
 
+# Supposing the machine/cluster has 4 cores
+cores = 4
+
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set('sparkquantum.cluster.totalCores', 4)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
@@ -68,7 +71,7 @@ joint = Position().measure(state)
 labels = ["{}'s position x".format(particle.identifier),
           "{}'s position y".format(particle.identifier),
           'Probability']
-joint.plot(path + 'joint_2d1p', labels=labels, dpi=300)
+joint.plot(path + 'joint', labels=labels, dpi=300)
 
 # Destroying the RDD and stopping the SparkContext
 state.destroy()
