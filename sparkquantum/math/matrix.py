@@ -76,7 +76,14 @@ class Matrix(Base):
             The sparsity of this matrix.
 
         """
-        return 1.0 - self._num_elements / self._size
+        nelem = self._nelem
+
+        if self._nelem is None:
+            self._logger.warn(
+                "this matrix will be considered as dense as it has not had its number of elements defined.")
+            nelem = self._size
+
+        return 1.0 - nelem / self._size
 
     def dump(self, path, glue=None, codec=None, filename=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
@@ -154,6 +161,41 @@ class Matrix(Base):
             self._logger.error("invalid dumping mode")
             raise ValueError("invalid dumping mode")
 
+    def clear(self):
+        """Remove possible zero entries of this matrix object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created,
+        substituting the old one.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            A reference to this object.
+
+        Raises
+        ------
+        NotImplementedError
+            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
+
+        """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        if self._data.is_cached:
+            self._logger.warning(
+                "it is not advised to execute a transformation after this object's RDD has been cached")
+
+        zero = self._dtype()
+
+        self._data = self._data.filter(
+            lambda m: m[-1] is not None and m[-1] != zero
+        )
+
+        return self
+
     def ndarray(self):
         """Create a Numpy array containing this object's RDD data.
 
@@ -167,7 +209,16 @@ class Matrix(Base):
         :py:class:`numpy.ndarray`
             The Numpy array.
 
+        Raises
+        ------
+        NotImplementedError
+            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
+
         """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
         rdd = mathutil.remove_zeros(
             mathutil.change_coordinate(
                 self._data,
@@ -314,11 +365,9 @@ class Matrix(Base):
         """
         if not is_matrix(other):
             self._logger.error(
-                "'Matrix' instance expected, not '{}'".format(
-                    type(other)))
+                "'Matrix' instance expected, not '{}'".format(type(other)))
             raise TypeError(
-                "'Matrix' instance expected, not '{}'".format(
-                    type(other)))
+                "'Matrix' instance expected, not '{}'".format(type(other)))
 
         rdd, shape, dtype, nelem = self._kron(other)
 
@@ -340,8 +389,8 @@ class Matrix(Base):
         """
         if not Matrix.is_square(self):
             self._logger.error(
-                "Cannot calculate the trace of non square matrix")
-            raise TypeError("Cannot calculate the trace of non square matrix")
+                "cannot calculate the trace of non square matrix")
+            raise TypeError("cannot calculate the trace of non square matrix")
 
         rdd = mathutil.change_coordinate(
             self._data,
@@ -409,11 +458,9 @@ class Matrix(Base):
     def _sum_matrix(self, other, constant):
         if self._shape[0] != other.shape[0] or self._shape[1] != other.shape[1]:
             self._logger.error(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+                "incompatible shapes {} and {}".format(self._shape, other.shape))
             raise ValueError(
-                "incompatible shapes {} and {}".format(
-                    self._shape, other.shape))
+                "incompatible shapes {} and {}".format(self._shape, other.shape))
 
         dtype = util.get_precedent_type(
             self._dtype, other.dtype)
@@ -460,7 +507,7 @@ class Matrix(Base):
 
     def _sum_scalar(self, other, constant):
         if other == type(other)():
-            return self._data, self._dtype
+            return self._data, self._shape, self._dtype, self._nelem
 
         dtype = util.get_precedent_type(
             self._dtype, type(other))
@@ -560,13 +607,18 @@ class Matrix(Base):
         return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     def _multiply_matrix(self, other):
+        if (self._coord_format != constants.MatrixCoordinateMultiplier or
+                other.coord_format != constants.MatrixCoordinateMultiplicand):
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
         if self._shape[1] != other.shape[0]:
             self._logger.error(
                 "incompatible shapes {} and {}".format(self._shape, other.shape))
             raise ValueError(
                 "incompatible shapes {} and {}".format(self._shape, other.shape))
 
-        new_shape = (self._shape[0], other.shape[1])
+        shape = (self._shape[0], other.shape[1])
 
         dtype = util.get_precedent_type(self._dtype, other.dtype)
 
@@ -605,26 +657,29 @@ class Matrix(Base):
         rdd = mathutil.remove_zeros(
             rdd, dtype, constants.MatrixCoordinateDefault)
 
-        return rdd, new_shape, dtype, nelem
+        return rdd, shape, dtype, nelem
 
     def _multiply_scalar(self, other, constant):
-        if isinstance(other, (int, float)):
-            if other == 1.0:
-                return self._data, self._shape, self._dtype
-            elif other == 0.0 and constant < 0:
-                # It is a division by zero operation
-                raise ZeroDivisionError
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
 
         dtype = util.get_precedent_type(self._dtype, type(other))
 
-        rdd = self._data
+        if other == type(other)():
+            if constant < 0:
+                # It is a division by zero operation
+                raise ZeroDivisionError
+            elif constant > 0:
+                return self._sc.emptyRDD, self._shape, dtype, 0
+            else:
+                return self._data, self._shape, dtype, self._nelem
+        elif other == type(other)() + 1:
+            return self._data, self._shape, dtype, self._nelem
 
-        rdd = rdd.map(
+        rdd = self._data.map(
             lambda m: (m[0], m[1], m[2] * other ** constant)
         )
-
-        rdd = mathutil.remove_zeros(
-            rdd, dtype, constants.MatrixCoordinateDefault)
 
         return rdd, self._shape, dtype, self._nelem
 
@@ -712,7 +767,7 @@ class Matrix(Base):
 
         Notes
         -----
-        This matrix must be a row vector.
+        This matrix must be a row vector and `other` must be a column vector.
 
         Parameters
         ----------
@@ -730,20 +785,20 @@ class Matrix(Base):
 
         """
         if not self.is_rowvector(self):
-            self._logger.error("This 'Matrix' instance must be a row vector")
-            raise ValueError("This 'Matrix' instance must be a row vector")
+            self._logger.error("this 'Matrix' instance must be a row vector")
+            raise ValueError("this 'Matrix' instance must be a row vector")
 
         if not self.is_columnvector(self):
             self._logger.error(
-                "The other 'Matrix' instance must be a column vector")
+                "the other 'Matrix' instance must be a column vector")
             raise ValueError(
-                "The other 'Matrix' instance must be a column vector")
+                "the other 'Matrix' instance must be a column vector")
 
         matrix = self.multiply(other)
 
         result = matrix.data.collect()
 
-        if len(result):
+        if len(result) == 0:
             return matrix.dtype()
         else:
             return result[0]
@@ -762,17 +817,9 @@ class Matrix(Base):
         bool
             True if matrix is empty, False otherwise.
 
-        Raises
-        ------
-        TypeError
-            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
-
         """
-        if not is_matrix(matrix):
-            raise TypeError(
-                "'Matrix' instance expected, not {}".format(type(matrix)))
-
-        return matrix.shape[0] == 0 and matrix.shape[1] == 0
+        return (is_matrix(matrix)
+                and matrix.shape[0] == 0 and matrix.shape[1] == 0)
 
     @staticmethod
     def is_square(matrix):
@@ -788,17 +835,8 @@ class Matrix(Base):
         bool
             True if matrix is square, False otherwise.
 
-        Raises
-        ------
-        TypeError
-            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
-
         """
-        if not is_matrix(matrix):
-            raise TypeError(
-                "'Matrix' instance expected, not {}".format(type(matrix)))
-
-        return matrix.shape[0] == matrix.shape[1]
+        return is_matrix(matrix) and matrix.shape[0] == matrix.shape[1]
 
     @staticmethod
     def is_rowvector(matrix):
@@ -814,17 +852,8 @@ class Matrix(Base):
         bool
             True if matrix is a row vector, False otherwise.
 
-        Raises
-        ------
-        TypeError
-            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
-
         """
-        if not is_matrix(matrix):
-            raise TypeError(
-                "'Matrix' instance expected, not {}".format(type(matrix)))
-
-        return matrix.shape[0] == 1
+        return is_matrix(matrix) and matrix.shape[0] == 1
 
     @staticmethod
     def is_colvector(matrix):
@@ -840,17 +869,8 @@ class Matrix(Base):
         bool
             True if matrix is a column vector, False otherwise.
 
-        Raises
-        ------
-        TypeError
-            If `matrix` is not a :py:class:`sparkquantum.math.matrix.Matrix` object.
-
         """
-        if not is_matrix(matrix):
-            raise TypeError(
-                "'Matrix' instance expected, not {}".format(type(matrix)))
-
-        return matrix.shape[1] == 1
+        return is_matrix(matrix) and matrix.shape[1] == 1
 
     @staticmethod
     def diagonal(size, value):
@@ -955,7 +975,7 @@ class Matrix(Base):
 
         sc = SparkContext.getOrCreate()
 
-        nelem = shape[0] * shape[1]
+        nelem = 0
 
         rdd = sc.emptyRDD()
 
