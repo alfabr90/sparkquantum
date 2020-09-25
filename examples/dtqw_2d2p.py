@@ -16,8 +16,11 @@ from sparkquantum.dtqw.particle import Particle
 path = './output/dtqw_2d2p/'
 util.create_dir(path)
 
+# Supposing the machine/cluster has 4 cores
+cores = 4
+
 # Initiallizing the SparkContext with some options
-conf = SparkConf().set('sparkquantum.cluster.totalCores', 4)
+conf = SparkConf().set('sparkquantum.cluster.totalCores', cores)
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
 
@@ -31,17 +34,8 @@ size = 2 * steps + 1
 # The particles will change their phase when colliding
 phase = 1.0 * cmath.pi
 
-percolation = None
-
-# The mesh will have percolations with the following likelihood
-#percolation = Random(0.3)
-
-# or even have permanent percolations
-# percolation = Permanent([math.floor((size - 1) / 4),
-#                         math.ceil(3 * (size - 1) / 4 + 1)])
-
 # Choosing a mesh and instantiating the walk with it
-mesh = Lattice((size, size), percolation=percolation)
+mesh = Lattice((size, size))
 dtqw = DiscreteTimeQuantumWalk(
     mesh,
     interaction=PhaseChange(phase),
@@ -97,13 +91,13 @@ state = dtqw.walk(steps)
 joint, collision, marginal = Position().measure(state)
 
 labels = ["Particles' position x", "Particles' position y", 'Probability']
-collision.plot(path + 'collision_2d2p', labels=labels, dpi=300)
+collision.plot(path + 'collision', labels=labels, dpi=300)
 
 for p in range(len(dtqw.particles)):
     labels = ["{}'s position x".format(dtqw.particles[p].identifier),
               "{}'s position y".format(dtqw.particles[p].identifier),
               'Probability']
-    marginal[p].plot(path + 'marginal_2d2p_particle{}'.format(p + 1),
+    marginal[p].plot(path + 'marginal_particle{}'.format(p + 1),
                      labels=labels, dpi=300)
 
 # Destroying the RDD and stopping the SparkContext

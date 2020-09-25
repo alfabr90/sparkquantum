@@ -1,16 +1,18 @@
 import math
 
+import numpy as np
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
+from sparkquantum.dtqw.mesh.percolation.random import Random
 from sparkquantum.dtqw.observable.position import Position
 from sparkquantum.dtqw.particle import Particle
 
 # Choosing a directory to store plots and logs, if enabled
-path = './output/dtqw_1d1p/'
+path = './output/dtqw_perc_random/'
 util.create_dir(path)
 
 # Supposing the machine/cluster has 4 cores
@@ -28,8 +30,8 @@ steps = 100
 # 2 * steps + 1 sites
 size = 2 * steps + 1
 
-# Choosing a mesh and instantiating the walk with it
-mesh = Line((size, ))
+# Choosing a mesh with random percolations and instantiating the walk with it
+mesh = Line((size, ), percolation=Random(0.1))
 dtqw = DiscreteTimeQuantumWalk(mesh)
 
 # To add particles to the walk, a coin must be instantiated with
@@ -53,19 +55,36 @@ cstate = (1 / math.sqrt(2), 1j / math.sqrt(2))
 # position corresponding to the center site of the mesh
 dtqw.add_particle(particle, cstate, mesh.center())
 
-# Performing the walk
-state = dtqw.walk(steps)
+# Performing the walk 10 times to get the average distribution
+nsims = 10
 
-# Measuring the state of the system and plotting its distribution
-joint = Position().measure(state)
+# As the mesh is small enough to fit into memory, use a numpy array
+# to store the average distribution of the simulations
+pdf = np.zeros((mesh.shape[0], len(dtqw.particles) + 1), dtype=float)
+
+position = Position()
+
+for i in range(nsims):
+    state = dtqw.walk(steps)
+
+    # Measuring the state of the system and accumulating it to the numpy array
+    joint = position.measure(state)
+    pdf += joint.ndarray()
+
+    # Destroying the RDD to remove them from memory and disk
+    state.destroy()
+    joint.destroy()
+
+    # Resetting the walk
+    dtqw.reset()
+
+pdf /= nsims
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
-joint.plot(path + 'joint', labels=labels, dpi=300)
+plot.line(mesh.axis()[0], pdf, path + 'joint', labels=labels, dpi=300)
 
 # Destroying the RDD to remove them from memory and disk
-state.destroy()
 dtqw.destroy()
-joint.destroy()
 
 # Stopping the SparkContext
 sc.stop()

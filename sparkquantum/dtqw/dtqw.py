@@ -772,7 +772,9 @@ class DiscreteTimeQuantumWalk:
             A reference to this object.
 
         """
-        self._inistate.unpersist()
+        if self._inistate is not None:
+            self._inistate.unpersist()
+
         self._destroy_state()
         self._destroy_operators()
 
