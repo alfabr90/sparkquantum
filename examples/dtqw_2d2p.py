@@ -34,17 +34,8 @@ size = 2 * steps + 1
 # The particles will change their phase when colliding
 phase = 1.0 * cmath.pi
 
-percolation = None
-
-# The mesh will have percolations with the following likelihood
-#percolation = Random(0.3)
-
-# or even have permanent percolations
-# percolation = Permanent([math.floor((size - 1) / 4),
-#                         math.ceil(3 * (size - 1) / 4 + 1)])
-
 # Choosing a mesh and instantiating the walk with it
-mesh = Lattice((size, size), percolation=percolation)
+mesh = Lattice((size, size))
 dtqw = DiscreteTimeQuantumWalk(
     mesh,
     interaction=PhaseChange(phase),
