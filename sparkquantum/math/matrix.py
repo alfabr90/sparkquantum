@@ -67,394 +67,6 @@ class Matrix(Base):
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
 
-    def sparsity(self):
-        """Calculate the sparsity of this matrix.
-
-        Returns
-        -------
-        float
-            The sparsity of this matrix.
-
-        """
-        nelem = self._nelem
-
-        if self._nelem is None:
-            self._logger.warn(
-                "this matrix will be considered as dense as it has not had its number of elements defined.")
-            nelem = self._size
-
-        return 1.0 - nelem / self._size
-
-    def dump(self, path, glue=None, codec=None, filename=None):
-        """Dump this object's RDD to disk in a unique file or in many part-* files.
-
-        Notes
-        -----
-        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
-        This is not suitable for large working sets, as all data may not fit into driver's main memory.
-        This method exports the data in the :py:const:`sparkquantum.constants.MatrixCoordinateDefault` format.
-
-        Parameters
-        ----------
-        path : str
-            The path where the dumped RDD will be located at.
-        glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
-        codec : str, optional
-            Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
-        filename : str, optional
-            File name used when the dumping mode is in a single file. Default value is None.
-            In this case, a temporary named file is generated inside the informed path.
-
-        Raises
-        ------
-        ValueError
-            If the chosen 'sparkquantum.math.dumpingMode' configuration is not valid.
-
-        """
-        if glue is None:
-            glue = conf.get(
-                self._sc,
-                'sparkquantum.dumpingGlue')
-
-        if codec is None:
-            codec = conf.get(
-                self._sc,
-                'sparkquantum.dumpingCompressionCodec')
-
-        dumping_mode = int(
-            conf.get(
-                self._sc,
-                'sparkquantum.math.dumpingMode'))
-
-        rdd = mathutil.remove_zeros(
-            mathutil.change_coordinate(
-                self._data,
-                self._coord_format,
-                constants.MatrixCoordinateDefault),
-            self._dtype,
-            constants.MatrixCoordinateDefault)
-
-        rdd = rdd.map(
-            lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
-        )
-
-        if dumping_mode == constants.DumpingModeUniqueFile:
-            data = rdd.collect()
-
-            util.create_dir(path)
-
-            if not filename:
-                filename = util.get_temp_path(path)
-            else:
-                filename = util.append_slash(path) + filename
-
-            if len(data):
-                with open(filename, 'a') as f:
-                    for d in data:
-                        f.write(d + "\n")
-        elif dumping_mode == constants.DumpingModePartFiles:
-            rdd.saveAsTextFile(path, codec)
-        else:
-            self._logger.error("invalid dumping mode")
-            raise ValueError("invalid dumping mode")
-
-    def clear(self):
-        """Remove possible zero entries of this matrix object.
-
-        Notes
-        -----
-        Due to the immutability of RDD, a new RDD instance is created,
-        substituting the old one.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            A reference to this object.
-
-        Raises
-        ------
-        NotImplementedError
-            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
-
-        """
-        if self._coord_format != constants.MatrixCoordinateDefault:
-            self._logger.error("invalid coordinate format")
-            raise NotImplementedError("invalid coordinate format")
-
-        if self._data.is_cached:
-            self._logger.warning(
-                "it is not advised to execute a transformation after this object's RDD has been cached")
-
-        zero = self._dtype()
-
-        self._data = self._data.filter(
-            lambda m: m[-1] is not None and m[-1] != zero
-        )
-
-        return self
-
-    def ndarray(self):
-        """Create a Numpy array containing this object's RDD data.
-
-        Notes
-        -----
-        This method calls the :py:func:`pyspark.RDD.collect` method. This is not suitable for large working sets,
-        as all data may not fit into main memory.
-
-        Returns
-        -------
-        :py:class:`numpy.ndarray`
-            The Numpy array.
-
-        Raises
-        ------
-        NotImplementedError
-            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
-
-        """
-        if self._coord_format != constants.MatrixCoordinateDefault:
-            self._logger.error("invalid coordinate format")
-            raise NotImplementedError("invalid coordinate format")
-
-        rdd = mathutil.remove_zeros(
-            mathutil.change_coordinate(
-                self._data,
-                self._coord_format,
-                constants.MatrixCoordinateDefault),
-            self._dtype,
-            constants.MatrixCoordinateDefault)
-
-        data = rdd.collect()
-
-        result = np.zeros(self._shape, dtype=self._dtype)
-
-        for e in data:
-            result[e[0], e[1]] = e[2]
-
-        return result
-
-    def _change_coordinate(self, coord_format):
-        return mathutil.change_coordinate(
-            self._data,
-            old_coordinate=self._coord_format,
-            new_coordinate=coord_format)
-
-    def change_coordinate(self, coord_format):
-        """Change the coordinate format of this object.
-
-        Notes
-        -----
-        Due to the immutability of RDD, a new RDD instance is created
-        in the desired coordinate format. Thus, a new instance of this class
-        is returned with this RDD.
-
-        Parameters
-        ----------
-        coord_format : int
-            The new coordinate format of this object.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            A new matrix object with the RDD in the desired coordinate format.
-
-        """
-        rdd = self._change_coordinate(coord_format)
-
-        return Matrix(rdd, self._shape,
-                      dtype=self._dtype, coord_format=coord_format, nelem=self._nelem)
-
-    def _transpose(self):
-        rdd = mathutil.remove_zeros(
-            mathutil.change_coordinate(
-                self._data,
-                self._coord_format,
-                constants.MatrixCoordinateDefault),
-            self._dtype,
-            constants.MatrixCoordinateDefault)
-
-        shape = (self._shape[1], self._shape[0])
-
-        rdd = rdd.map(
-            lambda m: (m[1], m[0], m[2])
-        )
-
-        return rdd, shape
-
-    def transpose(self):
-        """Transpose this matrix.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            The resulting matrix.
-
-        """
-        rdd, shape = self._transpose()
-
-        return Matrix(rdd, shape,
-                      dtype=self._dtype, nelem=self._nelem)
-
-    def _kron(self, other):
-        other_shape = other.shape
-        new_shape = (self._shape[0] * other_shape[0],
-                     self._shape[1] * other_shape[1])
-
-        dtype = util.get_precedent_type(self._dtype, other.dtype)
-
-        rdd = self._data
-        other_rdd = other.data
-
-        # TODO: improve
-        if self._nelem is not None and other.nelem is not None:
-            nelem = self._nelem * other.nelem
-
-            num_partitions = util.get_num_partitions(
-                self._sc,
-                util.get_size_of_type(dtype) * nelem
-            )
-        else:
-            nelem = None
-
-            num_partitions = max(
-                rdd.getNumPartitions(),
-                other_rdd.getNumPartitions())
-
-        rdd = rdd.map(
-            lambda m: (0, m)
-        ).join(
-            other_rdd.map(
-                lambda m: (0, m)
-            ),
-            numPartitions=num_partitions
-        ).map(
-            lambda m: (m[1][0], m[1][1])
-        ).map(
-            lambda m: (
-                m[0][0] * other_shape[0] + m[1][0],
-                m[0][1] * other_shape[1] + m[1][1],
-                m[0][2] * m[1][2])
-        )
-
-        rdd = mathutil.remove_zeros(
-            rdd, dtype, constants.MatrixCoordinateDefault)
-
-        return rdd, new_shape, dtype, nelem
-
-    def kron(self, other):
-        """Perform a tensor (Kronecker) product with another matrix.
-
-        Parameters
-        ----------
-        other : :py:class:`sparkquantum.math.matrix.Matrix`
-            The other matrix.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            The resulting matrix.
-
-        Raises
-        ------
-        TypeError
-            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
-
-        """
-        if not is_matrix(other):
-            self._logger.error(
-                "'Matrix' instance expected, not '{}'".format(type(other)))
-            raise TypeError(
-                "'Matrix' instance expected, not '{}'".format(type(other)))
-
-        rdd, shape, dtype, nelem = self._kron(other)
-
-        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
-
-    def trace(self):
-        """Calculate the trace of this matrix.
-
-        Returns
-        -------
-        float
-            The trace of this matrix.
-
-        Raises
-        ------
-        TypeError
-            If this matrix is nor square.
-
-        """
-        if not Matrix.is_square(self):
-            self._logger.error(
-                "cannot calculate the trace of non square matrix")
-            raise TypeError("cannot calculate the trace of non square matrix")
-
-        rdd = mathutil.change_coordinate(
-            self._data,
-            self._coord_format,
-            constants.MatrixCoordinateDefault)
-
-        return rdd.filter(
-            lambda m: m[0] == m[1]
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-    def norm(self):
-        """Calculate the norm of this matrix.
-
-        Returns
-        -------
-        float
-            The norm of this matrix.
-
-        """
-        rdd = mathutil.remove_zeros(
-            mathutil.change_coordinate(
-                self._data,
-                self._coord_format,
-                constants.MatrixCoordinateDefault),
-            self._dtype,
-            constants.MatrixCoordinateDefault)
-
-        if self._dtype == complex:
-            def __map(m):
-                return m[2].real ** 2 + m[2].imag ** 2
-        else:
-            def __map(m):
-                return m[2] ** 2
-
-        n = rdd.map(
-            __map
-        ).reduce(
-            lambda a, b: a + b
-        )
-
-        return math.sqrt(n)
-
-    def is_unitary(self):
-        """Check if this matrix is unitary by calculating its norm.
-
-        Notes
-        -----
-        This method uses the 'sparkquantum.math.roundPrecision' configuration to round the calculated norm.
-
-        Returns
-        -------
-        bool
-            True if the norm of this matrix is 1.0, False otherwise.
-
-        """
-        round_precision = int(
-            conf.get(
-                self._sc,
-                'sparkquantum.math.roundPrecision'))
-
-        return round(self.norm(), round_precision) == 1.0
-
     def _sum_matrix(self, other, constant):
         if self._shape[0] != other.shape[0] or self._shape[1] != other.shape[1]:
             self._logger.error(
@@ -500,10 +112,7 @@ class Matrix(Base):
             __map
         )
 
-        rdd = mathutil.remove_zeros(
-            rdd, dtype, constants.MatrixCoordinateDefault)
-
-        return rdd, self._shape, dtype, nelem
+        return Matrix(rdd, self._shape, dtype=dtype, nelem=nelem).clear()
 
     def _sum_scalar(self, other, constant):
         if other == type(other)():
@@ -544,67 +153,7 @@ class Matrix(Base):
             __map
         )
 
-        rdd = mathutil.remove_zeros(
-            rdd, dtype, constants.MatrixCoordinateDefault)
-
-        return rdd, self._shape, dtype, nelem
-
-    def _sum(self, other, constant):
-        if is_matrix(other):
-            return self._sum_matrix(other, constant)
-        elif mathutil.is_scalar(other):
-            return self._sum_scalar(other, constant)
-        else:
-            self._logger.error(
-                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
-            raise TypeError(
-                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
-
-    def sum(self, other):
-        """Perform a summation with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
-
-        Parameters
-        ----------
-        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
-            The other matrix or scalar.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            The resulting matrix.
-
-        Raises
-        ------
-        TypeError
-            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
-
-        """
-        rdd, shape, dtype, nelem = self._sum(other, 1)
-
-        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
-
-    def subtract(self, other):
-        """Perform a subtraction with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
-
-        Parameters
-        ----------
-        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
-            The other matrix or number.
-
-        Returns
-        -------
-        :py:class:`sparkquantum.math.matrix.Matrix`
-            The resulting matrix.
-
-        Raises
-        ------
-        TypeError
-            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
-
-        """
-        rdd, shape, dtype, nelem = self._sum(other, -1)
-
-        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
+        return Matrix(rdd, self._shape, dtype=dtype, nelem=nelem).clear()
 
     def _multiply_matrix(self, other):
         if (self._coord_format != constants.MatrixCoordinateMultiplier or
@@ -654,10 +203,7 @@ class Matrix(Base):
             lambda m: (m[0][0], m[0][1], m[1])
         )
 
-        rdd = mathutil.remove_zeros(
-            rdd, dtype, constants.MatrixCoordinateDefault)
-
-        return rdd, shape, dtype, nelem
+        return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
 
     def _multiply_scalar(self, other, constant):
         if self._coord_format != constants.MatrixCoordinateDefault:
@@ -671,17 +217,488 @@ class Matrix(Base):
                 # It is a division by zero operation
                 raise ZeroDivisionError
             elif constant > 0:
-                return self._sc.emptyRDD, self._shape, dtype, 0
+                return Matrix(self._sc.emptyRDD, self._shape,
+                              dtype=dtype, coord_format=self._coord_format, nelem=0)
             else:
-                return self._data, self._shape, dtype, self._nelem
+                return Matrix(self._data, self._shape,
+                              dtype=dtype, coord_format=self._coord_format, nelem=self._nelem)
         elif other == type(other)() + 1:
-            return self._data, self._shape, dtype, self._nelem
+            return Matrix(self._data, self._shape,
+                          dtype=dtype, coord_format=self._coord_format, nelem=self._nelem)
 
         rdd = self._data.map(
             lambda m: (m[0], m[1], m[2] * other ** constant)
         )
 
-        return rdd, self._shape, dtype, self._nelem
+        return Matrix(rdd, self._shape,
+                      dtype=dtype, coord_format=self._coord_format, nelem=self._nelem)
+
+    def sparsity(self):
+        """Calculate the sparsity of this matrix.
+
+        Returns
+        -------
+        float
+            The sparsity of this matrix.
+
+        """
+        nelem = self._nelem
+
+        if nelem is None:
+            self._logger.warning(
+                "this matrix will be considered as dense as it has not had its number of elements defined")
+            nelem = self._size
+
+        return 1.0 - nelem / self._size
+
+    def dump(self, path, glue=None, codec=None, filename=None):
+        """Dump this object's RDD to disk in a unique file or in many part-* files.
+
+        Notes
+        -----
+        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
+        This is not suitable for large working sets, as all data may not fit into driver's main memory.
+        This method exports the data in the :py:const:`sparkquantum.constants.MatrixCoordinateDefault` format.
+
+        Parameters
+        ----------
+        path : str
+            The path where the dumped RDD will be located at.
+        glue : str, optional
+            The glue string that connects each coordinate and value of each element in the RDD.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
+        codec : str, optional
+            Codec name used to compress the dumped data.
+            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
+        filename : str, optional
+            File name used when the dumping mode is in a single file. Default value is None.
+            In this case, a temporary named file is generated inside the informed path.
+
+        Raises
+        ------
+        NotImplementedError
+            If the coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
+
+        ValueError
+            If the chosen 'sparkquantum.math.dumpingMode' configuration is not valid.
+
+        """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        if glue is None:
+            glue = conf.get(
+                self._sc,
+                'sparkquantum.dumpingGlue')
+
+        if codec is None:
+            codec = conf.get(
+                self._sc,
+                'sparkquantum.dumpingCompressionCodec')
+
+        dumping_mode = int(
+            conf.get(
+                self._sc,
+                'sparkquantum.math.dumpingMode'))
+
+        rdd = self.clear().data
+
+        rdd = rdd.map(
+            lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
+        )
+
+        if dumping_mode == constants.DumpingModeUniqueFile:
+            data = rdd.collect()
+
+            util.create_dir(path)
+
+            if not filename:
+                filename = util.get_temp_path(path)
+            else:
+                filename = util.append_slash(path) + filename
+
+            if len(data):
+                with open(filename, 'a') as f:
+                    for d in data:
+                        f.write(d + "\n")
+        elif dumping_mode == constants.DumpingModePartFiles:
+            rdd.saveAsTextFile(path, codec)
+        else:
+            self._logger.error("invalid dumping mode")
+            raise ValueError("invalid dumping mode")
+
+    def ndarray(self):
+        """Create a Numpy array containing this object's RDD data.
+
+        Notes
+        -----
+        This method calls the :py:func:`pyspark.RDD.collect` method. This is not suitable for large working sets,
+        as all data may not fit into main memory.
+
+        Returns
+        -------
+        :py:class:`numpy.ndarray`
+            The Numpy array.
+
+        Raises
+        ------
+        NotImplementedError
+            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
+
+        """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        data = self.clear().data.collect()
+
+        result = np.zeros(self._shape, dtype=self._dtype)
+
+        for e in data:
+            result[e[0], e[1]] = e[2]
+
+        return result
+
+    def clear(self):
+        """Remove possible zero entries of this matrix object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            A new matrix object.
+
+        Raises
+        ------
+        NotImplementedError
+            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
+
+        """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        zero = self._dtype()
+
+        rdd = self._data.filter(
+            lambda m: m[2] is not None and m[2] != zero
+        )
+
+        return Matrix(rdd, self._shape,
+                      dtype=self._dtype, coord_format=self._coord_format, nelem=self._nelem)
+
+    def copy(self):
+        """Make a copy of this object.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            A new matrix object.
+
+        """
+        rdd = self._data.map(
+            lambda m: m
+        )
+
+        return Matrix(rdd, self._shape,
+                      dtype=self._dtype, coord_format=self._coord_format, nelem=self._nelem)
+
+    def to_coordinate(self, coord_format):
+        """Change the coordinate format of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created
+        in the desired coordinate format.
+
+        Parameters
+        ----------
+        coord_format : int
+            The new coordinate format for this object.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            A new matrix object with the RDD in the desired coordinate format.
+
+        """
+        if self._coord_format == coord_format:
+            return self
+
+        rdd = self._data
+
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            if self._coord_format == constants.MatrixCoordinateMultiplier:
+                rdd = rdd.map(
+                    lambda m: (m[1][0], m[0], m[1][1])
+                )
+            elif self._coord_format == constants.MatrixCoordinateMultiplicand:
+                rdd = rdd.map(
+                    lambda m: (m[0], m[1][0], m[1][1])
+                )
+            elif self._coord_format == constants.MatrixCoordinateIndexed:
+                rdd = rdd.map(
+                    lambda m: (m[0][0], m[0][1], m[1])
+                )
+            else:
+                raise ValueError("invalid coordinate format")
+
+        if coord_format != constants.MatrixCoordinateDefault:
+            if coord_format == constants.MatrixCoordinateMultiplier:
+                rdd = rdd.map(
+                    lambda m: (m[1], (m[0], m[2]))
+                )
+            elif coord_format == constants.MatrixCoordinateMultiplicand:
+                rdd = rdd.map(
+                    lambda m: (m[0], (m[1], m[2]))
+                )
+            elif coord_format == constants.MatrixCoordinateIndexed:
+                rdd = rdd.map(
+                    lambda m: ((m[0], m[1]), m[2])
+                )
+            else:
+                raise ValueError("invalid coordinate format")
+
+        return Matrix(rdd, self._shape,
+                      dtype=self._dtype, coord_format=coord_format, nelem=self._nelem)
+
+    def transpose(self):
+        """Transpose this matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        shape = (self._shape[1], self._shape[0])
+
+        rdd = rdd.map(
+            lambda m: (m[1], m[0], m[2])
+        )
+
+        return Matrix(rdd, shape,
+                      dtype=self._dtype, coord_format=self._coord_format, nelem=self._nelem)
+
+    def kron(self, other):
+        """Perform a tensor (Kronecker) product with another matrix.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix`
+            The other matrix.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
+
+        """
+        if not is_matrix(other):
+            self._logger.error(
+                "'Matrix' instance expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' instance expected, not '{}'".format(type(other)))
+
+        if (self._coord_format != constants.MatrixCoordinateDefault or
+                other.coord_format != constants.MatrixCoordinateDefault):
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        other_shape = other.shape
+        shape = (self._shape[0] * other_shape[0],
+                     self._shape[1] * other_shape[1])
+
+        dtype = util.get_precedent_type(self._dtype, other.dtype)
+
+        rdd = self._data
+        other_rdd = other.data
+
+        if self._nelem is not None and other.nelem is not None:
+            nelem = self._nelem * other.nelem
+        else:
+            nelem = None
+
+        if self._nelem is not None:
+            num_partitions = util.get_num_partitions(
+                self._sc,
+                util.get_size_of_type(dtype) * self._nelem
+            )
+        else:
+            num_partitions = rdd.getNumPartitions()
+
+        if other.nelem is not None:
+            other_num_partitions = util.get_num_partitions(
+                self._sc,
+                util.get_size_of_type(dtype) * other.nelem
+            )
+        else:
+            other_num_partitions = other_rdd.getNumPartitions()
+
+        num_partitions = num_partitions * other_num_partitions
+
+        rdd = rdd.map(
+            lambda m: (0, m)
+        ).join(
+            other_rdd.map(
+                lambda m: (0, m)
+            ),
+            numPartitions=num_partitions
+        ).map(
+            lambda m: (m[1][0], m[1][1])
+        ).map(
+            lambda m: (
+                m[0][0] * other_shape[0] + m[1][0],
+                m[0][1] * other_shape[1] + m[1][1],
+                m[0][2] * m[1][2])
+        )
+
+        return Matrix(rdd, shape,
+                      dtype=dtype, coord_format=self._coord_format, nelem=nelem)
+
+    def trace(self):
+        """Calculate the trace of this matrix.
+
+        Returns
+        -------
+        float
+            The trace of this matrix.
+
+        Raises
+        ------
+        TypeError
+            If this matrix is not square.
+
+        """
+        if not Matrix.is_square(self):
+            self._logger.error(
+                "cannot calculate the trace of non square matrix")
+            raise TypeError("cannot calculate the trace of non square matrix")
+
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
+        return self._data.filter(
+            lambda m: m[0] == m[1]
+        ).reduce(
+            lambda a, b: a[2] + b[2]
+        )
+
+    def norm(self):
+        """Calculate the norm of this matrix.
+
+        Returns
+        -------
+        float
+            The norm of this matrix.
+
+        """
+        if self._dtype == complex:
+            def __map(m):
+                return m[2].real ** 2 + m[2].imag ** 2
+        else:
+            def __map(m):
+                return m[2] ** 2
+
+        n = self._data.map(
+            __map
+        ).reduce(
+            lambda a, b: a + b
+        )
+
+        return math.sqrt(n)
+
+    def is_unitary(self):
+        """Check if this matrix is unitary by calculating its norm.
+
+        Notes
+        -----
+        This method uses the 'sparkquantum.math.roundPrecision' configuration to round the calculated norm.
+
+        Returns
+        -------
+        bool
+            True if the norm of this matrix is 1.0, False otherwise.
+
+        """
+        round_precision = int(
+            conf.get(
+                self._sc,
+                'sparkquantum.math.roundPrecision'))
+
+        return round(self.norm(), round_precision) == 1.0
+
+    def sum(self, other):
+        """Perform a summation with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
+            The other matrix or scalar.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
+
+        """
+        if is_matrix(other):
+            return self._sum_matrix(other, 1)
+        elif mathutil.is_scalar(other):
+            return self._sum_scalar(other, 1)
+        else:
+            self._logger.error(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+
+    def subtract(self, other):
+        """Perform a subtraction with another matrix (element-wise) or scalar (number), i.e., int, float or complex.
+
+        Parameters
+        ----------
+        other : :py:class:`sparkquantum.math.matrix.Matrix` or scalar
+            The other matrix or number.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.math.matrix.Matrix`
+            The resulting matrix.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix` object or not a scalar.
+
+        """
+        if is_matrix(other):
+            return self._sum_matrix(other, -1)
+        elif mathutil.is_scalar(other):
+            return self._sum_scalar(other, -1)
+        else:
+            self._logger.error(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
+            raise TypeError(
+                "'Matrix' instance, int, float or complex expected, not '{}'".format(type(other)))
 
     def multiply(self, other):
         """Multiply this matrix by another one or by a scalar (number), i.e, int, float or complex.
@@ -711,14 +728,9 @@ class Matrix(Base):
 
         """
         if is_matrix(other):
-            rdd, shape, dtype, nelem = self._multiply_matrix(other)
-
-            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
+            return self._multiply_matrix(other)
         elif mathutil.is_scalar(other):
-            rdd, shape, dtype, nelem = self._multiply_scalar(
-                other, 1)
-
-            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
+            return self._multiply_scalar(other, 1)
         else:
             self._logger.error(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))
@@ -751,11 +763,7 @@ class Matrix(Base):
         if is_matrix(other):
             raise NotImplementedError
         elif mathutil.is_scalar(other):
-            rdd, shape, dtype, nelem = self._multiply_scalar(
-                other, -1
-            )
-
-            return Matrix(rdd, shape, dtype=dtype, nelem=nelem)
+            return self._multiply_scalar(other, -1)
         else:
             self._logger.error(
                 "'Matrix' intance, int, float or complex expected, not '{}'".format(type(other)))

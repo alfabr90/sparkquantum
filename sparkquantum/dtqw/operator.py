@@ -1,6 +1,6 @@
 from sparkquantum import constants
 from sparkquantum.dtqw.state import State, is_state
-from sparkquantum.math.matrix import Matrix
+from sparkquantum.math.matrix import Matrix, is_matrix
 
 __all__ = ['Operator', 'is_operator']
 
@@ -33,7 +33,7 @@ class Operator(Matrix):
     def __str__(self):
         return '{} with shape {}'.format(self.__class__.__name__, self._shape)
 
-    def change_coordinate(self, coord_format):
+    def to_coordinate(self, coord_format):
         """Change the coordinate format of this object.
 
         Notes
@@ -53,10 +53,7 @@ class Operator(Matrix):
             A new operator object with the RDD in the desired coordinate format.
 
         """
-        rdd = self._change_coordinate(coord_format)
-
-        return Operator(rdd, self._shape,
-                        dtype=self._dtype, coord_format=coord_format, nelem=self._nelem)
+        return Operator.from_matrix(super().to_coordinate(coord_format))
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another operator.
@@ -83,18 +80,7 @@ class Operator(Matrix):
             raise TypeError(
                 "'Operator' instance expected, not '{}'".format(type(other)))
 
-        rdd, shape, dtype, nelem = self._kron(other)
-
-        return Operator(rdd, shape, dtype=dtype, nelem=nelem)
-
-    def sum(self, other):
-        return None
-
-    def subtract(self, other):
-        return None
-
-    def transpose(self):
-        return None
+        return Operator.from_matrix(super().kron(other))
 
     def multiply(self, other):
         """Multiply this operator with another one or with a system state.
@@ -119,25 +105,63 @@ class Operator(Matrix):
 
         """
         if is_operator(other):
-            rdd, shape, dtype, nelem = self._multiply_matrix(other)
-
-            return Operator(rdd, shape, dtype=dtype, nelem=nelem)
+            return Operator.from_matrix(super().multiply(other))
         elif is_state(other):
-            rdd, shape, dtype, nelem = self._multiply_matrix(other)
-
-            return State(rdd, shape, other.mesh, other.particles,
-                         dtype=dtype, nelem=nelem)
+            return State.from_matrix(super().multiply(other),
+                                     other.mesh, other.particles, other.repr_format)
         else:
             self._logger.error(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
             raise TypeError(
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 
+    def clear(self):
+        return None
+
+    def copy(self):
+        return None
+
+    def sum(self, other):
+        return None
+
+    def subtract(self, other):
+        return None
+
+    def transpose(self):
+        return None
+
     def divide(self, other):
         return None
 
     def dot_product(self, other):
         return None
+
+    @staticmethod
+    def from_matrix(matrix):
+        """Build an operator from a matrix object.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            The matrix to serve as a base.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            The new operator.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not '{}'".format(type(matrix)))
+
+        return Operator(matrix.data, matrix.shape,
+                        dtype=matrix.dtype, coord_format=matrix.coord_format, nelem=matrix.nelem)
 
 
 def is_operator(obj):
