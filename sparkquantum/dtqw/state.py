@@ -4,7 +4,7 @@ from sparkquantum import conf, constants, util
 from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.particle import is_particle
 from sparkquantum.math import util as mathutil
-from sparkquantum.math.matrix import Matrix
+from sparkquantum.math.matrix import Matrix, is_matrix
 
 __all__ = ['State', 'is_state']
 
@@ -30,10 +30,10 @@ class State(Matrix):
         dtype : type, optional
             The Python type of all values in this object. Default value is complex.
         coord_format : int, optional
-            The coordinate format of this object. Default value is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`
+            The coordinate format of this object. Default value is :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
         repr_format : int, optional
             Indicate how the quantum system is represented.
-            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`..
+            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
         nelem : int, optional
             The expected (or definitive) number of elements. This helps to find a
             better number of partitions when (re)partitioning the RDD. Default value is None.
@@ -114,13 +114,18 @@ class State(Matrix):
         Raises
         ------
         NotImplementedError
-            If the dimension of the mesh is not valid.
+            If the coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault` or
+            if the dimension of the mesh is not valid.
 
         ValueError
             If any of the chosen 'sparkquantum.dtqw.state.dumpingFormat', 'sparkquantum.math.dumpingMode' or
             'sparkquantum.dtqw.stateRepresentationFormat' configuration is not valid.
 
         """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
         if glue is None:
             glue = conf.get(
                 self._sc,
@@ -137,13 +142,7 @@ class State(Matrix):
         dumping_mode = int(conf.get(
             self._sc, 'sparkquantum.math.dumpingMode'))
 
-        rdd = mathutil.remove_zeros(
-            mathutil.change_coordinate(
-                self._data,
-                self._coord_format,
-                constants.MatrixCoordinateDefault),
-            self._dtype,
-            constants.MatrixCoordinateDefault)
+        rdd = self.clear().data
 
         if dumping_format == constants.StateDumpingFormatIndex:
             if dumping_mode == constants.DumpingModeUniqueFile:
@@ -287,7 +286,7 @@ class State(Matrix):
             self._logger.error("invalid dumping format")
             raise ValueError("invalid dumping format")
 
-    def change_coordinate(self, coord_format):
+    def to_coordinate(self, coord_format):
         """Change the coordinate format of this object.
 
         Notes
@@ -307,10 +306,8 @@ class State(Matrix):
             A new state object with the RDD in the desired coordinate format.
 
         """
-        rdd = self._change_coordinate(coord_format)
-
-        return State(rdd, self._shape, self._mesh, self._particles,
-                     dtype=self._dtype, coord_format=coord_format, repr_format=self._repr_format, nelem=self._nelem)
+        return State.from_matrix(super().to_coordinate(coord_format),
+                                 self._mesh, self._particles, self._repr_format)
 
     def transpose(self):
         """Transpose this state.
@@ -321,10 +318,8 @@ class State(Matrix):
             The resulting state.
 
         """
-        rdd, shape = self._transpose()
-
-        return State(rdd, shape, self._mesh, self._particles,
-                     dtype=self._dtype, coord_format=self._coord_format, repr_format=self._repr_format, nelem=self._nelem)
+        return State.from_matrix(super().transpose(),
+                                 self._mesh, self._particles, self._repr_format)
 
     def kron(self, other):
         """Perform a tensor (Kronecker) product with another system state.
@@ -351,10 +346,14 @@ class State(Matrix):
             raise TypeError(
                 "'State' instance expected, not '{}'".format(type(other)))
 
-        rdd, shape, dtype, nelem = self._kron(other)
+        return State.from_matrix(super().kron(other),
+                                 self._mesh, self._particles + other.particles, self._repr_format)
 
-        return State(rdd, shape, self._mesh, self._particles + other.particles,
-                     dtype=dtype, coord_format=self._coord_format, repr_format=self._repr_format, nelem=self._nelem)
+    def clear(self):
+        return None
+
+    def copy(self):
+        return None
 
     def sum(self, other):
         return None
@@ -370,6 +369,40 @@ class State(Matrix):
 
     def dot_product(self, other):
         return None
+
+    @staticmethod
+    def from_matrix(matrix, mesh, particles, repr_format):
+        """Build a state from a matrix object.
+
+        Parameters
+        ----------
+        matrix : :py:class:`sparkquantum.math.matrix.Matrix`
+            The matrix to serve as a base.
+        mesh : :py:class:`sparkquantum.dtqw.mesh.mesh.Mesh`
+            The mesh where the particles are walking on.
+        particles : tuple of :py:class:`sparkquantum.dtqw.particle.Particle`
+            The particles present in the walk.
+        repr_format : int, optional
+            Indicate how the quantum system is represented.
+            Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.state.State`
+            The new state.
+
+        Raises
+        ------
+        TypeError
+            If `other` is not a :py:class:`sparkquantum.math.matrix.Matrix`.
+
+        """
+        if not is_matrix(matrix):
+            raise TypeError(
+                "'Matrix' instance expected, not '{}'".format(type(matrix)))
+
+        return State(matrix.data, matrix.shape, mesh, particles,
+                     dtype=matrix.dtype, coord_format=matrix.coord_format, repr_format=repr_format, nelem=matrix.nelem)
 
 
 def is_state(obj):

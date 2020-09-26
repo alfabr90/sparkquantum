@@ -62,8 +62,7 @@ class ProbabilityDistribution(Base):
         return self._dtype
 
     def __str__(self):
-        return 'Probability distribution of random variables {}'.format(
-            self._variables)
+        return 'Probability distribution'
 
     def ndarray(self):
         """Create a Numpy array containing this object's RDD data.

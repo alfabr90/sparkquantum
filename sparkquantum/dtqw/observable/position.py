@@ -38,7 +38,8 @@ class Position(Observable):
         Raises
         ------
         NotImplementedError
-            If the dimension of the mesh is not valid.
+            If the state's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault` or
+            if the dimension of the mesh is not valid.
 
         ValueError
             If the chosen 'sparkquantum.dtqw.stateRepresentationFormat' configuration
@@ -50,6 +51,10 @@ class Position(Observable):
                 "'State' instance expected, not '{}'".format(type(self._state)))
             raise TypeError(
                 "'State' instance expected, not '{}'".format(type(self._state)))
+
+        if state.coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
 
         self._logger.info("measuring the state of the system...")
 
@@ -147,15 +152,7 @@ class Position(Observable):
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
-        rdd = mathutil.change_coordinate(
-            mathutil.remove_zeros(
-                state.data,
-                state.dtype,
-                state.coord_format),
-            state.coord_format,
-            constants.MatrixCoordinateDefault)
-
-        rdd = rdd.map(
+        rdd = state.data.map(
             __map
         ).reduceByKey(
             lambda a, b: a + b, numPartitions=num_partitions
@@ -327,7 +324,8 @@ class Position(Observable):
         Raises
         ------
         NotImplementedError
-            If the dimension of the mesh is not valid.
+            If the state's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault` or
+            if the dimension of the mesh is not valid.
 
         ValueError
             If `particle` is not valid, i.e., particle number does not belong to the walk,
@@ -346,6 +344,10 @@ class Position(Observable):
                 "'Particle' instance expected, not '{}'".format(type(particle)))
             raise TypeError(
                 "'Particle' instance expected, not '{}'".format(type(particle)))
+
+        if state.coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
 
         self._logger.info(
             "measuring the state of the system for particle {}...".format(particle.identifier))
@@ -426,15 +428,7 @@ class Position(Observable):
         num_partitions = util.get_num_partitions(
             state.data.context, expected_size)
 
-        rdd = mathutil.change_coordinate(
-            mathutil.remove_zeros(
-                state.data,
-                state.dtype,
-                state.coord_format),
-            state.coord_format,
-            constants.MatrixCoordinateDefault)
-
-        rdd = rdd.map(
+        rdd = state.data.map(
             __map
         ).reduceByKey(
             lambda a, b: a + b, numPartitions=num_partitions
@@ -525,8 +519,8 @@ class Position(Observable):
         if len(state.particles) == 1:
             return self.measure_system(state, storage_level)
         else:
-            system = self.measure_system(state, storage_level)
-            collision = self.measure_collision(state, system, storage_level)
-            partials = self.measure_particles(state, storage_level)
+            joint = self.measure_system(state, storage_level)
+            collision = self.measure_collision(state, joint, storage_level)
+            marginal = self.measure_particles(state, storage_level)
 
-            return system, collision, partials
+            return joint, collision, marginal

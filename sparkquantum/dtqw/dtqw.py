@@ -227,9 +227,7 @@ class DiscreteTimeQuantumWalk:
 
                 co = self._particles[p].coin.create_operator(
                     self._mesh.sites, repr_format=self._repr_format
-                ).change_coordinate(
-                    constants.MatrixCoordinateMultiplicand
-                )
+                ).to_coordinate(constants.MatrixCoordinateMultiplicand)
 
                 num_partitions = util.get_num_partitions(
                     self._sc,
@@ -255,7 +253,9 @@ class DiscreteTimeQuantumWalk:
 
         time = datetime.now()
 
-        so = self._mesh.create_operator(repr_format=self._repr_format).change_coordinate(
+        so = self._mesh.create_operator(
+            repr_format=self._repr_format
+        ).to_coordinate(
             constants.MatrixCoordinateMultiplier
         )
 
@@ -279,7 +279,9 @@ class DiscreteTimeQuantumWalk:
 
         particles = len(self._particles)
 
-        io = self._interaction.create_operator(self._mesh, particles, repr_format=self._repr_format).change_coordinate(
+        io = self._interaction.create_operator(
+            self._mesh, particles, repr_format=self._repr_format
+        ).to_coordinate(
             constants.MatrixCoordinateMultiplier
         )
 
@@ -457,7 +459,7 @@ class DiscreteTimeQuantumWalk:
                 nelem
             )
 
-            eo = eo.change_coordinate(
+            eo = eo.to_coordinate(
                 constants.MatrixCoordinateMultiplier
             ).partition_by(
                 num_partitions=num_partitions
@@ -816,21 +818,21 @@ class DiscreteTimeQuantumWalk:
 
         time = datetime.now()
 
-        result_tmp = result.change_coordinate(
+        result_tmp = result.to_coordinate(
             constants.MatrixCoordinateMultiplicand
         )
 
         if particles > 1 and self._interaction_operator is not None:
-            result_tmp = self._interaction_operator.multiply(result_tmp).change_coordinate(
+            result_tmp = self._interaction_operator.multiply(result_tmp).to_coordinate(
                 constants.MatrixCoordinateMultiplicand
             )
 
         for eo in self._evolution_operators:
-            result_tmp = eo.multiply(result_tmp).change_coordinate(
+            result_tmp = eo.multiply(result_tmp).to_coordinate(
                 constants.MatrixCoordinateMultiplicand
             )
 
-        result_tmp = result_tmp.change_coordinate(
+        result_tmp = result_tmp.to_coordinate(
             constants.MatrixCoordinateDefault
         )
 
