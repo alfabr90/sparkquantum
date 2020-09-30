@@ -344,6 +344,10 @@ class DiscreteTimeQuantumWalk:
             dtype = self._coin_operators[p].dtype
             nelem = eo.nelem * eo.shape[0] ** (particles - 1)
 
+            num_partitions = max(util.get_num_partitions(
+                self._sc, util.get_size_of_type(dtype) * nelem
+            ), eo.data.getNumPartitions())
+
             shape = eo.shape
 
             if particles > 1:
@@ -452,12 +456,6 @@ class DiscreteTimeQuantumWalk:
 
                 eo = Operator(rdd, shape,
                               dtype=dtype, nelem=nelem)
-
-            num_partitions = util.get_num_partitions(
-                self._sc,
-                util.get_size_of_type(dtype) *
-                nelem
-            )
 
             eo = eo.to_coordinate(
                 constants.MatrixCoordinateMultiplier
@@ -745,8 +743,6 @@ class DiscreteTimeQuantumWalk:
 
         self._logger.info("checking if the initial state is unitary...")
 
-        self._inistate.materialize(self._storage_level)
-
         if not self._inistate.is_unitary():
             self._logger.error("the initial state is not unitary")
             raise ValueError("the initial state is not unitary")
@@ -818,36 +814,32 @@ class DiscreteTimeQuantumWalk:
 
         time = datetime.now()
 
-        result_tmp = result.to_coordinate(
-            constants.MatrixCoordinateMultiplicand
-        )
-
         if particles > 1 and self._interaction_operator is not None:
-            result_tmp = self._interaction_operator.multiply(result_tmp).to_coordinate(
-                constants.MatrixCoordinateMultiplicand
+            result = self._interaction_operator.multiply(
+                result.to_coordinate(
+                    constants.MatrixCoordinateMultiplicand
+                ).partition_by(
+                    self._interaction_operator.data.getNumPartitions()
+                )
             )
 
         for eo in self._evolution_operators:
-            result_tmp = eo.multiply(result_tmp).to_coordinate(
-                constants.MatrixCoordinateMultiplicand
+            result = eo.multiply(
+                result.to_coordinate(
+                    constants.MatrixCoordinateMultiplicand
+                ).partition_by(
+                    eo.data.getNumPartitions()
+                )
             )
 
-        result_tmp = result_tmp.to_coordinate(
-            constants.MatrixCoordinateDefault
-        )
-
-        partitions = util.get_num_partitions(
-            self._sc,
-            util.get_size_of_type(result_tmp.dtype) * result_tmp.nelem
-        )
-
-        result_tmp.repartition(partitions).persist(self._storage_level)
+        result.persist(self._storage_level)
 
         if configs['checkpointing_frequency'] >= 0 and step % configs['checkpointing_frequency'] == 0:
-            result_tmp.checkpoint()
+            result.checkpoint()
 
-        result_tmp.materialize(self._storage_level)
-        result.unpersist()
+        result.materialize(self._storage_level)
+
+        self._curstate.unpersist()
 
         time = (datetime.now() - time).total_seconds()
 
@@ -857,15 +849,15 @@ class DiscreteTimeQuantumWalk:
         self._profile_state(
             'systemState{}'.format(step),
             'system state after step {}'.format(step),
-            result_tmp,
+            result,
             time)
 
         if configs['dumping_frequency'] >= 0 and step % configs['dumping_frequency'] == 0:
-            result_tmp.dump(
+            result.dump(
                 configs['dumping_path'] + "states/" + str(step))
 
         if configs['check_unitary'] == 'True':
-            if not result_tmp.is_unitary():
+            if not result.is_unitary():
                 self._logger.error(
                     "the state {} is not unitary".format(step))
                 raise ValueError(
@@ -873,10 +865,10 @@ class DiscreteTimeQuantumWalk:
 
         if configs['dump_states_probability_distributions'] == 'True':
             if particles == 1:
-                result_tmp.measure().dump(
+                result.measure().dump(
                     configs['dumping_path'] + "probability_distributions/" + str(step))
             else:
-                joint, collision, marginal = result_tmp.measure()
+                joint, collision, marginal = result.measure()
 
                 joint.dump(
                     configs['dumping_path'] + "probability_distributions/joint/" + str(step))
@@ -886,13 +878,11 @@ class DiscreteTimeQuantumWalk:
                     marginal[p].dump(
                         configs['dumping_path'] + "probability_distributions/marginal/" + str(step) + "/particle" + str(p + 1))
 
-        app_id = self._sc.applicationId
-
-        self._profiler.log_rdd(app_id=app_id)
+        self._profiler.log_rdd(app_id=self._sc.applicationId)
 
         self._curstep += 1
 
-        return result_tmp
+        return result
 
     def walk(self, steps):
         """Perform the quantum walk.
