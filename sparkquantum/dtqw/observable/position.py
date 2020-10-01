@@ -449,6 +449,8 @@ class Position(Observable):
             self._logger.error("probability distributions must sum one")
             raise ValueError("probability distributions must sum one")
 
+        time = (datetime.now() - time).total_seconds()
+
         self._profile_distribution(
             'partialMeasurementParticle{}'.format(pind + 1),
             'partial measurement for particle {}'.format(pind + 1),
