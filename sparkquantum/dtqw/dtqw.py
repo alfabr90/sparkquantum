@@ -220,7 +220,10 @@ class DiscreteTimeQuantumWalk:
 
             if len(self._coin_operators) < p + 1:
                 self._logger.info(
-                    "building coin operator for particle {}...".format(p + 1)
+                    "building coin operator for particle {} ({})...".format(
+                        p + 1,
+                        particle.identifier if particle.identifier is not None else 'unidentified'
+                    )
                 )
 
                 time = datetime.now()
@@ -243,8 +246,11 @@ class DiscreteTimeQuantumWalk:
                 time = (datetime.now() - time).total_seconds()
 
                 self._profile_operator(
-                    'coinOperator{}'.format(p + 1),
-                    'coin operator for particle {}'.format(p + 1),
+                    'coinOperatorParticle{}'.format(p + 1),
+                    'coin operator for particle {} ({})'.format(
+                        p + 1,
+                        particle.identifier if particle.identifier is not None else 'unidentified'
+                    ),
                     self._coin_operators[p],
                     time)
 
@@ -334,8 +340,14 @@ class DiscreteTimeQuantumWalk:
                 self._sc, 'sparkquantum.dtqw.evolutionOperator.kroneckerMode')
 
         for p in range(particles):
+            particle = self._particles[p]
+
             self._logger.info(
-                "building evolution operator for particle {}...".format(p + 1))
+                "building evolution operator for particle {} ({})...".format(
+                    p + 1,
+                    particle.identifier if particle.identifier is not None else 'unidentified'
+                )
+            )
 
             time = datetime.now()
 
@@ -474,8 +486,11 @@ class DiscreteTimeQuantumWalk:
 
             self._profile_operator(
                 'evolutionOperatorParticle{}'.format(p + 1),
-                'evolution operator for particle {}'.format(p + 1),
-                self._evolution_operators[-1],
+                'evolution operator for particle {} ({})'.format(
+                    p + 1,
+                    particle.identifier if particle.identifier is not None else 'unidentified'
+                ),
+                self._evolution_operators[p],
                 time)
 
             if particles > 1:
