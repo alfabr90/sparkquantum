@@ -62,13 +62,13 @@ nsims = 10
 # to store the average distribution of the simulations
 pdf = np.zeros((mesh.shape[0], len(dtqw.particles) + 1), dtype=float)
 
-position = Position()
+observable = Position()
 
 for i in range(nsims):
     state = dtqw.walk(steps)
 
     # Measuring the state of the system and accumulating it to the numpy array
-    joint = position.measure(state)
+    joint = observable.measure(state)
     pdf += joint.ndarray()
 
     # Destroying the RDD to remove them from memory and disk
