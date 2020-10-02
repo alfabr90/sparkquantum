@@ -181,24 +181,15 @@ class Matrix(Base):
                 nelem = self._nelem
             else:
                 nelem = other.nelem
-
-            num_partitions = util.get_num_partitions(
-                self._sc,
-                util.get_size_of_type(dtype) * nelem
-            )
         else:
             nelem = None
 
-            num_partitions = max(
-                rdd.getNumPartitions(),
-                other_rdd.getNumPartitions())
-
         rdd = rdd.join(
-            other_rdd, numPartitions=num_partitions
+            other_rdd
         ).map(
             lambda m: ((m[1][0][0], m[1][1][0]), m[1][0][1] * m[1][1][1])
         ).reduceByKey(
-            lambda a, b: a + b, numPartitions=num_partitions
+            lambda a, b: a + b
         ).map(
             lambda m: (m[0][0], m[0][1], m[1])
         )
@@ -520,7 +511,7 @@ class Matrix(Base):
 
         other_shape = other.shape
         shape = (self._shape[0] * other_shape[0],
-                     self._shape[1] * other_shape[1])
+                 self._shape[1] * other_shape[1])
 
         dtype = util.get_precedent_type(self._dtype, other.dtype)
 
@@ -607,6 +598,10 @@ class Matrix(Base):
             The norm of this matrix.
 
         """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
         if self._dtype == complex:
             def __map(m):
                 return m[2].real ** 2 + m[2].imag ** 2
@@ -635,6 +630,10 @@ class Matrix(Base):
             True if the norm of this matrix is 1.0, False otherwise.
 
         """
+        if self._coord_format != constants.MatrixCoordinateDefault:
+            self._logger.error("invalid coordinate format")
+            raise NotImplementedError("invalid coordinate format")
+
         round_precision = int(
             conf.get(
                 self._sc,

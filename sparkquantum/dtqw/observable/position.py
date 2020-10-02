@@ -349,23 +349,7 @@ class Position(Observable):
             self._logger.error("invalid coordinate format")
             raise NotImplementedError("invalid coordinate format")
 
-        self._logger.info(
-            "measuring the state of the system for particle {}...".format(particle.identifier))
-
-        time = datetime.now()
-
-        ndim = state.mesh.ndim
         particles = len(state.particles)
-        csubspace = 2
-        cspace = csubspace ** ndim
-        psubspace = state.mesh.shape
-        pspace = state.mesh.sites
-        cpspace = cspace * pspace
-        repr_format = state.repr_format
-
-        shape = (pspace, ndim + 1)
-
-        nelem = shape[0]
 
         pind = None
 
@@ -377,6 +361,27 @@ class Position(Observable):
         if pind is None:
             self._logger.error("particle not found")
             raise ValueError("particle not found")
+
+        self._logger.info(
+            "measuring the state of the system for particle {} ({})...".format(
+                pind + 1,
+                particle.identifier if particle.identifier is not None else 'unidentified'
+            )
+        )
+
+        time = datetime.now()
+
+        ndim = state.mesh.ndim
+        csubspace = 2
+        cspace = csubspace ** ndim
+        psubspace = state.mesh.shape
+        pspace = state.mesh.sites
+        cpspace = cspace * pspace
+        repr_format = state.repr_format
+
+        shape = (pspace, ndim + 1)
+
+        nelem = shape[0]
 
         if ndim == 1:
             if repr_format == constants.StateRepresentationFormatCoinPosition:
@@ -449,9 +454,14 @@ class Position(Observable):
             self._logger.error("probability distributions must sum one")
             raise ValueError("probability distributions must sum one")
 
+        time = (datetime.now() - time).total_seconds()
+
         self._profile_distribution(
             'partialMeasurementParticle{}'.format(pind + 1),
-            'partial measurement for particle {}'.format(pind + 1),
+            'partial measurement for particle {} ({})...'.format(
+                pind + 1,
+                particle.identifier if particle.identifier is not None else 'unidentified'
+            ),
             distribution, time)
 
         return distribution

@@ -68,15 +68,16 @@ dtqw.add_particle(particle, cstate, mesh.center())
 state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its distribution
-position = Position()
-joint = position.measure(state)
+observable = Position()
+
+joint = observable.measure(state)
 
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint', labels=labels, dpi=300)
 
 # Exporting the profiling data
 dtqw.profiler.export(path)
-position.profiler.export(path)
+observable.profiler.export(path)
 
 # Destroying the RDD to remove them from memory and disk
 state.destroy()
