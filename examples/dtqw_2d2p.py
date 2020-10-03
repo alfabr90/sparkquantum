@@ -100,7 +100,7 @@ for p in range(len(dtqw.particles)):
     marginal[p].plot(path + 'marginal_particle{}'.format(p + 1),
                      labels=labels, dpi=300)
 
-# Destroying the RDD and stopping the SparkContext
+# Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
 joint.destroy()

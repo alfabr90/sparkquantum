@@ -79,7 +79,7 @@ joint.plot(path + 'joint', labels=labels, dpi=300)
 dtqw.profiler.export(path)
 observable.profiler.export(path)
 
-# Destroying the RDD to remove them from memory and disk
+# Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
 joint.destroy()
