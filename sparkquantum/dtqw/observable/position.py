@@ -458,7 +458,7 @@ class Position(Observable):
 
         self._profile_distribution(
             'partialMeasurementParticle{}'.format(pind + 1),
-            'partial measurement for particle {} ({})...'.format(
+            'partial measurement for particle {} ({})'.format(
                 pind + 1,
                 particle.identifier if particle.identifier is not None else 'unidentified'
             ),
