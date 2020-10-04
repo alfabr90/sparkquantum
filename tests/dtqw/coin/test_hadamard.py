@@ -10,17 +10,14 @@ from sparkquantum.dtqw.coin.hadamard import Hadamard
 class TestHadamard(Base):
     def setUp(self):
         super().setUp()
-        self.ndim = 2
-        self.coin = Hadamard(self.ndim)
+        self.m = 2
+        self.coin = Hadamard(self.m)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), '{}d hadamard coin'.format(self.ndim))
-
-    def test_ndim(self):
-        self.assertEqual(self.coin.ndim, self.ndim)
+        self.assertEqual(str(self.coin), 'Hadamard coin')
 
     def test_data(self):
         value = (complex() + 1) / 2.0
