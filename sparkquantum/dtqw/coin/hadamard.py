@@ -18,7 +18,7 @@ class Hadamard(Coin):
 
         """
         if m < 1:
-            raise ValueError("invalid number of points")
+            raise ValueError("invalid number of recursions")
 
         super().__init__()
 

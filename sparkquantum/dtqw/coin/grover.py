@@ -16,7 +16,7 @@ class Grover(Coin):
 
         """
         if size < 2:
-            raise ValueError("invalid number of dimensions")
+            raise ValueError("invalid size")
 
         super().__init__()
 
