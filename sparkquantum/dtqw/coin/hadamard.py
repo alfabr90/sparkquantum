@@ -8,27 +8,25 @@ __all__ = ['Hadamard']
 class Hadamard(Coin):
     """Class that represents the Hadamard coin."""
 
-    def __init__(self, ndim):
+    def __init__(self, m):
         """Build a Hadamard coin object.
 
         Parameters
         ----------
-        ndim : int
-            The number of dimensions for the coin. Must be positive.
+        m : int
+            The number of recursions to build the coin. Must be positive.
 
         """
-        if ndim < 1:
-            raise ValueError("invalid number of dimensions")
+        if m < 1:
+            raise ValueError("invalid number of recursions")
 
         super().__init__()
 
-        self._ndim = ndim
-
-        n = 2 ** ndim
-        sq = math.sqrt(n)
+        size = 2 ** m
+        sq = math.sqrt(size)
 
         self._data = tuple(
-            [tuple([(-1) ** (format(i & j, 'b').count("1")) / sq for i in range(n)]) for j in range(n)])
+            [tuple([(-1) ** (format(i & j, 'b').count("1")) / sq for i in range(size)]) for j in range(size)])
 
     def __str__(self):
-        return '{}d hadamard coin'.format(self._ndim)
+        return 'Hadamard coin'

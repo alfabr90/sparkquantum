@@ -68,7 +68,7 @@ joint = Position().measure(state)
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint', labels=labels, dpi=300)
 
-# Destroying the RDD to remove them from memory and disk
+# Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
 joint.destroy()

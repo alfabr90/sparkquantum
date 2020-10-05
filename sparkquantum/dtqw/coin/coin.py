@@ -16,7 +16,6 @@ class Coin:
         self._sc = SparkContext.getOrCreate()
 
         self._data = None
-        self._ndim = None
 
         self._logger = util.get_logger(
             self._sc, self.__class__.__name__)
@@ -30,11 +29,6 @@ class Coin:
     def data(self):
         """tuple"""
         return self._data
-
-    @property
-    def ndim(self):
-        """int"""
-        return self._ndim
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -80,7 +74,7 @@ class Coin:
             If `repr_format` is not valid.
 
         """
-        cspace = 2 ** self._ndim
+        cspace = len(self._data)
         shape = (cspace * pspace, cspace * pspace)
 
         data = util.broadcast(self._sc, self._data)

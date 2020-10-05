@@ -64,7 +64,7 @@ labels = ["{}'s position x".format(particle.identifier),
           'Probability']
 joint.plot(path + 'joint', labels=labels, dpi=300)
 
-# Destroying the RDD and stopping the SparkContext
+# Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
 joint.destroy()

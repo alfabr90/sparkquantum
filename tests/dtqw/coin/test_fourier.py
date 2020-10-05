@@ -10,17 +10,14 @@ from sparkquantum.dtqw.coin.fourier import Fourier
 class TestFourier(Base):
     def setUp(self):
         super().setUp()
-        self.ndim = 2
-        self.coin = Fourier(self.ndim)
+        self.n = 2
+        self.coin = Fourier(self.n)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), '{}d fourier coin'.format(self.ndim))
-
-    def test_ndim(self):
-        self.assertEqual(self.coin.ndim, self.ndim)
+        self.assertEqual(str(self.coin), 'Fourier coin')
 
     def test_data(self):
         value_r = (complex() + 1) / 2

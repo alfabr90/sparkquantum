@@ -146,7 +146,7 @@ joint = Position().measure(state)
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
 
-# Destroying the RDD and stopping the SparkContext
+# Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
 joint.destroy()
@@ -277,7 +277,7 @@ conf = SparkConf() \
     # other configurations
 ```
 
-_sparkquantum_ allows customizing some Python's logging options the same way as above. The possible configurations are described in the table in the end of this documentation.
+_sparkquantum_ allows customizing some Python's logging options the same way as above. The possible configurations are described in the table at the end of this documentation.
 
 Besides logging, the simulator can also gathers data about the resource usage during the simulations and exports them in CSV files. Similarly as the previous feature, the user may enable profiling through setting one configuration parameter, namely `sparkquantum.profiling.enabled`:
 

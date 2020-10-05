@@ -10,17 +10,14 @@ from sparkquantum.dtqw.coin.grover import Grover
 class TestGrover(Base):
     def setUp(self):
         super().setUp()
-        self.ndim = 2
-        self.coin = Grover(self.ndim)
+        self.size = 4
+        self.coin = Grover(self.size)
 
     def test_is_coin(self):
         self.assertTrue(is_coin(self.coin))
 
     def test_str(self):
-        self.assertEqual(str(self.coin), '{}d grover coin'.format(self.ndim))
-
-    def test_ndim(self):
-        self.assertEqual(self.coin.ndim, self.ndim)
+        self.assertEqual(str(self.coin), 'Grover coin')
 
     def test_data(self):
         value = (complex() + 1) / 2.0

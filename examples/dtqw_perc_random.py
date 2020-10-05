@@ -83,7 +83,7 @@ pdf /= nsims
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 plot.line(mesh.axis()[0], pdf, path + 'joint', labels=labels, dpi=300)
 
-# Destroying the RDD to remove them from memory and disk
+# Destroying the RDD to remove them from memory and/or disk
 dtqw.destroy()
 
 # Stopping the SparkContext
