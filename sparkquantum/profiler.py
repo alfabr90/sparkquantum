@@ -82,12 +82,10 @@ class Profiler:
             self._base_url)
 
     def _is_enabled(self):
-        return conf.get(self._sc,
-                        'sparkquantum.profiling.enabled') == 'True'
+        return conf.get(self._sc, 'sparkquantum.profiling.enabled')
 
     def _get_baseurl(self):
-        return conf.get(self._sc,
-                        'sparkquantum.profiling.baseUrl')
+        return conf.get(self._sc, 'sparkquantum.profiling.baseUrl')
 
     def _start(self):
         self._data = {}

@@ -79,7 +79,7 @@ class Mesh:
         raise NotImplementedError
 
     def create_operator(self, cspace,
-                        repr_format=constants.StateRepresentationFormatCoinPosition):
+                        repr_format=constants.StateRepresentationFormatCoinPosition, perc_mode=constants.PercolationsGenerationModeBroadcast):
         """Build the shift operator for a quantum walk.
 
         Parameters
@@ -89,6 +89,9 @@ class Mesh:
         repr_format : int, optional
             Indicate how the quantum system is represented.
             Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
+        perc_mode : int, optional
+            Indicate how the percolations will be generated.
+            Default value is :py:const:`sparkquantum.constants.PercolationsGenerationModeBroadcast`.
 
         Raises
         -------

@@ -75,7 +75,7 @@ class Base:
         ----------
         num_partitions : int
             The target number of partitions of the RDD.
-        shuffle: boolean
+        shuffle: bool
             Indicate that Spark must force a shuffle operation.
 
         Returns

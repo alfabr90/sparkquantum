@@ -242,28 +242,26 @@ class Matrix(Base):
 
         return 1.0 - nelem / self._size
 
-    def dump(self, path, glue=None, codec=None, filename=None):
+    def dump(self, mode, glue=' ', path=None, codec=None, filename=None):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
         -----
-        Depending on the chosen dumping mode, this method calls the RDD's :py:func:`pyspark.RDD.collect` method.
+        Depending on the chosen dumping mode, this method calls the :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
-        This method exports the data in the :py:const:`sparkquantum.constants.MatrixCoordinateDefault` format.
 
         Parameters
         ----------
-        path : str
-            The path where the dumped RDD will be located at.
+        mode : int
+            Storage mode used to dump this state.
         glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
+            The glue string that connects each component of each element in the RDD.
+            Default value is ' '.
         codec : str, optional
-            Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
+            Codec name used to compress the dumped data. Default value is None.
         filename : str, optional
-            File name used when the dumping mode is in a single file. Default value is None.
-            In this case, a temporary named file is generated inside the informed path.
+            The full path with file name used when the dumping mode is in a single file.
+            Default value is None.
 
         Raises
         ------
@@ -271,49 +269,24 @@ class Matrix(Base):
             If the coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`.
 
         ValueError
-            If the chosen 'sparkquantum.math.dumpingMode' configuration is not valid.
+            If the chosen dumping mode is not valid.
 
         """
         if self._coord_format != constants.MatrixCoordinateDefault:
             self._logger.error("invalid coordinate format")
             raise NotImplementedError("invalid coordinate format")
 
-        if glue is None:
-            glue = conf.get(
-                self._sc,
-                'sparkquantum.dumpingGlue')
-
-        if codec is None:
-            codec = conf.get(
-                self._sc,
-                'sparkquantum.dumpingCompressionCodec')
-
-        dumping_mode = int(
-            conf.get(
-                self._sc,
-                'sparkquantum.math.dumpingMode'))
-
-        rdd = self.clear().data
-
-        rdd = rdd.map(
+        rdd = self.clear().data.map(
             lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
         )
 
-        if dumping_mode == constants.DumpingModeUniqueFile:
+        if mode == constants.DumpingModeUniqueFile:
             data = rdd.collect()
 
-            util.create_dir(path)
-
-            if not filename:
-                filename = util.get_temp_path(path)
-            else:
-                filename = util.append_slash(path) + filename
-
-            if len(data):
-                with open(filename, 'a') as f:
-                    for d in data:
-                        f.write(d + "\n")
-        elif dumping_mode == constants.DumpingModePartFiles:
+            with open(filename, 'a') as f:
+                for d in data:
+                    f.write(d + "\n")
+        elif mode == constants.DumpingModePartFiles:
             rdd.saveAsTextFile(path, codec)
         else:
             self._logger.error("invalid dumping mode")
@@ -352,7 +325,7 @@ class Matrix(Base):
         return result
 
     def clear(self):
-        """Remove possible zero entries of this matrix object.
+        """Remove possible zero entries of this object.
 
         Notes
         -----

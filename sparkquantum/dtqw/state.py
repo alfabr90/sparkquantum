@@ -83,90 +83,52 @@ class State(Matrix):
         return 'State with shape {} of {} over a {}'.format(
             self._shape, particles, self._mesh)
 
-    def dump(self, path,
-             glue=None, codec=None, filename=None, dumping_format=None):
+    def dump(self, mode, glue=' ', path=None, codec=None,
+             filename=None, format=constants.StateDumpingFormatIndex):
         """Dump this object's RDD to disk in a unique file or in many part-* files.
 
         Notes
         -----
-        This method checks the dumping format by using the 'sparkquantum.dtqw.state.dumpingFormat' configuration value.
-        In case the chosen format is the mesh coordinates one, this method also checks the state's representation format.
         Depending on the chosen dumping mode, this method calls the :py:func:`pyspark.RDD.collect` method.
         This is not suitable for large working sets, as all data may not fit into driver's main memory.
 
         Parameters
         ----------
-        path : str
-            The path where the dumped RDD will be located at.
+        mode : int
+            Storage mode used to dump this state.
         glue : str, optional
-            The glue string that connects each coordinate and value of each element in the RDD.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingGlue' configuration value.
+            The glue string that connects each component of each element in the RDD.
+            Default value is ' '.
         codec : str, optional
-            Codec name used to compress the dumped data.
-            Default value is None. In this case, it uses the 'sparkquantum.dumpingCompressionCodec' configuration value.
+            Codec name used to compress the dumped data. Default value is None.
         filename : str, optional
-            File name used when the dumping mode is in a single file. Default value is None.
-            In this case, a temporary named file is generated inside the informed path.
-        dumping_format : int, optional
-            Printing format used to dump this state.
-            Default value is None. In this case, it uses the 'sparkquantum.math.dumpingFormat' configuration value.
+            The full path with file name used when the dumping mode is in a single file.
+            Default value is None.
+        format : int, optional
+            Printing format used to dump this state. Default value is :py:const:`sparkquantum.constants.StateDumpingFormatIndex`.
 
         Raises
         ------
         NotImplementedError
-            If the coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault` or
-            if the dimension of the mesh is not valid.
+            If the dimension of the mesh is not valid.
 
         ValueError
-            If any of the chosen 'sparkquantum.dtqw.state.dumpingFormat', 'sparkquantum.math.dumpingMode' or
-            'sparkquantum.dtqw.stateRepresentationFormat' configuration is not valid.
+            If this state's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault` or
+            if the chosen dumping mode or dumping format is not valid.
 
         """
         if self._coord_format != constants.MatrixCoordinateDefault:
             self._logger.error("invalid coordinate format")
-            raise NotImplementedError("invalid coordinate format")
-
-        if glue is None:
-            glue = conf.get(
-                self._sc,
-                'sparkquantum.dumpingGlue')
-
-        if codec is None:
-            codec = conf.get(self._sc,
-                             'sparkquantum.dumpingCompressionCodec')
-
-        if dumping_format is None:
-            dumping_format = int(conf.get(
-                self._sc, 'sparkquantum.dtqw.state.dumpingFormat'))
-
-        dumping_mode = int(conf.get(
-            self._sc, 'sparkquantum.math.dumpingMode'))
+            raise ValueError("invalid coordinate format")
 
         rdd = self.clear().data
 
-        if dumping_format == constants.StateDumpingFormatIndex:
-            if dumping_mode == constants.DumpingModeUniqueFile:
-                data = rdd.collect()
-
-                util.create_dir(path)
-
-                if not filename:
-                    filename = util.get_temp_path(path)
-                else:
-                    filename = util.append_slash(path) + filename
-
-                if len(data):
-                    with open(filename, 'a') as f:
-                        for d in data:
-                            f.write(d + "\n")
-            elif dumping_mode == constants.DumpingModePartFiles:
-                rdd.saveAsTextFile(path, codec)
-            else:
-                self._logger.error("invalid dumping mode")
-                raise ValueError("invalid dumping mode")
-        elif dumping_format == constants.StateDumpingFormatCoordinate:
-            repr_format = int(conf.get(
-                self._sc, 'sparkquantum.dtqw.stateRepresentationFormat'))
+        if format == constants.StateDumpingFormatIndex:
+            rdd = rdd.map(
+                lambda m: glue.join((str(m[0]), str(m[1]), str(m[2])))
+            )
+        elif format == constants.StateDumpingFormatCoordinate:
+            repr_format = self._repr_format
 
             ndim = self._mesh.ndim
             csubspace = 2
@@ -261,30 +223,22 @@ class State(Matrix):
                 self._logger.error("mesh dimension not implemented")
                 raise NotImplementedError("mesh dimension not implemented")
 
-            if dumping_mode == constants.DumpingModeUniqueFile:
-                data = rdd.collect()
-
-                util.create_dir(path)
-
-                if not filename:
-                    filename = util.get_temp_path(path)
-                else:
-                    filename = util.append_slash(path) + filename
-
-                if len(data):
-                    with open(filename, 'a') as f:
-                        for d in data:
-                            f.write(d + "\n")
-            elif dumping_mode == constants.DumpingModePartFiles:
-                rdd.map(
-                    __map
-                ).saveAsTextFile(path, codec)
-            else:
-                self._logger.error("invalid dumping mode")
-                raise ValueError("invalid dumping mode")
+            rdd = rdd.map(__map)
         else:
             self._logger.error("invalid dumping format")
             raise ValueError("invalid dumping format")
+
+        if mode == constants.DumpingModeUniqueFile:
+            data = rdd.collect()
+
+            with open(filename, 'a') as f:
+                for d in data:
+                    f.write(d + "\n")
+        elif mode == constants.DumpingModePartFiles:
+            rdd.saveAsTextFile(path, codec)
+        else:
+            self._logger.error("invalid dumping mode")
+            raise ValueError("invalid dumping mode")
 
     def to_coordinate(self, coord_format):
         """Change the coordinate format of this object.

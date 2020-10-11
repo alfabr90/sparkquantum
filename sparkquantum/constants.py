@@ -1,8 +1,6 @@
 __all__ = [
     'DumpingModeUniqueFile',
     'DumpingModePartFiles',
-    'KroneckerModeBroadcast',
-    'KroneckerModeDump',
     'MatrixCoordinateDefault',
     'MatrixCoordinateMultiplier',
     'MatrixCoordinateMultiplicand',
@@ -23,17 +21,6 @@ DumpingModePartFiles = 1
 """
 Indicate that the mathematical entity will be dumped to part-* files in disk. This is done in a parallel/distributed way.
 This is the default behaviour.
-"""
-KroneckerModeBroadcast = 0
-"""
-Indicate that the kronecker operation will be performed with the right operand in a broadcast variable.
-Suitable for small working sets, providing the best performance due to all the data being located
-locally in every node of the cluster.
-"""
-KroneckerModeDump = 1
-"""
-Indicate that the kronecker operation will be performed with the right operand previously dumped to disk.
-Suitable for working sets that do not fit in cache provided by Spark.
 """
 MatrixCoordinateDefault = 0
 """

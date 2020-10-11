@@ -116,7 +116,24 @@ class Operator(Matrix):
                 "'State' or 'Operator' instance expected, not '{}'".format(type(other)))
 
     def clear(self):
-        return None
+        """Remove possible zero entries of this object.
+
+        Notes
+        -----
+        Due to the immutability of RDD, a new RDD instance is created.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.operator.Operator`
+            A new operator object.
+
+        Raises
+        ------
+        NotImplementedError
+            If this object's coordinate format is not :py:const:`sparkquantum.constants.MatrixCoordinateDefault`..
+
+        """
+        return Operator.from_matrix(super().clear())
 
     def copy(self):
         return None
