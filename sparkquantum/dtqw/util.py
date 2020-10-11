@@ -30,9 +30,9 @@
 
 #     Parameters
 #     ----------
-#     x : int or boolean
+#     x : int or bool
 #         Control the signal (plus or minus).
-#     y : int or boolean
+#     y : int or bool
 #         Control the state of the second ket.
 
 #     Returns

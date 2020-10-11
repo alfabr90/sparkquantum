@@ -43,10 +43,6 @@ class Observable:
                 )
             )
 
-        if conf.get(self._sc,
-                    'sparkquantum.dtqw.profiler.logExecutors') == 'True':
-            self._profiler.log_executors(app_id=app_id)
-
     def measure_system(
             self, state, storage_level=StorageLevel.MEMORY_AND_DISK):
         """Perform the measurement of the entire system state.

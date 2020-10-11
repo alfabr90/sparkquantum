@@ -106,10 +106,11 @@ def get_num_partitions(spark_context, expected_size):
     """
     safety_factor = float(conf.get(
         spark_context, 'sparkquantum.cluster.numPartitionsSafetyFactor'))
+
     num_partitions = None
 
-    if conf.get(
-            spark_context, 'sparkquantum.cluster.useSparkDefaultNumPartitions') == 'False':
+    if not conf.get(spark_context,
+                    'sparkquantum.cluster.useSparkDefaultNumPartitions'):
         num_cores = conf.get(
             spark_context, 'sparkquantum.cluster.totalCores')
 
@@ -275,7 +276,7 @@ def get_logger(
 
     logger.setLevel(level)
 
-    if conf.get(sc, 'sparkquantum.logging.enabled') == 'True':
+    if conf.get(sc, 'sparkquantum.logging.enabled'):
         if filename is None:
             filename = conf.get(sc, 'sparkquantum.logging.filename')
 
