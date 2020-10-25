@@ -281,16 +281,6 @@ class Position(Observable):
 
         distribution = ProbabilityDistribution(
             rdd, shape, state.mesh.axis(), nelem=nelem
-        )
-
-        norm = distribution.norm()
-
-        rdd.map(
-            lambda m: m[-1] / norm
-        )
-
-        distribution = ProbabilityDistribution(
-            rdd, shape, state.mesh.axis(), nelem=nelem
         ).materialize(storage_level)
 
         time = (datetime.now() - time).total_seconds()
