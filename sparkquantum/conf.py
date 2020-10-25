@@ -15,7 +15,7 @@ _defaults = {
     'sparkquantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
     'sparkquantum.logging.level': logging.WARNING,
     'sparkquantum.math.roundPrecision': 10,
-    'sparkquantum.profiling.enabled': True,
+    'sparkquantum.profiling.enabled': False,
     'sparkquantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
 }
 """
@@ -41,7 +41,7 @@ def get(sc, config):
     """
     c = sc.getConf().get(config)
 
-    if not c:
+    if c is None:
         if config not in _defaults:
             return None
         return _defaults[config]

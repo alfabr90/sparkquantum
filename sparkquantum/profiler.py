@@ -11,7 +11,7 @@ __all__ = ['Profiler', 'is_profiler']
 
 
 class Profiler:
-    """Profile and export the resources consumed by Spark_.
+    """Top-level class for Spark_ metrics profilers.
 
     .. _Spark:
         https://spark.apache.org
@@ -19,11 +19,10 @@ class Profiler:
     """
 
     def __init__(self):
-        """Build a profiler object."""
+        """Build a top-level profiler object."""
         self._sc = SparkContext.getOrCreate()
 
-        self._data = None
-        self._resources = None
+        self._rdd = None
         self._executors = None
 
         self._base_url = self._get_baseurl()
@@ -33,34 +32,6 @@ class Profiler:
             self._sc, self.__class__.__name__)
 
         self._start()
-
-    @staticmethod
-    def _default_rdd():
-        return {'memoryUsed': 0, 'diskUsed': 0}
-
-    @staticmethod
-    def _default_resources():
-        return {'totalShuffleWrite': [], 'totalShuffleRead': [],
-                'diskUsed': [], 'memoryUsed': []}
-
-    @staticmethod
-    def _default_executor():
-        return {'totalShuffleWrite': [], 'totalShuffleRead': [],
-                'diskUsed': [], 'memoryUsed': []}
-
-    @staticmethod
-    def _export_values(values, fieldnames, filename, extension='csv'):
-        if extension == 'csv':
-            f = filename + '.' + extension
-
-            with open(f, 'w') as f:
-                w = csv.DictWriter(f, fieldnames=fieldnames)
-                w.writeheader()
-
-                for v in values:
-                    w.writerow(v)
-        else:
-            raise NotImplementedError("unsupported file extension")
 
     def __del__(self):
         # In cases where multiple simulations are performed,
@@ -81,34 +52,67 @@ class Profiler:
         return 'Profiler configured to request data from {}'.format(
             self._base_url)
 
-    def _is_enabled(self):
-        return conf.get(self._sc, 'sparkquantum.profiling.enabled')
+    def _rdd_metrics(self):
+        return {'numPartitions': 0,
+                'numCachedPartitions': 0,
+                'memoryUsed': 0,
+                'diskUsed': 0}
+
+    def _executor_metrics(self):
+        return {'memoryUsed': 0,
+                'diskUsed': 0,
+                'maxMemory': 0,
+                'totalShuffleWrite': 0,
+                'totalShuffleRead': 0,
+                'memoryMetrics.usedOnHeapStorageMemory': 0,
+                'memoryMetrics.usedOffHeapStorageMemory': 0,
+                'memoryMetrics.totalOnHeapStorageMemory': 0,
+                'memoryMetrics.totalOffHeapStorageMemory': 0,
+                'peakMemoryMetrics.OnHeapExecutionMemory': 0,
+                'peakMemoryMetrics.OffHeapExecutionMemory': 0,
+                'peakMemoryMetrics.OnHeapStorageMemory': 0,
+                'peakMemoryMetrics.OffHeapStorageMemory': 0,
+                'peakMemoryMetrics.OnHeapUnifiedMemory': 0,
+                'peakMemoryMetrics.OffHeapUnifiedMemory': 0}
 
     def _get_baseurl(self):
         return conf.get(self._sc, 'sparkquantum.profiling.baseUrl')
 
+    def _is_enabled(self):
+        return util.to_bool(
+            conf.get(self._sc, 'sparkquantum.profiling.enabled'))
+
     def _start(self):
-        self._data = {}
-        self._resources = self._default_resources()
+        self._rdd = {}
         self._executors = {}
 
-    def reset(self):
-        """Reset the profiler attributes to get info for a new profiling round."""
-        self._start()
+    def _export(self, values, fieldnames, filename, extension='csv'):
+        if extension == 'csv':
+            f = filename + '.' + extension
+
+            with open(f, 'w') as f:
+                w = csv.DictWriter(f, fieldnames=fieldnames)
+                w.writeheader()
+
+                for v in values:
+                    w.writerow(v)
+        else:
+            raise NotImplementedError("unsupported file extension")
 
     def _request(self, url_suffix=''):
         url = self._base_url + 'applications' + url_suffix
 
         self._logger.info("performing request to '{}'...".format(url))
 
-        t1 = datetime.now()
+        time = datetime.now()
 
         try:
             with request.urlopen(url) as response:
                 result = response.read()
 
-            self._logger.debug("request performed in {}s".format(
-                (datetime.now() - t1).total_seconds()))
+            time = (datetime.now() - time).total_seconds()
+
+            self._logger.debug("request performed in {}s".format(time))
         except error.URLError as e:
             self._logger.warning(
                 "request to {} failed with the following error: '{}' and no data will be returned".format(url, e.reason))
@@ -118,36 +122,36 @@ class Profiler:
             result = json.loads(result.decode('utf-8'))
         else:
             self._logger.warning(
-                "the response of request to {} is empty".format(url))
+                "the response of request to {} was empty".format(url))
         return result
 
     def request_applications(self):
-        """Request application info.
+        """Request all applications' data.
 
         Returns
         -------
         list
-            A list with application info if profiling is enabled, `None` otherwise.
+            A list with all applications' data if profiling is enabled, `None` otherwise.
 
         """
         if self._enabled:
             return self._request()
 
     def request_jobs(self, app_id, job_id=None):
-        """Request an application's jobs info.
+        """Request all the application's jobs' data.
 
         Parameters
         ----------
         app_id : int
             The application's id.
         job_id : int, optional
-            The job's id.
+            The job's id. Default value is None.
 
         Returns
         -------
         list or dict
-            A list with all application's jobs info or a dict with the job info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A list with all the application's jobs' data or a dict with a
+            job's data if profiling is enabled, `None` otherwise.
 
         """
         if self._enabled:
@@ -157,20 +161,20 @@ class Profiler:
                 return self._request("/{}/jobs/{}".format(app_id, job_id))
 
     def request_stages(self, app_id, stage_id=None):
-        """Request an application's stages info.
+        """Request all the application's stages' data.
 
         Parameters
         ----------
         app_id : int
             The application's id.
         stage_id : int, optional
-            The stage's id.
+            The stage's id. Default value is None.
 
         Returns
         -------
         list or dict
-            A list with all application's stages info or a dict with the stage info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A list with all the application's stages' data or a dict with a
+            stage's data if profiling is enabled, `None` otherwise.
 
         """
         if self._enabled:
@@ -180,7 +184,7 @@ class Profiler:
                 return self._request("/{}/stages/{}".format(app_id, stage_id))
 
     def request_stageattempt(self, app_id, stage_id, stageattempt_id):
-        """Request an application's stage attempts info.
+        """Request an application's stage attempt's data.
 
         Parameters
         ----------
@@ -194,8 +198,8 @@ class Profiler:
         Returns
         -------
         dict
-            A dict with an application's stage attempt info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A dict with an application's stage attempt's data if profiling is enabled,
+            `None` otherwise.
 
         """
         if self._enabled:
@@ -204,7 +208,7 @@ class Profiler:
 
     def request_stageattempt_tasksummary(
             self, app_id, stage_id, stageattempt_id):
-        """Request the task summary of a stage attempt info.
+        """Request the task summary of a stage attempt.
 
         Parameters
         ----------
@@ -219,7 +223,7 @@ class Profiler:
         -------
         dict
             A dict with the task summary of a stage attempt if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            `None` otherwise.
 
         """
         if self._enabled:
@@ -227,7 +231,7 @@ class Profiler:
                 "/{}/stages/{}/{}/taskSummary".format(app_id, stage_id, stageattempt_id))
 
     def request_stageattempt_tasklist(self, app_id, stage_id, stageattempt_id):
-        """Request the task list of a stage attempt info.
+        """Request the task list of a stage attempt.
 
         Parameters
         ----------
@@ -242,7 +246,7 @@ class Profiler:
         -------
         list
             A list with the task list of a stage attempt if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            `None` otherwise.
 
         """
         if self._enabled:
@@ -250,7 +254,7 @@ class Profiler:
                 "/{}/stages/{}/{}/taskList".format(app_id, stage_id, stageattempt_id))
 
     def request_executors(self, app_id):
-        """Request an application's active executors info.
+        """Request all the application's active executors' data.
 
         Parameters
         ----------
@@ -260,15 +264,15 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's active executors info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A list with all the application's active executors' data if profiling is enabled,
+            `None` otherwise.
 
         """
         if self._enabled:
             return self._request("/{}/executors".format(app_id))
 
     def request_allexecutors(self, app_id):
-        """Request an application's executors info.
+        """Request all the application's executors' data.
 
         Parameters
         ----------
@@ -278,28 +282,28 @@ class Profiler:
         Returns
         -------
         list
-            A list with all application's executors info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A list with all the application's executors' data if profiling is enabled,
+            `None` otherwise.
 
         """
         if self._enabled:
             return self._request("/{}/allexecutors".format(app_id))
 
     def request_rdd(self, app_id, rdd_id=None):
-        """Request an application's RDD info.
+        """Request all the application's RDDs' data.
 
         Parameters
         ----------
         app_id : int
             The application's id.
         rdd_id : int, optional
-            The RDD's id.
+            The RDD's id. Default value is None.
 
         Returns
         -------
         list or dict
-            A list with all application's RDD info or a dict with the RDD info if profiling is enabled,
-            `None` otherwise or when an error occurred.
+            A list with all the application's RDDs' data or a dict with the
+            RDD's data if profiling is enabled, `None` otherwise.
 
         """
         if self._enabled:
@@ -309,118 +313,77 @@ class Profiler:
                 return self._request(
                     "/{}/storage/rdd/{}".format(app_id, rdd_id))
 
-    def log_executors(self, data=None, app_id=None):
-        """Log all executors info into the log file.
+    def reset(self):
+        """Reset the profiler's attributes, in order to get ready for a new profiling round."""
+        self._start()
 
-        Notes
-        -----
-        When no data is provided, the application's id is used to request those data.
+    def log_rdd(self, app_id, rdd_id=None):
+        """Log all the application's RDDs' data.
 
         Parameters
         ----------
-        data : list, optional
-            The executors data.
         app_id : int
-            The application's id.
-
-        Raises
-        ------
-        ValueError
-            If `app_id` is not valid.
-
-        """
-        if data is None:
-            if app_id is None:
-                self._logger.error(
-                    "application id expected, not '{}'".format(type(app_id)))
-                raise ValueError(
-                    "application id expected, not '{}'".format(type(app_id)))
-            data = self.request_executors(app_id)
-
-        if data is not None:
-            self._logger.info("printing executors data...")
-            for d in data:
-                for k, v in d.items():
-                    self._logger.info("{}: {}".format(k, v))
-
-    def log_rdd(self, data=None, app_id=None, rdd_id=None):
-        """Log all RDD info into the log file.
-
-        Notes
-        -----
-        When no data is provided, the application's id is used to request all its RDD data.
-        If the RDD's id are also provided, they are used to get its data.
-
-        Parameters
-        ----------
-        data : list, optional
-            The executors data.
-        app_id : int, optional
             The application's id.
         rdd_id : int, optional
-            The RDD's id.
-
-        Raises
-        ------
-        ValueError
-            If `app_id` is not valid.
+            The RDD's id. Default value is None.
 
         """
-        if data is None:
-            if app_id is None:
-                self._logger.error(
-                    "expected an application id, not '{}'".format(type(app_id)))
-                raise ValueError(
-                    "expected an application id, not '{}'".format(type(app_id)))
+        data = self.request_rdd(app_id, rdd_id)
+
+        if data is None or len(data) == 0:
+            self._logger.info("no stored RDD to have its data logged")
+        else:
+            if rdd_id is None:
+                self._logger.info("logging the application's RDDs' data...")
             else:
-                if rdd_id is None:
-                    data = self.request_rdd(app_id)
+                self._logger.info(
+                    "logging the application's RDD {}'s data...".format(rdd_id))
 
-                    if data is not None:
-                        self._logger.info("printing RDDs data...")
-                        for d in data:
-                            for k, v in d.items():
-                                if k != 'partitions':
-                                    self._logger.info(
-                                        "{}: {}".format(k, v))
+            for d in data:
+                for k, v in d.items():
+                    if k != 'partitions':
+                        self._logger.info("{}: {}".format(k, v))
+
+    def log_executors(self, app_id, exec_id=None):
+        """Log all the application's active executors' data.
+
+        Parameters
+        ----------
+        app_id : int
+            The application's id.
+        exec_id : int, optional
+            The executor's id. Default value is None.
+
+        """
+        data = self.request_executors(app_id)
+
+        if data is None or len(data) == 0:
+            self._logger.info("no active executor to have its data logged")
+        else:
+            if exec_id is None:
+                self._logger.info(
+                    "logging the application's active executors' data...")
+
+                for d in data:
+                    for k, v in d.items():
+                        self._logger.info("{}: {}".format(k, v))
+            else:
+                ex_profile = None
+
+                for d in data:
+                    if exec_id == d['id']:
+                        ex_profile = d
+                        break
+
+                if ex_profile is None:
+                    self._logger.warning(
+                        "executor {} is not active".format(exec_id))
                 else:
-                    data = self.request_rdd(app_id, rdd_id)
+                    for k, v in ex_profile.items():
+                        self._logger.info("{}: {}".format(k, v))
 
-                    if data is not None:
-                        self._logger.info(
-                            "printing RDD (id {}) data...".format(rdd_id))
-                        for k, v in data.items():
-                            if k != 'partitions':
-                                self._logger.info("{}: {}".format(k, v))
-
-    def profile_rdd(self, name, app_id, rdd_id):
-        """Store information about a RDD that represents a quantum walk element.
-
-        Parameters
-        ----------
-        name : str
-            A name for the element.
-        app_id : int
-            The application's id.
-        rdd_id : int
-            The RDD's id.
-
-        """
-        if self._enabled:
-            self._logger.info("profiling RDD for '{}'...".format(name))
-
-            if name not in self._data:
-                self._data[name] = self._default_rdd()
-
-            data = self.request_rdd(app_id, rdd_id)
-
-            if data is not None:
-                for k, v in data.items():
-                    if k in self._data[name]:
-                        self._data[name][k] = v
-
-    def profile_resources(self, app_id):
-        """Store information about the resources consumed by the application.
+    def profile_rdd(self, app_id):
+        """Store all the application's RDDs' data.
 
         Parameters
         ----------
@@ -429,132 +392,104 @@ class Profiler:
 
         """
         if self._enabled:
-            self._logger.info("profiling application resources...")
+            self._logger.info("profiling all the application's RDDs' data...")
+
+            data = self.request_rdd(app_id)
+
+            for d in data:
+                if d['id'] not in self._rdd:
+                    self._rdd[d['id']] = []
+
+                rdd_profile = self._rdd_metrics()
+
+                self._rdd[d['id']].append(rdd_profile)
+
+                for k, v in d.items():
+                    if k in rdd_profile:
+                        rdd_profile[k] = v
+
+    def profile_executors(self, app_id):
+        """Store all the application's active executors' data.
+
+        Parameters
+        ----------
+        app_id : int
+            The application's id.
+
+        """
+        if self._enabled:
+            self._logger.info(
+                "profiling all the application's active executors' data...")
 
             data = self.request_executors(app_id)
-
-            for k in self._resources:
-                self._resources[k].append(0)
 
             if data is not None:
                 for d in data:
+                    if d['id'] not in self._executors:
+                        self._executors[d['id']] = []
+
+                    ex_profile = self._executor_metrics()
+
+                    self._executors[d['id']].append(ex_profile)
+
                     for k, v in d.items():
-                        if k in self._resources:
-                            self._resources[k][-1] += v
+                        if k in ex_profile:
+                            ex_profile[k] = v
 
-    def profile_executors(self, app_id, exec_id=None):
-        """Store all executors info.
+                    if 'memoryMetrics' in d:
+                        ex_profile['memoryMetrics.usedOnHeapStorageMemory'] = d['memoryMetrics']['usedOnHeapStorageMemory']
+                        ex_profile['memoryMetrics.usedOffHeapStorageMemory'] = d['memoryMetrics']['usedOffHeapStorageMemory']
+                        ex_profile['memoryMetrics.totalOnHeapStorageMemory'] = d['memoryMetrics']['totalOnHeapStorageMemory']
+                        ex_profile['memoryMetrics.totalOffHeapStorageMemory'] = d['memoryMetrics']['totalOffHeapStorageMemory']
 
-        Notes
-        -----
-        When no executor's id is provided, all the application's executors info are requested and stored.
+                    if 'peakMemoryMetrics' in d:
+                        ex_profile['peakMemoryMetrics.OnHeapExecutionMemory'] = d['peakMemoryMetrics']['OnHeapExecutionMemory']
+                        ex_profile['peakMemoryMetrics.OffHeapExecutionMemory'] = d['peakMemoryMetrics']['OffHeapExecutionMemory']
+                        ex_profile['peakMemoryMetrics.OnHeapStorageMemory'] = d['peakMemoryMetrics']['OnHeapStorageMemory']
+                        ex_profile['peakMemoryMetrics.OffHeapStorageMemory'] = d['peakMemoryMetrics']['OffHeapStorageMemory']
+                        ex_profile['peakMemoryMetrics.OnHeapUnifiedMemory'] = d['peakMemoryMetrics']['OnHeapUnifiedMemory']
+                        ex_profile['peakMemoryMetrics.OffHeapUnifiedMemory'] = d['peakMemoryMetrics']['OffHeapUnifiedMemory']
 
-        Parameters
-        ----------
-        app_id : int
-            The application's id.
-        exec_id : int, optional
-            The executor's id.
-
-        """
-        if self._enabled:
-            if exec_id is None:
-                self._logger.info("profiling resources of executors...")
-            else:
-                self._logger.info(
-                    "profiling resources of executor {}...".format(exec_id))
-
-            data = self.request_executors(app_id)
-
-            if data is not None:
-                if exec_id is None:
-                    for d in data:
-                        if d['id'] not in self._executors:
-                            self._executors[d['id']] = self._default_executor()
-
-                        for k, v in d.items():
-                            if k in self._executors[d['id']]:
-                                self._executors[d['id']][k].append(v)
-                else:
-                    for d in data:
-                        if d['id'] == exec_id:
-                            if d['id'] not in self._executors:
-                                self._executors[d['id']
-                                                ] = self._default_executor()
-
-                            for k, v in d.items():
-                                if k in self._executors[d['id']]:
-                                    self._executors[d['id']][k].append(v)
-                            break
-
-    def get_rdd(self, name=None):
-        """Get the RDD resources of all elements or of the named one.
+    def get_rdd(self, rdd_id=None):
+        """Get all the previously profiled RDDs' data.
 
         Parameters
         ----------
-        name : str, optional
-            A name for the element.
+        rdd_id : int, optional
+            The RDD's id. Default value is None.
 
         Returns
         -------
-        dict
-            A dict with the RDD resources of all elements or with just the RDD resources of the named element.
+        dict or list
+            A dict with all the previously profiled RDDs' data or a list with the RDD's data.
 
         """
-        if len(self._data):
-            if name is None:
-                return self._data.copy()
+        if len(self._rdd):
+            if rdd_id is None:
+                return self._rdd.copy()
             else:
-                if name not in self._data:
+                if rdd_id not in self._rdd:
                     self._logger.warning(
-                        "no measurement of RDD resources has been done for '{}'".format(name))
-                    return {}
-                return self._data[name]
+                        "no data from RDD {} has been stored yet".format(rdd_id))
+                    return []
+
+                return self._rdd[rdd_id]
         else:
-            self._logger.warning(
-                "no measurement of RDD resources has been done")
-            return {}
-
-    def get_resources(self, name=None):
-        """Get the resources of all elements or of the named one.
-
-        Parameters
-        ----------
-        name : str, optional
-            The name representing a resource.
-
-        Returns
-        -------
-        dict
-            A dict with the resources of all elements or with just the resources of the named element.
-
-        """
-        if len(self._resources):
-            if name is None:
-                return self._resources.copy()
-            else:
-                if name not in self._default_resources():
-                    self._logger.warning(
-                        "no measurement of resources has been done for '{}'".format(name))
-                    return {}
-                return self._resources[name]
-        else:
-            self._logger.warning(
-                "no measurement of resources has been done")
+            self._logger.warning("no RDD's data has been stored yet")
             return {}
 
     def get_executors(self, exec_id=None):
-        """Get the resources of all executors or of the named one (by its id).
+        """Get all the previously profiled executors' data.
 
         Parameters
         ----------
         exec_id : int, optional
-            An executor id.
+            An executor id. Default value is None.
 
         Returns
         -------
-        dict
-            A dict with the resources of all executors or with just the resources of the named executor.
+        dict or list
+            A dict with all the previously profiled executors' data or a list with the executor's data.
 
         """
         if len(self._executors):
@@ -563,16 +498,16 @@ class Profiler:
             else:
                 if exec_id not in self._executors:
                     self._logger.warning(
-                        "no measurement of resources has been done for executor {}".format(exec_id))
-                    return {}
+                        "no data from executor {} has been stored yet".format(exec_id))
+                    return []
+
                 return self._executors[exec_id]
         else:
-            self._logger.warning(
-                "no measurement of executors resources has been done")
+            self._logger.warning("no executors' data has been stored yet")
             return self._executors
 
     def export_rdd(self, path, extension='csv'):
-        """Export all stored RDD resources informations.
+        """Export all the stored RDDs' data.
 
         Notes
         -----
@@ -592,73 +527,26 @@ class Profiler:
 
         """
         self._logger.info(
-            "exporting RDD resources in {} format...".format(extension))
+            "exporting all the stored RDDs' data in {} format...".format(extension))
 
-        if len(self._data):
-            rdd = []
+        path = util.append_slash(path) + 'profiling/'
+        util.create_dir(path)
 
-            for k, v in self._data.items():
-                tmp = v.copy()
-                tmp['rdd'] = k
-                rdd.append(tmp)
+        if len(self._rdd):
+            fieldnames = self._rdd_metrics().keys()
 
-            self._export_values(rdd, rdd[-1].keys(),
-                                util.append_slash(path) + 'rdd', extension)
+            for k, v in self._rdd.items():
+                self._export(v,
+                             fieldnames,
+                             "{}rdd_{}".format(path, k),
+                             extension)
 
-            self._logger.info("RDD resources successfully exported")
+            self._logger.info("RDD data successfully exported")
         else:
-            self._logger.warning(
-                "no measurement of RDD resources has been done")
-
-    def export_resources(self, path, extension='csv'):
-        """Export all stored resources informations.
-
-        Notes
-        -----
-        For now, only CSV extension is supported.
-
-        Parameters
-        ----------
-        path: str
-            The location of the files.
-        extension: str, optional
-            The extension of the files. Default value is 'csv'.
-
-        Raises
-        ------
-        NotImplementedError
-            If `extension` is not valid or not supported.
-
-        """
-        self._logger.info(
-            "exporting resources in {} format...".format(extension))
-
-        if len(self._resources):
-            resources = []
-            size = 0
-
-            for k, v in self._resources.items():
-                size = len(v)
-                break
-
-            for i in range(size):
-                tmp = self._default_resources()
-
-                for k in tmp:
-                    tmp[k] = self._resources[k][i]
-
-                resources.append(tmp)
-
-            self._export_values(resources, resources[-1].keys(),
-                                util.append_slash(path) + 'resources', extension)
-
-            self._logger.info("resources successfully exported")
-        else:
-            self._logger.warning(
-                "no measurement of resources has been done")
+            self._logger.warning("no RDD data has been stored yet")
 
     def export_executors(self, path, extension='csv'):
-        """Export all stored executors' resources informations.
+        """Export all stored executors' data.
 
         Notes
         -----
@@ -680,33 +568,24 @@ class Profiler:
         self._logger.info(
             "exporting executors resources in {} format...".format(extension))
 
+        path = util.append_slash(path) + 'profiling/'
+        util.create_dir(path)
+
         if len(self._executors):
-            for k1, v1 in self._executors.items():
-                executors = []
-                size = 0
+            fieldnames = self._executor_metrics().keys()
 
-                for k2, v2 in v1.items():
-                    size = len(v2)
-                    break
+            for k, v in self._executors.items():
+                self._export(v,
+                             fieldnames,
+                             "{}executor_{}".format(path, k),
+                             extension)
 
-                for i in range(size):
-                    tmp = self._default_resources()
-
-                    for k2 in tmp:
-                        tmp[k2] = v1[k2][i]
-
-                    executors.append(tmp)
-
-                self._export_values(executors, executors[-1].keys(),
-                                    "{}executor_{}".format(util.append_slash(path), k1), extension)
-
-            self._logger.info("executors resources successfully exported")
+            self._logger.info("executor data successfully exported")
         else:
-            self._logger.warning(
-                "no measurement of executors resources has been done")
+            self._logger.warning("no executor data has been stored yet")
 
     def export(self, path, extension='csv'):
-        """Export all stored profiling information.
+        """Export all stored profiling data.
 
         Notes
         -----
@@ -726,7 +605,6 @@ class Profiler:
 
         """
         self.export_rdd(path, extension)
-        self.export_resources(path, extension)
         self.export_executors(path, extension)
 
 

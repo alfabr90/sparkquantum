@@ -3,6 +3,7 @@ import logging
 import math
 import sys
 import tempfile as tf
+from distutils.util import strtobool
 
 from pyspark import RDD
 
@@ -20,6 +21,29 @@ __all__ = [
     'clear_path',
     'get_size_of_path',
     'get_logger']
+
+
+def to_bool(val):
+    """Convert a value to true or false.
+
+    Parameters
+    ----------
+    val
+        The value to be converted.
+
+    Returns
+    -------
+    bool
+
+    """
+    if val is None:
+        return False
+    elif isinstance(val, bool):
+        return val
+    elif isinstance(val, str):
+        return bool(strtobool(val))
+    else:
+        return bool(val)
 
 
 def broadcast(sc, data):
@@ -109,8 +133,8 @@ def get_num_partitions(spark_context, expected_size):
 
     num_partitions = None
 
-    if not conf.get(spark_context,
-                    'sparkquantum.cluster.useSparkDefaultNumPartitions'):
+    if not to_bool(conf.get(spark_context,
+                            'sparkquantum.cluster.useSparkDefaultNumPartitions')):
         num_cores = conf.get(
             spark_context, 'sparkquantum.cluster.totalCores')
 
@@ -276,7 +300,7 @@ def get_logger(
 
     logger.setLevel(level)
 
-    if conf.get(sc, 'sparkquantum.logging.enabled'):
+    if to_bool(conf.get(sc, 'sparkquantum.logging.enabled')):
         if filename is None:
             filename = conf.get(sc, 'sparkquantum.logging.filename')
 

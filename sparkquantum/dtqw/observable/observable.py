@@ -3,7 +3,7 @@ from datetime import datetime
 from pyspark import SparkContext, StorageLevel
 
 from sparkquantum import conf, util
-from sparkquantum.dtqw.profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import get_profiler
 
 __all__ = ['Observable', 'is_observable']
 
@@ -17,7 +17,7 @@ class Observable:
 
         self._logger = util.get_logger(
             self._sc, self.__class__.__name__)
-        self._profiler = QuantumWalkProfiler()
+        self._profiler = get_profiler()
 
     @property
     def profiler(self):
@@ -28,7 +28,7 @@ class Observable:
             self, profile_title, log_title, distribution, time):
         app_id = self._sc.applicationId
 
-        self._profiler.profile_resources(app_id)
+        self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
 
         info = self._profiler.profile_distribution(

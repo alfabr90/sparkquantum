@@ -12,7 +12,7 @@ from sparkquantum.dtqw.mesh.mesh import is_mesh
 from sparkquantum.dtqw.mesh.percolation.permanent import is_permanent
 from sparkquantum.dtqw.operator import Operator
 from sparkquantum.dtqw.particle import is_particle
-from sparkquantum.dtqw.profiler import QuantumWalkProfiler
+from sparkquantum.dtqw.profiler import get_profiler
 from sparkquantum.dtqw.state import State, is_state
 from sparkquantum.math.matrix import Matrix
 
@@ -78,7 +78,7 @@ class DiscreteTimeQuantumWalk:
 
         self._logger = util.get_logger(
             self._sc, self.__class__.__name__)
-        self._profiler = QuantumWalkProfiler()
+        self._profiler = get_profiler()
 
     @property
     def sc(self):
@@ -183,7 +183,7 @@ class DiscreteTimeQuantumWalk:
     def _profile_operator(self, profile_title, log_title, operator, time):
         app_id = self._sc.applicationId
 
-        self._profiler.profile_resources(app_id)
+        self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
 
         info = self._profiler.profile_operator(
@@ -199,7 +199,7 @@ class DiscreteTimeQuantumWalk:
     def _profile_state(self, profile_title, log_title, state, time):
         app_id = self._sc.applicationId
 
-        self._profiler.profile_resources(app_id)
+        self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
 
         info = self._profiler.profile_state(profile_title, state, time)
