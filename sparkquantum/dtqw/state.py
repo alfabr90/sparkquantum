@@ -66,7 +66,7 @@ class State(Matrix):
 
     @ property
     def particles(self):
-        """int"""
+        """tuple"""
         return self._particles
 
     @ property

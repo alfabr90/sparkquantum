@@ -82,7 +82,7 @@ dtqw.add_particle(particle1, cstate, position)
 dtqw.add_particle(particle2, cstate, position)
 
 # Adding the entangled particles to the walk, informing the system state
-#dtqw.add_entanglement([particle1, particle2], state)
+#dtqw.add_entanglement((particle1, particle2), state)
 
 # Performing the walk
 state = dtqw.walk(steps)
