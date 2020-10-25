@@ -10,6 +10,7 @@ from pyspark import RDD
 from sparkquantum import conf
 
 __all__ = [
+    'to_bool',
     'broadcast',
     'get_precedent_type',
     'get_size_of_type',

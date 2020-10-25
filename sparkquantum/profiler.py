@@ -529,7 +529,7 @@ class Profiler:
         self._logger.info(
             "exporting all the stored RDDs' data in {} format...".format(extension))
 
-        path = util.append_slash(path) + 'profiling/'
+        path = util.append_slash(path) + 'profiling/rdd/'
         util.create_dir(path)
 
         if len(self._rdd):
@@ -568,7 +568,7 @@ class Profiler:
         self._logger.info(
             "exporting executors resources in {} format...".format(extension))
 
-        path = util.append_slash(path) + 'profiling/'
+        path = util.append_slash(path) + 'profiling/executors/'
         util.create_dir(path)
 
         if len(self._executors):
