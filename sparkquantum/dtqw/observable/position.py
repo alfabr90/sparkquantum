@@ -175,9 +175,8 @@ class Position(Observable):
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_distribution(
-            'systemMeasurement', 'system measurement',
-            distribution, time)
+        self._profile_distribution('systemMeasurement', 'system measurement',
+                                   distribution, time)
 
         return distribution
 
@@ -220,9 +219,9 @@ class Position(Observable):
 
         if not isinstance(system_measurement, ProbabilityDistribution):
             self._logger.error(
-                "'PositionJointProbabilityDistribution' instance expected, not '{}'".format(type(system_measurement)))
-            raise TypeError("'PositionJointProbabilityDistribution' instance expected, not '{}'".format(
-                type(system_measurement)))
+                "'ProbabilityDistribution' instance expected, not '{}'".format(type(system_measurement)))
+            raise TypeError(
+                "'ProbabilityDistribution' instance expected, not '{}'".format(type(system_measurement)))
 
         self._logger.info(
             "measuring the state of the system considering the particles that are at the same positions...")
@@ -282,23 +281,12 @@ class Position(Observable):
 
         distribution = ProbabilityDistribution(
             rdd, shape, state.mesh.axis(), nelem=nelem
-        )
-
-        norm = distribution.norm()
-
-        rdd.map(
-            lambda m: m[-1] / norm
-        )
-
-        distribution = ProbabilityDistribution(
-            rdd, shape, state.mesh.axis(), nelem=nelem
         ).materialize(storage_level)
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_distribution(
-            'collisionMeasurement', 'collision measurement',
-            distribution, time)
+        self._profile_distribution('collisionMeasurement', 'collision measurement',
+                                   distribution, time)
 
         return distribution
 
