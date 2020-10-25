@@ -4,42 +4,42 @@ from sparkquantum.dtqw.state import is_state
 from sparkquantum.math.distribution import is_distribution
 from sparkquantum.profiler import Profiler
 
-__all__ = ['QuantumWalkProfiler']
+__all__ = ['QuantumWalkProfiler', 'get_profiler']
 
 
 class QuantumWalkProfiler(Profiler):
-    """Profile and export the resources consumed by Spark_ for quantum walks.
-
-    .. _Spark:
-        https://spark.apache.org
-
-    """
+    """Class for profiling quantum walks."""
 
     def __init__(self):
-        """Build a quantum walk profiler object."""
+        """Build a profiler object for quantum walks."""
         super().__init__()
 
-        self._times = None
         self._operators = None
         self._states = None
         self._distributions = None
 
         self._start()
 
-    @staticmethod
-    def _default_operator():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
-                'size': 0, 'numElements': 0}
+    def _operator_data(self):
+        return {'memoryUsed': 0,
+                'diskUsed': 0,
+                'size': 0,
+                'numElements': 0,
+                'buildingTime': 0.0}
 
-    @staticmethod
-    def _default_state():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
-                'size': 0, 'numElements': 0}
+    def _state_data(self):
+        return {'memoryUsed': 0,
+                'diskUsed': 0,
+                'size': 0,
+                'numElements': 0,
+                'buildingTime': 0.0}
 
-    @staticmethod
-    def _default_distribution():
-        return {'buildingTime': 0.0, 'diskUsed': 0, 'memoryUsed': 0,
-                'size': 0, 'numElements': 0}
+    def _distribution_data(self):
+        return {'memoryUsed': 0,
+                'diskUsed': 0,
+                'size': 0,
+                'numElements': 0,
+                'buildingTime': 0.0}
 
     def __str__(self):
         return 'Quantum Walk Profiler configured to request data from {}'.format(
@@ -48,43 +48,21 @@ class QuantumWalkProfiler(Profiler):
     def _start(self):
         super()._start()
 
-        self._times = {}
         self._operators = {}
         self._states = {}
         self._distributions = {}
 
-    def profile_time(self, name, value):
-        """Store the execution or building time for a named quantum walk element.
-
-        Parameters
-        ----------
-        name : str
-            A name for the element.
-        value : float
-            The measured execution or building time of the element.
-
-        """
-        if self._enabled:
-            self._logger.info("profiling time for '{}'...".format(name))
-
-            self._times[name] = value
-
     def profile_operator(self, name, operator, time):
-        """Store building time and resources information for a named quantum walk operator.
+        """Store a named quantum walk operator's data.
 
         Parameters
         ----------
         name : str
-            A name for the operator.
+            The operator's name.
         operator : :py:class:`sparkquantum.dtqw.operator.Operator`
             The :py:class:`sparkquantum.dtqw.operator.Operator` object.
         time : float
-            The measured building time of the operator.
-
-        Returns
-        -------
-        dict
-            The resources information measured for the operator if profiling is enabled, `None` otherwise.
+            The building time of the operator.
 
         Raises
         -----
@@ -105,7 +83,7 @@ class QuantumWalkProfiler(Profiler):
             if name not in self._operators:
                 self._operators[name] = []
 
-            self._operators[name].append(self._default_operator())
+            op_profile = self._operator_data()
 
             app_id = operator.sc.applicationId
             rdd_id = operator.data.id()
@@ -113,31 +91,26 @@ class QuantumWalkProfiler(Profiler):
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._default_operator():
-                        self._operators[name][-1][k] = v
+                    if k in op_profile:
+                        op_profile[k] = v
 
-            self._operators[name][-1]['buildingTime'] = time
-            self._operators[name][-1]['size'] = operator.size
-            self._operators[name][-1]['numElements'] = operator.nelem
+            op_profile['buildingTime'] = time
+            op_profile['size'] = operator.size
+            op_profile['numElements'] = operator.nelem
 
-            return self._operators[name][-1]
+            self._operators[name].append(op_profile)
 
     def profile_state(self, name, state, time):
-        """Store building time and resources information for a named quantum walk system state.
+        """Store a named quantum walk state's data.
 
         Parameters
         ----------
         name : str
-            A name for the state.
+            The state's name.
         state : :py:class:`sparkquantum.dtqw.state.State`
             The ``nth`` step corresponding state.
         time : float
-            The measured building time of the state.
-
-        Returns
-        -------
-        dict
-            The resources information measured for the state if profiling is enabled, `None` otherwise.
+            The building time of the state.
 
         Raises
         -----
@@ -158,7 +131,7 @@ class QuantumWalkProfiler(Profiler):
             if name not in self._states:
                 self._states[name] = []
 
-            self._states[name].append(self._default_state())
+            st_profile = self._state_data()
 
             app_id = state.sc.applicationId
             rdd_id = state.data.id()
@@ -166,32 +139,27 @@ class QuantumWalkProfiler(Profiler):
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._default_state():
-                        self._states[name][-1][k] = v
+                    if k in st_profile:
+                        st_profile[k] = v
 
-            self._states[name][-1]['buildingTime'] = time
-            self._states[name][-1]['size'] = state.size
-            self._states[name][-1]['numElements'] = state.nelem
+            st_profile['buildingTime'] = time
+            st_profile['size'] = state.size
+            st_profile['numElements'] = state.nelem
 
-            return self._states[name][-1]
+            self._states[name].append(st_profile)
 
     def profile_distribution(
             self, name, distribution, time):
-        """Store building time and resources information for a named measurement (probability distribution).
+        """Store a named quantum walk probability distribution's data.
 
         Parameters
         ----------
         name : str
-            A name for the distribution.
+            The distribution's name.
         distribution : :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`
             The probability distribution object.
         time : float
-            The measured building time of the probability distribution.
-
-        Returns
-        -------
-        dict
-            The resources information measured for the probability distribution if profiling is enabled, `None` otherwise.
+            The building time of the probability distribution.
 
         Raises
         -----
@@ -212,8 +180,7 @@ class QuantumWalkProfiler(Profiler):
             if name not in self._distributions:
                 self._distributions[name] = []
 
-            self._distributions[name].append(
-                self._default_distribution())
+            dist_profile = self._distribution_data()
 
             app_id = distribution.sc.applicationId
             rdd_id = distribution.data.id()
@@ -221,54 +188,27 @@ class QuantumWalkProfiler(Profiler):
 
             if data is not None:
                 for k, v in data.items():
-                    if k in self._default_distribution():
-                        self._distributions[name][-1][k] = v
+                    if k in dist_profile:
+                        dist_profile[k] = v
 
-            self._distributions[name][-1]['buildingTime'] = time
-            self._distributions[name][-1]['size'] = distribution.size
-            self._distributions[name][-1]['numElements'] = distribution.nelem
+            dist_profile['buildingTime'] = time
+            dist_profile['size'] = distribution.size
+            dist_profile['numElements'] = distribution.nelem
 
-            return self._distributions[name][-1]
-
-    def get_times(self, name=None):
-        """Get the measured time of all elements or of the named one.
-
-        Parameters
-        ----------
-        name : str, optional
-            A name for the element.
-
-        Returns
-        -------
-        dict or float
-            A dict with the measured time of all elements or the measured time of the named element.
-
-        """
-        if len(self._times):
-            if name is None:
-                return self._times.copy()
-            else:
-                if name not in self._times:
-                    self._logger.warning(
-                        "no measurement of time has been done for '{}'".format(name))
-                    return {}
-                return self._times[name]
-        else:
-            self._logger.warning("no measurement of time has been done")
-            return {}
+            self._distributions[name].append(dist_profile)
 
     def get_operators(self, name=None):
-        """Get the resources information of all operators or of the one with the provided name.
+        """Get all the previously profiled operators' data.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.dtqw.operator.Operator`.
+            The operator's name. Default value is None.
 
         Returns
         -------
         dict or list
-            A dict with the resources information of all operators or a list with the resources information of the named operator.
+            A dict with all the previously profiled operators' data or a list with the operator's data.
 
         """
         if len(self._operators):
@@ -278,7 +218,8 @@ class QuantumWalkProfiler(Profiler):
                 if name not in self._operators:
                     self._logger.warning(
                         "no resources information for operator '{}'".format(name))
-                    return {}
+                    return []
+
                 return self._operators[name]
         else:
             self._logger.warning(
@@ -286,17 +227,17 @@ class QuantumWalkProfiler(Profiler):
             return {}
 
     def get_states(self, name=None):
-        """Get the resources information of all states or of the one with the provided name.
+        """Get all the previously profiled states' data.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.dtqw.state.State`.
+            The state's data. Default value is None.
 
         Returns
         -------
         dict or list
-            A dict with the resources information of all states or a list with the resources information of the named state.
+            A dict with all the previously profiled states' data or a list with the state's data.
 
         """
         if len(self._states):
@@ -306,7 +247,8 @@ class QuantumWalkProfiler(Profiler):
                 if name not in self._states:
                     self._logger.warning(
                         "no resources information for state '{}'".format(name))
-                    return {}
+                    return []
+
                 return self._states[name]
         else:
             self._logger.warning(
@@ -314,19 +256,18 @@ class QuantumWalkProfiler(Profiler):
             return {}
 
     def get_distributions(self, name=None):
-        """Get the resources information of all probability distributions or
-        of the one with the provided name.
+        """Get all the previously profiled probability distributions' data.
 
         Parameters
         ----------
         name : str, optional
-            The name used for a :py:class:`sparkquantum.math.distribution.ProbabilityDistribution`.
+            The distribution's data. Default value is None.
 
         Returns
         -------
         dict or list
-            A dict with the resources information of all probability distributions or
-            a list of the resources information of the named probability distribution.
+            A dict with all the previously profiled probability distributions' data or
+            a list with the probability distribution's data.
 
         """
         if len(self._distributions):
@@ -336,45 +277,16 @@ class QuantumWalkProfiler(Profiler):
                 if name not in self._distributions:
                     self._logger.warning(
                         "no resources information for probability distribution '{}'".format(name))
-                    return {}
+                    return []
+
                 return self._distributions[name]
         else:
             self._logger.warning(
                 "no resources information for probability distributions have been obtained")
             return {}
 
-    def export_times(self, path, extension='csv'):
-        """Export all stored execution and/or building times.
-
-        Notes
-        -----
-        For now, only CSV extension is supported.
-
-        Parameters
-        ----------
-        path: str
-            The location of the files.
-        extension: str, optional
-            The extension of the files. Default value is 'csv'.
-
-        Raises
-        ------
-        NotImplementedError
-            If `extension` is not valid or not supported.
-
-        """
-        self._logger.info("exporting times in {} format...".format(extension))
-
-        if len(self._times):
-            self._export_values([self._times], self._times.keys(),
-                                util.append_slash(path) + 'times', extension)
-
-            self._logger.info("times successfully exported")
-        else:
-            self._logger.warning("no measurement of time has been done")
-
     def export_operators(self, path, extension='csv'):
-        """Export all stored operators' resources.
+        """Export all stored operators' data.
 
         Notes
         -----
@@ -394,26 +306,30 @@ class QuantumWalkProfiler(Profiler):
 
         """
         self._logger.info(
-            "exporting operators' resources in {} format...".format(extension))
+            "exporting all the stored operators' data in {} format...".format(extension))
+
+        path = util.append_slash(path) + 'profiling/'
+        util.create_dir(path)
 
         if len(self._operators):
-            operator = []
+            operators = []
 
             for k, v in self._operators.items():
                 for i in v:
-                    operator.append(i.copy())
-                    operator[-1]['name'] = k
+                    operators.append(i.copy())
+                    operators[-1]['name'] = k
 
-            self._export_values(operator, operator[-1].keys(),
-                                util.append_slash(path) + 'operators', extension)
+            self._export(operators,
+                         operators[-1].keys(),
+                         path + 'operators',
+                         extension)
 
-            self._logger.info("operator's resources successfully exported")
+            self._logger.info("operator data successfully exported")
         else:
-            self._logger.warning(
-                "no measurement of operators' resources has been done")
+            self._logger.warning("no operator data has been stored yet")
 
     def export_states(self, path, extension='csv'):
-        """Export all stored state' resources.
+        """Export all stored states' data.
 
         Notes
         -----
@@ -433,7 +349,10 @@ class QuantumWalkProfiler(Profiler):
 
         """
         self._logger.info(
-            "exporting states' resources in {} format...".format(extension))
+            "exporting all the stored states' data in {} format...".format(extension))
+
+        path = util.append_slash(path) + 'profiling/'
+        util.create_dir(path)
 
         if len(self._states):
             states = []
@@ -443,16 +362,14 @@ class QuantumWalkProfiler(Profiler):
                     states.append(i.copy())
                     states[-1]['name'] = k
 
-            self._export_values(states, states[-1].keys(),
-                                util.append_slash(path) + 'states', extension)
+            self._export(states, states[-1].keys(), path + 'states', extension)
 
-            self._logger.info("states' resources successfully exported")
+            self._logger.info("state data successfully exported")
         else:
-            self._logger.warning(
-                "no measurement of states' resources has been done")
+            self._logger.warning("no state data has been stored yet")
 
     def export_distributions(self, path, extension='csv'):
-        """Export all stored probability distributions' resources.
+        """Export all stored probability distributions' data.
 
         Notes
         -----
@@ -472,7 +389,10 @@ class QuantumWalkProfiler(Profiler):
 
         """
         self._logger.info(
-            "exporting probability distributions' resources in {} format...".format(extension))
+            "exporting all the stored distributions' data in {} format...".format(extension))
+
+        path = util.append_slash(path) + 'profiling/'
+        util.create_dir(path)
 
         if len(self._distributions):
             distributions = []
@@ -482,17 +402,17 @@ class QuantumWalkProfiler(Profiler):
                     distributions.append(i.copy())
                     distributions[-1]['name'] = k
 
-            self._export_values(distributions, distributions[-1].keys(),
-                                util.append_slash(path) + 'distributions', extension)
+            self._export(distributions,
+                         distributions[-1].keys(),
+                         path + 'distributions',
+                         extension)
 
-            self._logger.info(
-                "probability distributions' resources successfully exported")
+            self._logger.info("distribution data successfully exported")
         else:
-            self._logger.warning(
-                "no measurement of probability distributions' resources has been done")
+            self._logger.warning("no distribution data has been stored yet")
 
     def export(self, path, extension='csv'):
-        """Export all stored profiling information of quantum walks.
+        """Export all stored profiling data.
 
         Notes
         -----
@@ -513,7 +433,19 @@ class QuantumWalkProfiler(Profiler):
         """
         super().export(path, extension)
 
-        self.export_times(path, extension)
         self.export_operators(path, extension)
         self.export_states(path, extension)
         self.export_distributions(path, extension)
+
+
+_profiler = None
+
+
+def get_profiler():
+    """Get the profiler instance of this module following the singleton pattern."""
+    global _profiler
+
+    if _profiler is None:
+        _profiler = QuantumWalkProfiler()
+
+    return _profiler
