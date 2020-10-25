@@ -21,13 +21,13 @@ cores = 4
 conf = SparkConf().set(
     'sparkquantum.cluster.totalCores', cores
 ).set(
-    'sparkquantum.logging.enabled', 'True'
+    'sparkquantum.logging.enabled', True
 ).set(
     'sparkquantum.logging.level', logging.DEBUG
 ).set(
     'sparkquantum.logging.filename', path + 'log.txt'
 ).set(
-    'sparkquantum.profiling.enabled', 'True'
+    'sparkquantum.profiling.enabled', True
 )
 sc = SparkContext(conf=conf)
 sc.setLogLevel('ERROR')
@@ -75,9 +75,10 @@ joint = observable.measure(state)
 labels = ["{}'s position x".format(particle.identifier), 'Probability']
 joint.plot(path + 'joint', labels=labels, dpi=300)
 
-# Exporting the profiling data
+# Exporting the profiling data using the profiler that
+# has been associated to the `DiscreteTimeQuantumWalk`
+# object because it is a singleton profiler
 dtqw.profiler.export(path)
-observable.profiler.export(path)
 
 # Destroying the RDD to remove them from memory and/or disk
 state.destroy()
