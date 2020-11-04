@@ -6,26 +6,26 @@ __all__ = ['Particle', 'is_particle']
 class Particle:
     """Class that represents a particle in a quantum walk."""
 
-    def __init__(self, coin, identifier=None):
+    def __init__(self, coin, name=None):
         """Build a particle object.
 
         Parameters
         ----------
         coin : :py:class:`sparkquantum.dtqw.coin.coin.Coin`
             The coin whose operator will be applied on this particle.
-        identifier : int or str
-            The identifier of the particle. Can be a number, code or name.
+        name : int or str
+            The name of the particle. Can be a number, code or name.
 
         """
         # if not is_coin(coin):
         #     raise TypeError(
         #         "'Coin' instance expected, not '{}'".format(type(self._coin)))
 
-        if identifier is not None and len(str(identifier)) == 0:
-            raise ValueError("invalid identifier")
+        if name is not None and len(str(name)) == 0:
+            raise ValueError("invalid name")
 
         self._coin = coin
-        self._identifier = identifier
+        self._name = name
 
     @property
     def coin(self):
@@ -33,9 +33,9 @@ class Particle:
         return self._coin
 
     @property
-    def identifier(self):
+    def name(self):
         """int or str"""
-        return self._identifier
+        return self._name
 
 
 def is_particle(obj):

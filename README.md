@@ -48,10 +48,10 @@ From now on, particles can be added to the quantum walk, but first, a coin must 
 coin = Hadamard(mesh.ndim)
 ```
 
-When instantiating a particle, the user can assign an identifier to it:
+When instantiating a particle, the user can assign a name to it:
 
 ```python
-particle = Particle(coin, identifier='Electron')
+particle = Particle(coin, name='Electron')
 ```
 
 In this example, suppose the user needs to simulate the following initial quantum state, in Dirac's notation:
@@ -75,7 +75,7 @@ Finally, the user can measure the final quantum state, obtaining the probability
 ```python
 joint = Position().measure(state)
 
-labels = ["{}'s position x".format(particle.identifier), 'Probability']
+labels = ["{}'s position x".format(particle.name), 'Probability']
 joint.plot(path + 'joint_1d1p', labels=labels)
 
 ```
@@ -91,7 +91,7 @@ from sparkquantum import constants, plot, util
 from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
-from sparkquantum.dtqw.observable.position import Position
+from sparkquantum.dtqw.observer.position import Position
 from sparkquantum.dtqw.particle import Particle
 
 # Choosing a directory to store plots
@@ -121,7 +121,7 @@ dtqw = DiscreteTimeQuantumWalk(mesh)
 coin = Hadamard(mesh.ndim)
 
 # Instantiating a particle and giving it a name
-particle = Particle(coin, identifier='Electron')
+particle = Particle(coin, name='Electron')
 
 # Options of initial coin states
 # |i> --> (|0> - i|1>) / sqrt(2)
@@ -143,13 +143,13 @@ state = dtqw.walk(steps)
 # Measuring the state of the system and plotting its distribution
 joint = Position().measure(state)
 
-labels = ["{}'s position x".format(particle.identifier), 'Probability']
-joint.plot(path + 'joint_1d1p', labels=labels)
+labels = ['Position', 'Probability']
+joint.plot(path + 'joint', labels=labels)
+joint.destroy()
 
 # Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
-joint.destroy()
 
 # Stopping the SparkContext
 sc.stop()
@@ -288,15 +288,16 @@ conf = SparkConf() \
     # other configurations
 ```
 
-To export all gathered profiling data, the user just need to call, at the end of the simulation, the method `export` of the profiler that is automatically attached to the `DiscreteTimeQuantumWalk` and `Position` (`Observable`) classes:
+To export all gathered profiling data, the user just need to call, at the end of the simulation, the method `export` of the profiler that is automatically attached to the `DiscreteTimeQuantumWalk` and `Position` (`Observer`) classes:
 
 ```python
-# Exporting the profiling data
+# Exporting the profiling data using the profiler that
+# has been associated to the `DiscreteTimeQuantumWalk`
+# object because it is a singleton profiler
 dtqw.profiler.export(path)
-position.profiler.export(path)
 ```
 
-where `dtqw` and `position` are, respectively, the discrete time quantum walk and position observable objects.
+where `dtqw` is the discrete time quantum walk object.
 
 The profiling data comprehend building times and memory/disk usage of each entity in the DTQW: operators, states and distributions. Also, some summarized data about resource usage of Spark workers node (and the driver node) are exported.
 

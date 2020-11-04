@@ -212,20 +212,16 @@ class DiscreteTimeQuantumWalk:
             )
 
     def _create_coin_operators(self):
-        for p in range(len(self._particles)):
-            particle = self._particles[p]
+        for i, particle in enumerate(self._particles, start=1):
+            if len(self._coin_operators) < i:
+                name = particle.name if particle.name is not None else 'unidentified'
 
-            if len(self._coin_operators) < p + 1:
                 self._logger.info(
-                    "building coin operator for particle {} ({})...".format(
-                        p + 1,
-                        particle.identifier if particle.identifier is not None else 'unidentified'
-                    )
-                )
+                    "building coin operator for particle {} ({})...".format(i, name))
 
                 time = datetime.now()
 
-                co = self._particles[p].coin.create_operator(
+                co = particle.coin.create_operator(
                     self._mesh.sites, repr_format=self._repr_format
                 ).clear().to_coordinate(constants.MatrixCoordinateMultiplicand)
 
@@ -243,12 +239,9 @@ class DiscreteTimeQuantumWalk:
                 time = (datetime.now() - time).total_seconds()
 
                 self._profile_operator(
-                    'coinOperatorParticle{}'.format(p + 1),
-                    'coin operator for particle {} ({})'.format(
-                        p + 1,
-                        particle.identifier if particle.identifier is not None else 'unidentified'
-                    ),
-                    self._coin_operators[p],
+                    'coinOperatorParticle{}'.format(i),
+                    'coin operator for particle {} ({})'.format(i, name),
+                    self._coin_operators[-1],
                     time)
 
     def _create_shift_operator(self):
@@ -338,21 +331,17 @@ class DiscreteTimeQuantumWalk:
 
         particles = len(self._particles)
 
-        for p in range(particles):
-            particle = self._particles[p]
+        for i, particle in enumerate(self._particles):
+            name = particle.name if particle.name is not None else 'unidentified'
 
             self._logger.info(
-                "building evolution operator for particle {} ({})...".format(
-                    p + 1,
-                    particle.identifier if particle.identifier is not None else 'unidentified'
-                )
-            )
+                "building evolution operator for particle {} ({})...".format(i + 1, name))
 
             time = datetime.now()
 
-            eo = self._shift_operator.multiply(self._coin_operators[p])
+            eo = self._shift_operator.multiply(self._coin_operators[i])
 
-            dtype = self._coin_operators[p].dtype
+            dtype = self._coin_operators[i].dtype
             nelem = eo.nelem * eo.shape[0] ** (particles - 1)
 
             num_partitions = max(util.get_num_partitions(
@@ -364,14 +353,14 @@ class DiscreteTimeQuantumWalk:
             if particles > 1:
                 shape_tmp = shape
 
-                if p == 0:
+                if i == 0:
                     # The first particle's evolution operator consists in applying the tensor product between the
                     # evolution operator and the other particles' corresponding identity matrices
                     #
                     # W1 = U1 (X) I2 (X) ... (X) In
                     rdd_shape = (
-                        shape_tmp[0] ** (particles - 1 - p),
-                        shape_tmp[1] ** (particles - 1 - p)
+                        shape_tmp[0] ** (particles - 1 - i),
+                        shape_tmp[1] ** (particles - 1 - i)
                     )
 
                     def __map(m):
@@ -387,8 +376,8 @@ class DiscreteTimeQuantumWalk:
                     #
                     # Wi = I1 (X) ... (X) Ii-1 (X) Wi ...
                     rdd_shape = (
-                        shape_tmp[0] ** p,
-                        shape_tmp[1] ** p
+                        shape_tmp[0] ** i,
+                        shape_tmp[1] ** i
                     )
 
                     def __map(m):
@@ -407,10 +396,10 @@ class DiscreteTimeQuantumWalk:
                     # the pre-identity and evolution operators
                     #
                     # ... (X) Ii-1 (X) Wn
-                    if p < particles - 1:
+                    if i < particles - 1:
                         rdd_shape = (
-                            shape_tmp[0] ** (particles - 1 - p),
-                            shape_tmp[1] ** (particles - 1 - p)
+                            shape_tmp[0] ** (particles - 1 - i),
+                            shape_tmp[1] ** (particles - 1 - i)
                         )
 
                         def __map(m):
@@ -442,12 +431,9 @@ class DiscreteTimeQuantumWalk:
             time = (datetime.now() - time).total_seconds()
 
             self._profile_operator(
-                'evolutionOperatorParticle{}'.format(p + 1),
-                'evolution operator for particle {} ({})'.format(
-                    p + 1,
-                    particle.identifier if particle.identifier is not None else 'unidentified'
-                ),
-                self._evolution_operators[p],
+                'evolutionOperatorParticle{}'.format(i + 1),
+                'evolution operator for particle {} ({})'.format(i + 1, name),
+                self._evolution_operators[-1],
                 time)
 
         self._shift_operator.unpersist()
