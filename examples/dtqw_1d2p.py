@@ -1,5 +1,4 @@
 import math
-import cmath
 
 from pyspark import SparkContext, SparkConf
 
@@ -8,7 +7,7 @@ from sparkquantum.dtqw.coin.hadamard import Hadamard
 from sparkquantum.dtqw.dtqw import DiscreteTimeQuantumWalk
 from sparkquantum.dtqw.interaction.collision.phase import PhaseChange
 from sparkquantum.dtqw.mesh.grid.onedim.line import Line
-from sparkquantum.dtqw.observable.position import Position
+from sparkquantum.dtqw.observer.position import Position
 from sparkquantum.dtqw.particle import Particle
 
 # Choosing a directory to store plots and logs, if enabled
@@ -31,22 +30,19 @@ steps = 50
 size = 2 * steps + 1
 
 # The particles will change their phase when colliding
-phase = 1.0 * cmath.pi
+phase = complex(0, math.pi)
 
 # Choosing a mesh and instantiating the walk with it
 mesh = Line((size, ))
-dtqw = DiscreteTimeQuantumWalk(
-    mesh,
-    interaction=PhaseChange(phase),
-    repr_format=constants.StateRepresentationFormatCoinPosition)
+dtqw = DiscreteTimeQuantumWalk(mesh, interaction=PhaseChange(phase))
 
 # To add particles to the walk, a coin must be instantiated with
 # the correspondent dimension of the chosen mesh
 coin = Hadamard(mesh.ndim)
 
-# Instantiating the particle and giving them an identifier/name
-particle1 = Particle(coin, identifier='Fermion')
-particle2 = Particle(coin, identifier='Boson')
+# Instantiating the particle and giving them a name
+particle1 = Particle(coin, name='Fermion')
+particle2 = Particle(coin, name='Boson')
 
 # Options of initial coin states for the particle
 # |i> --> (|0> - i|1>) / sqrt(2)
@@ -95,29 +91,26 @@ dtqw.add_particle(particle2, cstate, position)
 state = dtqw.walk(steps)
 
 # Measuring the state of the system and plotting its distributions
-joint, collision, marginal = Position().measure(state)
+observer = Position()
 
-labels = ["{}'s position x".format(particle1.identifier),
-          "{}'s position x".format(particle2.identifier),
+joint = observer.measure(state)
+
+labels = ["{}'s position".format(particle1.name),
+          "{}'s position".format(particle2.name),
           'Probability']
-joint.plot(path + 'joint', labels=labels, dpi=300)
+joint.plot(path + 'joint', labels=labels)
+joint.destroy()
 
-labels = ["Particles' position x", 'Probability']
-collision.plot(path + 'collision', labels=labels, dpi=300)
+for i, particle in enumerate(state.particles, start=1):
+    marginal = observer.measure(state, particle=particle)
 
-for p in range(len(dtqw.particles)):
-    labels = ["{}'s position x".format(dtqw.particles[p].identifier),
-              'Probability']
-    marginal[p].plot(path + 'marginal_particle{}'.format(p + 1),
-                     labels=labels, dpi=300)
+    labels = ['Position', 'Probability']
+    marginal.plot(path + 'particle{}'.format(i), labels=labels)
+    marginal.destroy()
 
 # Destroying the RDD to remove them from memory and/or disk
 state.destroy()
 dtqw.destroy()
-joint.destroy()
-collision.destroy()
-for m in marginal:
-    m.destroy()
 
 # Stopping the SparkContext
 sc.stop()
