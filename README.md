@@ -75,8 +75,8 @@ Finally, the user can measure the final quantum state, obtaining the probability
 ```python
 joint = Position().measure(state)
 
-labels = ["{}'s position x".format(particle.name), 'Probability']
-joint.plot(path + 'joint_1d1p', labels=labels)
+labels = ['Position', 'Probability']
+joint.plot('./joint', labels=labels)
 
 ```
 
