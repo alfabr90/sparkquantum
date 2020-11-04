@@ -10,7 +10,7 @@ Subpackages
    sparkquantum.dtqw.coin
    sparkquantum.dtqw.interaction
    sparkquantum.dtqw.mesh
-   sparkquantum.dtqw.observable
+   sparkquantum.dtqw.observer
 
 Submodules
 ----------
