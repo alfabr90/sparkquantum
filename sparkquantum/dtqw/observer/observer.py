@@ -24,24 +24,12 @@ class Observer:
         """:py:class:`sparkquantum.dtqw.profiler.Profiler`."""
         return self._profiler
 
-    def _profile_distribution(
-            self, profile_title, log_title, distribution, time):
+    def _profile_distribution(self, profile_title, distribution, time):
         app_id = self._sc.applicationId
 
         self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
-
-        info = self._profiler.profile_distribution(
-            profile_title, distribution, time)
-
-        if info is not None:
-            self._logger.info(
-                "{} was done in {}s".format(log_title, info['buildingTime']))
-            self._logger.info(
-                "probability distribution with {} is consuming {} bytes in memory and {} bytes in disk".format(
-                    log_title, info['memoryUsed'], info['diskUsed']
-                )
-            )
+        self._profiler.profile_distribution(profile_title, distribution, time)
 
     def measure(self, state, particle=None,
                 storage_level=StorageLevel.MEMORY_AND_DISK):

@@ -140,8 +140,9 @@ class Position(Observer):
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_distribution('systemMeasurement', 'system measurement',
-                                   distribution, time)
+        self._logger.info("system measurement was done in {}s".format(time))
+
+        self._profile_distribution('systemMeasurement', distribution, time)
 
         return distribution
 
@@ -252,11 +253,12 @@ class Position(Observer):
 
         time = (datetime.now() - time).total_seconds()
 
+        self._logger.info(
+            "partial measurement for particle {} ({}) was done in {}s".format(
+                pind + 1, name, time))
+
         self._profile_distribution(
-            'partialMeasurementParticle{}'.format(pind + 1),
-            'partial measurement for particle {} ({})'.format(pind + 1, name),
-            distribution,
-            time)
+            'partialMeasurementParticle{}'.format(pind + 1), distribution, time)
 
         return distribution
 
@@ -369,8 +371,9 @@ class Position(Observer):
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_distribution('collisionMeasurement', 'collision measurement',
-                                   distribution, time)
+        self._logger.info("collision measurement was done in {}s".format(time))
+
+        self._profile_distribution('collisionMeasurement', distribution, time)
 
         return distribution
 

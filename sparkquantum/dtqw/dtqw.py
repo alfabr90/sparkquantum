@@ -180,36 +180,19 @@ class DiscreteTimeQuantumWalk:
         return '{} with {} over a {}'.format(
             'Discrete time quantum walk', particles, self._mesh)
 
-    def _profile_operator(self, profile_title, log_title, operator, time):
+    def _profile_operator(self, profile_title, operator, time):
         app_id = self._sc.applicationId
 
         self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
+        self._profiler.profile_operator(profile_title, operator, time)
 
-        info = self._profiler.profile_operator(
-            profile_title, operator, time)
-
-        if info is not None:
-            self._logger.info(
-                "{} was built in {}s".format(log_title, info['buildingTime']))
-            self._logger.info(
-                "{} is consuming {} bytes in memory and {} bytes in disk".format(
-                    log_title, info['memoryUsed'], info['diskUsed']))
-
-    def _profile_state(self, profile_title, log_title, state, time):
+    def _profile_state(self, profile_title, state, time):
         app_id = self._sc.applicationId
 
         self._profiler.profile_rdd(app_id)
         self._profiler.profile_executors(app_id)
-
-        info = self._profiler.profile_state(profile_title, state, time)
-
-        if info is not None:
-            self._logger.info(
-                "{} is consuming {} bytes in memory and {} bytes in disk".format(
-                    log_title, info['memoryUsed'], info['diskUsed']
-                )
-            )
+        self._profiler.profile_state(profile_title, state, time)
 
     def _create_coin_operators(self):
         for i, particle in enumerate(self._particles, start=1):
@@ -230,19 +213,20 @@ class DiscreteTimeQuantumWalk:
                     util.get_size_of_type(co.dtype) * co.nelem
                 )
 
-                self._coin_operators.append(
-                    co.partition_by(
-                        num_partitions=num_partitions
-                    ).materialize(self._storage_level)
-                )
+                co = co.partition_by(
+                    num_partitions=num_partitions
+                ).materialize(self._storage_level)
+
+                self._coin_operators.append(co)
 
                 time = (datetime.now() - time).total_seconds()
 
+                self._logger.info(
+                    "coin operator for particle {} ({}) was built in {}s".format(
+                        i, name, time))
+
                 self._profile_operator(
-                    'coinOperatorParticle{}'.format(i),
-                    'coin operator for particle {} ({})'.format(i, name),
-                    self._coin_operators[-1],
-                    time)
+                    'coinOperatorParticle{}'.format(i), co, time)
 
     def _create_shift_operator(self):
         self._logger.info("building shift operator...")
@@ -260,13 +244,17 @@ class DiscreteTimeQuantumWalk:
             util.get_size_of_type(so.dtype) * so.nelem
         )
 
-        self._shift_operator = so.partition_by(
-            num_partitions=num_partitions).materialize(self._storage_level)
+        so = so.partition_by(
+            num_partitions=num_partitions
+        ).materialize(self._storage_level)
+
+        self._shift_operator = so
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_operator('shiftOperator', 'shift operator',
-                               self._shift_operator, time)
+        self._logger.info("shift operator was built in {}s".format(time))
+
+        self._profile_operator('shiftOperator', so, time)
 
     def _create_interaction_operator(self):
         self._logger.info("building interaction operator...")
@@ -293,12 +281,15 @@ class DiscreteTimeQuantumWalk:
         if self._checkpoint_operators:
             io = io.checkpoint()
 
-        self._interaction_operator = io.materialize(self._storage_level)
+        io = io.materialize(self._storage_level)
+
+        self._interaction_operator = io
 
         time = (datetime.now() - time).total_seconds()
 
-        self._profile_operator('interactionOperator', 'interaction operator',
-                               self._interaction_operator, time)
+        self._logger.info("interaction operator was built in {}s".format(time))
+
+        self._profile_operator('interactionOperator', io, time)
 
     def _create_evolution_operators(self):
         """Build the evolution operators for the walk.
@@ -425,16 +416,17 @@ class DiscreteTimeQuantumWalk:
             if self._checkpoint_operators:
                 eo = eo.checkpoint()
 
-            self._evolution_operators.append(
-                eo.materialize(self._storage_level))
+            eo = eo.materialize(self._storage_level)
+
+            self._evolution_operators.append(eo)
 
             time = (datetime.now() - time).total_seconds()
 
+            self._logger.info(
+                "evolution operator for particle {} ({}) was built in {}s".format(i + 1, name, time))
+
             self._profile_operator(
-                'evolutionOperatorParticle{}'.format(i + 1),
-                'evolution operator for particle {} ({})'.format(i + 1, name),
-                self._evolution_operators[-1],
-                time)
+                'evolutionOperatorParticle{}'.format(i + 1), eo, time)
 
         self._shift_operator.unpersist()
 
@@ -748,13 +740,9 @@ class DiscreteTimeQuantumWalk:
         time = (datetime.now() - time).total_seconds()
 
         self._logger.info(
-            "step {} was done in {}s".format(step, time))
+            "system state after step  {} was done in {}s".format(step, time))
 
-        self._profile_state(
-            'systemState{}'.format(step),
-            'system state after step {}'.format(step),
-            result,
-            time)
+        self._profile_state('systemState{}'.format(step), result, time)
 
         self._profiler.log_rdd(app_id=self._sc.applicationId)
 
