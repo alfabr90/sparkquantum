@@ -68,7 +68,7 @@ class PhaseChange(Collision):
             raise TypeError(
                 "'Mesh' instance expected, not '{}'".format(type(mesh)))
 
-        colval = cmath.exp(self._phase * 1j)
+        colval = cmath.exp(self._phase)
 
         ndim = mesh.ndim
         csubspace = 2
