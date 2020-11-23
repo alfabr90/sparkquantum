@@ -6,7 +6,7 @@ __all__ = ['get']
 
 
 _defaults = {
-    'sparkquantum.cluster.maxPartitionSize': 32 * 10 ** 6,
+    'sparkquantum.cluster.maxPartitionSize': 32 * 1024 ** 2,
     'sparkquantum.cluster.numPartitionsSafetyFactor': 1.3,
     'sparkquantum.cluster.totalCores': 1,
     'sparkquantum.cluster.useSparkDefaultNumPartitions': False,
