@@ -130,12 +130,11 @@ def get_num_partitions(spark_context, expected_size):
 
     """
     safety_factor = float(conf.get(
-        spark_context, 'sparkquantum.cluster.numPartitionsSafetyFactor'))
+        spark_context, 'sparkquantum.partitioning.safetyFactor'))
 
     num_partitions = None
 
-    if not to_bool(conf.get(spark_context,
-                            'sparkquantum.cluster.useSparkDefaultNumPartitions')):
+    if to_bool(conf.get(spark_context, 'sparkquantum.partitioning.enabled')):
         num_cores = conf.get(
             spark_context, 'sparkquantum.cluster.totalCores')
 
@@ -145,7 +144,7 @@ def get_num_partitions(spark_context, expected_size):
 
         num_cores = int(num_cores)
         max_partition_size = int(conf.get(
-            spark_context, 'sparkquantum.cluster.maxPartitionSize'))
+            spark_context, 'sparkquantum.partitioning.rddPartitionSize'))
         num_partitions = math.ceil(
             safety_factor * expected_size / max_partition_size / num_cores) * num_cores
 

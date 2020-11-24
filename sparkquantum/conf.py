@@ -6,15 +6,15 @@ __all__ = ['get']
 
 
 _defaults = {
-    'sparkquantum.cluster.maxPartitionSize': 32 * 1024 ** 2,
-    'sparkquantum.cluster.numPartitionsSafetyFactor': 1.3,
     'sparkquantum.cluster.totalCores': 1,
-    'sparkquantum.cluster.useSparkDefaultNumPartitions': False,
     'sparkquantum.logging.enabled': False,
     'sparkquantum.logging.filename': './log.txt',
     'sparkquantum.logging.format': '%(levelname)s:%(name)s:%(asctime)s:%(message)s',
     'sparkquantum.logging.level': logging.WARNING,
     'sparkquantum.math.roundPrecision': 10,
+    'sparkquantum.partitioning.enabled': True,
+    'sparkquantum.partitioning.rddPartitionSize': 32 * 1024 ** 2,
+    'sparkquantum.partitioning.safetyFactor': 1.3,
     'sparkquantum.profiling.enabled': False,
     'sparkquantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
 }
