@@ -268,12 +268,12 @@ When a natural mesh is considered, all the possible positions that the particle 
 
 In some cases, the user may want to know how a long lasting simulation is being executed. To accomplish that, _sparkquantum_ optionally exposes a log file that keeps being filled with some messages and/or data related to each simulation step. This log file is generated and filled using [Python's logging facility](https://docs.python.org/3/library/logging.html).
 
-To enable logging, set the `sparkquantum.logging.enabled` configuration parameter with `'True'` as follows:
+To enable logging, set the `sparkquantum.logging.enabled` configuration parameter with `True` as follows:
 
 ```python
 conf = SparkConf() \
     # other configurations
-    .set('sparkquantum.logging.enabled', 'True')
+    .set('sparkquantum.logging.enabled', True)
     # other configurations
 ```
 
@@ -284,7 +284,7 @@ Besides logging, the simulator can also gathers data about the resource usage du
 ```python
 conf = SparkConf() \
     # other configurations
-    .set('sparkquantum.profiling.enabled', 'True')
+    .set('sparkquantum.profiling.enabled', True)
     # other configurations
 ```
 
@@ -309,16 +309,16 @@ TODO: explain how the user can implement custom coins, meshes and custom mesh pe
 
 Below, there is a list of the current configuration parameters that the user can define accodingly to his/her needs. The values must be set through `SparkConf` key-value pairs:
 
-| Property Name                                     |                     Default                      | Meaning                                                                                                                                                   |
-| :------------------------------------------------ | :----------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| sparkquantum.cluster.maxPartitionSize             |                       32MB                       | Maximum partition size of each RDD produced by the application. Only integers are accepted.                                                               |
-| sparkquantum.cluster.numPartitionsSafetyFactor    |                       1.3                        | A safety factor when calculating the best possible number of partitions of each RDD produced by the application.                                          |
-| sparkquantum.cluster.totalCores                   |                        1                         | Total number of cores used by the application. Necessary to calculate the best possible number of partitions of each RDD produced by the application      |
-| sparkquantum.cluster.useSparkDefaultNumPartitions |                      False                       | Whether to use the default number of partitions defined by Spark when partitioning the RDD produced by the application.                                   |
-| sparkquantum.logging.enabled                      |                      False                       | Whether the application must generate and fill a log file.                                                                                                |
-| sparkquantum.logging.filename                     |                   './log.txt'                    | The filename (with relative or absolute path) where all log data will be written by Python's logging facility.                                            |
-| sparkquantum.logging.format                       | '%(levelname)s:%(name)s:%(asctime)s:%(message)s' | Python's logging.Formatter acceptable format which each log record will be at.                                                                            |
-| sparkquantum.logging.level                        |                `logging.WARNING`                 | Python's logging facility acceptable severity level.                                                                                                      |
-| sparkquantum.math.roundPrecision                  |                        10                        | Decimal precision when rounding numbers.                                                                                                                  |
-| sparkquantum.profiling.enabled                    |                      False                       | Whether the application must profile all created RDD to get their metrics.                                                                                |
-| sparkquantum.profiling.baseUrl                    |         'http://localhost:4040/api/v1/'          | The [Spark Rest API](http://spark.apache.org/docs/latest/monitoring.html#rest-api) base URL that the application's profiler must use to get some metrics. |
+| Property Name                              |                     Default                      | Meaning                                                                                                                                                                                        |
+| :----------------------------------------- | :----------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sparkquantum.cluster.totalCores            |                        1                         | Total number of cores used by the application. Necessary to calculate the best possible number of partitions of each RDD produced by the application                                           |
+| sparkquantum.logging.enabled               |                      False                       | Whether the application must generate and fill a log file.                                                                                                                                     |
+| sparkquantum.logging.filename              |                   './log.txt'                    | The filename (with relative or absolute path) where all log data will be written by Python's logging facility.                                                                                 |
+| sparkquantum.logging.format                | '%(levelname)s:%(name)s:%(asctime)s:%(message)s' | Python's `logging.Formatter` acceptable format which each log record will be at.                                                                                                               |
+| sparkquantum.logging.level                 |                `logging.WARNING`                 | Python's logging facility acceptable severity level.                                                                                                                                           |
+| sparkquantum.math.roundPrecision           |                        10                        | Decimal precision when rounding numbers.                                                                                                                                                       |
+| sparkquantum.partitioning.enabled          |                       True                       | Whether to let sparkquantum calculate the number of partitions of each RDD produced by the application or use the default number of partitions defined by Spark.                               |
+| sparkquantum.partitioning.rddPartitionSize |                      32MiB                       | Partition size of each RDD produced by the application. Only integers are accepted.                                                                                                            |
+| sparkquantum.partitioning.safetyFactor     |                       1.3                        | A safety factor when calculating the best possible number of partitions of each RDD produced by the application. This is applied to the expected size of each RDD produced by the application. |
+| sparkquantum.profiling.enabled             |                      False                       | Whether the application must profile all created RDD to get their metrics.                                                                                                                     |
+| sparkquantum.profiling.baseUrl             |         'http://localhost:4040/api/v1/'          | The [Spark Rest API](http://spark.apache.org/docs/latest/monitoring.html#rest-api) base URL that the application's profiler must use to get some metrics.                                      |
