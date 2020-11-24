@@ -268,12 +268,12 @@ When a natural mesh is considered, all the possible positions that the particle 
 
 In some cases, the user may want to know how a long lasting simulation is being executed. To accomplish that, _sparkquantum_ optionally exposes a log file that keeps being filled with some messages and/or data related to each simulation step. This log file is generated and filled using [Python's logging facility](https://docs.python.org/3/library/logging.html).
 
-To enable logging, set the `sparkquantum.logging.enabled` configuration parameter with `'True'` as follows:
+To enable logging, set the `sparkquantum.logging.enabled` configuration parameter with `True` as follows:
 
 ```python
 conf = SparkConf() \
     # other configurations
-    .set('sparkquantum.logging.enabled', 'True')
+    .set('sparkquantum.logging.enabled', True)
     # other configurations
 ```
 
@@ -284,7 +284,7 @@ Besides logging, the simulator can also gathers data about the resource usage du
 ```python
 conf = SparkConf() \
     # other configurations
-    .set('sparkquantum.profiling.enabled', 'True')
+    .set('sparkquantum.profiling.enabled', True)
     # other configurations
 ```
 
