@@ -76,7 +76,9 @@ class Profiler:
                 'peakMemoryMetrics.OffHeapUnifiedMemory': 0}
 
     def _get_baseurl(self):
-        return conf.get(self._sc, 'sparkquantum.profiling.baseUrl')
+        port = conf.get(self._sc, 'spark.ui.port', default=4040)
+
+        return 'http://localhost:{}/api/v1'.format(port)
 
     def _is_enabled(self):
         return util.to_bool(
@@ -100,7 +102,15 @@ class Profiler:
             raise NotImplementedError("unsupported file extension")
 
     def _request(self, url_suffix=''):
-        url = self._base_url + 'applications' + url_suffix
+        ui_enabled = util.to_bool(
+            conf.get(self._sc, 'spark.ui.enabled', default=True))
+
+        if not ui_enabled:
+            self._logger.warning(
+                "Spark UI is disabled and no data will be returned")
+            return None
+
+        url = self._base_url + url_suffix
 
         self._logger.info("performing request to '{}'...".format(url))
 
@@ -135,7 +145,7 @@ class Profiler:
 
         """
         if self._enabled:
-            return self._request()
+            return self._request('/applications')
 
     def request_jobs(self, app_id, job_id=None):
         """Request all the application's jobs' data.
@@ -156,9 +166,10 @@ class Profiler:
         """
         if self._enabled:
             if job_id is None:
-                return self._request("/{}/jobs".format(app_id))
+                return self._request('/applications/{}/jobs'.format(app_id))
             else:
-                return self._request("/{}/jobs/{}".format(app_id, job_id))
+                return self._request(
+                    '/applications/{}/jobs/{}'.format(app_id, job_id))
 
     def request_stages(self, app_id, stage_id=None):
         """Request all the application's stages' data.
@@ -179,9 +190,10 @@ class Profiler:
         """
         if self._enabled:
             if stage_id is None:
-                return self._request("/{}/stages".format(app_id))
+                return self._request('/applications/{}/stages'.format(app_id))
             else:
-                return self._request("/{}/stages/{}".format(app_id, stage_id))
+                return self._request(
+                    '/applications/{}/stages/{}'.format(app_id, stage_id))
 
     def request_stageattempt(self, app_id, stage_id, stageattempt_id):
         """Request an application's stage attempt's data.
@@ -204,7 +216,7 @@ class Profiler:
         """
         if self._enabled:
             return self._request(
-                "/{}/stages/{}/{}".format(app_id, stage_id, stageattempt_id))
+                '/applications/{}/stages/{}/{}'.format(app_id, stage_id, stageattempt_id))
 
     def request_stageattempt_tasksummary(
             self, app_id, stage_id, stageattempt_id):
@@ -228,7 +240,7 @@ class Profiler:
         """
         if self._enabled:
             return self._request(
-                "/{}/stages/{}/{}/taskSummary".format(app_id, stage_id, stageattempt_id))
+                '/applications/{}/stages/{}/{}/taskSummary'.format(app_id, stage_id, stageattempt_id))
 
     def request_stageattempt_tasklist(self, app_id, stage_id, stageattempt_id):
         """Request the task list of a stage attempt.
@@ -251,7 +263,7 @@ class Profiler:
         """
         if self._enabled:
             return self._request(
-                "/{}/stages/{}/{}/taskList".format(app_id, stage_id, stageattempt_id))
+                '/applications/{}/stages/{}/{}/taskList'.format(app_id, stage_id, stageattempt_id))
 
     def request_executors(self, app_id):
         """Request all the application's active executors' data.
@@ -269,7 +281,7 @@ class Profiler:
 
         """
         if self._enabled:
-            return self._request("/{}/executors".format(app_id))
+            return self._request('/applications/{}/executors'.format(app_id))
 
     def request_allexecutors(self, app_id):
         """Request all the application's executors' data.
@@ -287,7 +299,8 @@ class Profiler:
 
         """
         if self._enabled:
-            return self._request("/{}/allexecutors".format(app_id))
+            return self._request(
+                '/applications/{}/allexecutors'.format(app_id))
 
     def request_rdd(self, app_id, rdd_id=None):
         """Request all the application's RDDs' data.
@@ -308,10 +321,11 @@ class Profiler:
         """
         if self._enabled:
             if rdd_id is None:
-                return self._request("/{}/storage/rdd".format(app_id))
+                return self._request(
+                    '/applications/{}/storage/rdd'.format(app_id))
             else:
                 return self._request(
-                    "/{}/storage/rdd/{}".format(app_id, rdd_id))
+                    '/applications/{}/storage/rdd/{}'.format(app_id, rdd_id))
 
     def reset(self):
         """Reset the profiler's attributes, in order to get ready for a new profiling round."""
