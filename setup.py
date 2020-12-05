@@ -15,7 +15,7 @@ setup(
     name='sparkquantum',
     version='0.1.0',
     packages=find_packages(),
-    requires=['numpy', 'matplotlib'],
+    requires=['numpy', 'matplotlib', 'pyspark'],
     url='https://github.com/alfabr90/sparkquantum',
     license='MIT',
     author='André Albuquerque',

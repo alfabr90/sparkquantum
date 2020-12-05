@@ -538,13 +538,9 @@ class DiscreteTimeQuantumWalk:
             nelem = len(cstate)
 
             if self._repr_format == constants.StateRepresentationFormatCoinPosition:
-                data = (
-                    (a * pspace + position, 0, cstate[a]) for a in range(nelem)
-                )
+                data = ((c[0] * pspace + position, 0, c[-1]) for c in cstate)
             elif self._repr_format == constants.StateRepresentationFormatPositionCoin:
-                data = (
-                    (position * cspace + a, 0, cstate[a]) for a in range(nelem)
-                )
+                data = ((position * cspace + c[0], 0, c[-1]) for c in cstate)
 
             rdd = self._sc.parallelize(cstate)
 

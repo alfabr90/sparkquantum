@@ -41,13 +41,13 @@ particle = Particle(coin, name='Electron')
 
 # Options of initial coin states for the particle
 # |i,j> --> (|0,0> + i|0,1> - i|1,0> + |1,1>) / 2
-cstate = (1 / 2, 1j / 2, -1j / 2, 1 / 2)
+cstate = ((0, 0, 0.5), (1, 0, 0.5j), (2, 0, -0.5j), (3, 0, 0.5))
 
 # |i,j> --> (|0,0> + i|0,1> + i|1,0> - |1,1>) / 2
-# cstate = (1 / 2, 1j / 2, 1j / 2, -1 / 2)
+# cstate = ((0, 0, 0.5), (1, 0, 0.5j), (2, 0, 0.5j), (3, 0, -0.5))
 
 # |i,j> --> (|0,0> - |0,1> - |1,0> + |1,1>) / 2
-# cstate = (1 / 2, -1 / 2, -1 / 2, 1 / 2)
+# cstate = ((0, 0, 0.5), (1, 0, -0.5), (2, 0, -0.5), (3, 0, 0.5))
 
 # Adding the particle to the walk with its coin state and
 # position corresponding to the center site of the mesh
