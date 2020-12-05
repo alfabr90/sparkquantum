@@ -15,15 +15,14 @@ _defaults = {
     'sparkquantum.partitioning.enabled': True,
     'sparkquantum.partitioning.rddPartitionSize': 32 * 1024 ** 2,
     'sparkquantum.partitioning.safetyFactor': 1.3,
-    'sparkquantum.profiling.enabled': False,
-    'sparkquantum.profiling.baseUrl': 'http://localhost:4040/api/v1/'
+    'sparkquantum.profiling.enabled': False
 }
 """
 Dict with the default values for all accepted configurations of the package.
 """
 
 
-def get(sc, config):
+def get(sc, config, default=None):
     """Get a configuration value from the :py:class:`pyspark.SparkContext` object.
 
     Parameters
@@ -32,18 +31,21 @@ def get(sc, config):
         The :py:class:`pyspark.SparkContext` object.
     config : str
         The configuration string to have its correspondent value obtained.
+    default: any
+        The default value for the configuration.
 
     Returns
     -------
-    str
-        The configuration value or None if the configuration is not found.
+    any
+        The configuration value.
 
     """
     c = sc.getConf().get(config)
 
     if c is None:
-        if config not in _defaults:
-            return None
-        return _defaults[config]
+        if default is not None:
+            c = default
+        elif config in _defaults:
+            c = _defaults[config]
 
     return c
