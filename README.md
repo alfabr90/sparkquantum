@@ -61,7 +61,7 @@ In this example, suppose the user needs to simulate the following initial quantu
 where `c` is the coin state and `p` is the position state. In order to do so, the user need to add the particle to the quantum walk, informing its coin state and position as follows:
 
 ```python
-dtqw.add_particle(particle, ((0, 0, 0.5), (1, 0, 0.5j)), mesh.center())
+dtqw.add_particle(particle, ((0, 0, 1 / math.sqrt(2)), (1, 0, 1j / math.sqrt(2))), mesh.center())
 ```
 
 To perform the walk, the user must call the `DiscreteTimeQuantumWalk.walk` method, informing the desired number of steps:
