@@ -46,13 +46,13 @@ particle2 = Particle(coin, name='Boson')
 
 # Options of initial coin states for the particle
 # |i> --> (|0> - i|1>) / sqrt(2)
-cstate = (1 / math.sqrt(2), 1j / math.sqrt(2))
+cstate = ((0, 0, 1 / math.sqrt(2)), (1, 0, 1j / math.sqrt(2)))
 
 # |i> --> |0>
-# cstate = (1, 0)
+# cstate = ((0, 0, 1), (1, 0, 0))
 
 # |i> --> |1>
-# cstate = (0, 1)
+# cstate = ((0, 0, 0), (1, 0, 1))
 
 # Each particle's position will correspond to the center site of the mesh
 position = mesh.center()
