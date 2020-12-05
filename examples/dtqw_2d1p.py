@@ -1,5 +1,3 @@
-import math
-
 from pyspark import SparkContext, SparkConf
 
 from sparkquantum import constants, plot, util
