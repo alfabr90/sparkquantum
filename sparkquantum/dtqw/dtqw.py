@@ -37,7 +37,7 @@ class DiscreteTimeQuantumWalk:
             Indicate how the quantum system will be represented.
             Default value is :py:const:`sparkquantum.constants.StateRepresentationFormatCoinPosition`.
         checkpoint_operators : bool, optional
-            Indicate whether the evolution and interaction operators will be checkpointed.
+            Indicate whether the evolution and interaction operators must be checkpointed.
             Default value is False.
         storage_level : :py:class:`pyspark.StorageLevel`, optional
             The desired storage level when materializing the operators' RDD.
@@ -693,7 +693,26 @@ class DiscreteTimeQuantumWalk:
 
         return self
 
-    def step(self):
+    def step(self, checkpoint_state=False):
+        """Perform a step of this quantum walk.
+
+        Parameters
+        ----------
+        checkpoint_state : bool, optional
+            Indicate whether the state must be checkpointed.
+            Default value is False.
+
+        Returns
+        -------
+        :py:class:`sparkquantum.dtqw.state.State`
+            The state of the system after performing the step.
+
+        Raises
+        ------
+        NotImplementedError
+            If this quantum walk has not been setup.
+
+        """
         if self._curstate is None:
             self._logger.error("this quantum walk has not been setup")
             raise NotImplementedError("this quantum walk has not been setup")
@@ -729,7 +748,12 @@ class DiscreteTimeQuantumWalk:
                 )
             )
 
-        result.materialize(self._storage_level)
+        result = result.persist(self._storage_level)
+
+        if checkpoint_state:
+            result = result.checkpoint()
+
+        result = result.materialize(self._storage_level)
 
         self._curstate.unpersist()
 
@@ -746,13 +770,17 @@ class DiscreteTimeQuantumWalk:
 
         return result
 
-    def walk(self, steps):
+    def walk(self, steps, checkpoint_frequency=None):
         """Perform the quantum walk.
 
         Parameters
         ----------
         steps : int
             The number of steps of the quantum walk.
+        checkpoint_frequency : int, optional
+            The rate which states will be checkpointed. Must be a positive value.
+            When it is set to None, zero or negative values, the checkpointing does not occur.
+            Default value is None.
 
         Returns
         -------
@@ -776,7 +804,14 @@ class DiscreteTimeQuantumWalk:
         step = self._curstep
 
         while step < steps:
-            self._curstate = self.step()
+            if (checkpoint_frequency is not None and
+                    checkpoint_frequency > 0 and
+                    (step + 1) % checkpoint_frequency == 0):
+                checkpoint = True
+            else:
+                checkpoint = False
+
+            self._curstate = self.step(checkpoint_state=checkpoint)
             step = self._curstep
 
         time = (datetime.now() - time).total_seconds()
