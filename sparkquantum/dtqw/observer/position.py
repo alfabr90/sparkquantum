@@ -279,6 +279,7 @@ class Position(Observer):
             The measurement of all possible positions of the entire system.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
@@ -379,16 +380,18 @@ class Position(Observer):
 
     def measure(self, state, particle=None,
                 storage_level=StorageLevel.MEMORY_AND_DISK):
-        """Perform the measurement of the system state.
+        """Perform the measurement of the system state or of a determined particle.
 
         Parameters
         ----------
         state : :py:class:`sparkquantum.dtqw.state.State`
             The system state.
         particle : :py:class:`sparkquantum.dtqw.particle.Particle`
-            The particle to have its position measured.
+            The particle to have its position measured or the entire system state.
+            Default value is None.
         storage_level : :py:class:`pyspark.StorageLevel`
             The desired storage level when materializing the RDD.
+            Default value is :py:const:`pyspark.StorageLevel.MEMORY_AND_DISK`.
 
         Returns
         -------
@@ -402,7 +405,7 @@ class Position(Observer):
             if the dimension of the mesh is not valid.
 
         ValueError
-            If `particle` is does not belong to the system state, if the state's 'sparkquantum.dtqw.stateRepresentationFormat'
+            If `particle` does not belong to the system state, if the state's 'sparkquantum.dtqw.stateRepresentationFormat'
             is not valid or if the sum of the calculated probability distributions is not equal to one.
 
         """
