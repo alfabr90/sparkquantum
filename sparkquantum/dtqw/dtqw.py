@@ -195,38 +195,43 @@ class DiscreteTimeQuantumWalk:
         self._profiler.profile_state(profile_title, state, time)
 
     def _create_coin_operators(self):
-        for i, particle in enumerate(self._particles, start=1):
-            if len(self._coin_operators) < i:
-                name = particle.name if particle.name is not None else 'unidentified'
+        i = len(self._coin_operators) + 1
 
-                self._logger.info(
-                    "building coin operator for particle {} ({})...".format(i, name))
+        while i <= len(self._particles):
+            particle = self._particles[i - 1]
 
-                time = datetime.now()
+            name = particle.name if particle.name is not None else 'unidentified'
 
-                co = particle.coin.create_operator(
-                    self._mesh.sites, repr_format=self._repr_format
-                ).clear().to_coordinate(constants.MatrixCoordinateMultiplicand)
+            self._logger.info(
+                "building coin operator for particle {} ({})...".format(i, name))
 
-                num_partitions = util.get_num_partitions(
-                    self._sc,
-                    util.get_size_of_type(co.dtype) * co.nelem
-                )
+            time = datetime.now()
 
-                co = co.partition_by(
-                    num_partitions=num_partitions
-                ).materialize(self._storage_level)
+            co = particle.coin.create_operator(
+                self._mesh.sites, repr_format=self._repr_format
+            ).clear().to_coordinate(constants.MatrixCoordinateMultiplicand)
 
-                self._coin_operators.append(co)
+            num_partitions = util.get_num_partitions(
+                self._sc,
+                util.get_size_of_type(co.dtype) * co.nelem
+            )
 
-                time = (datetime.now() - time).total_seconds()
+            co = co.partition_by(
+                num_partitions=num_partitions
+            ).materialize(self._storage_level)
 
-                self._logger.info(
-                    "coin operator for particle {} ({}) was built in {}s".format(
-                        i, name, time))
+            self._coin_operators.append(co)
 
-                self._profile_operator(
-                    'coinOperatorParticle{}'.format(i), co, time)
+            time = (datetime.now() - time).total_seconds()
+
+            self._logger.info(
+                "coin operator for particle {} ({}) was built in {}s".format(
+                    i, name, time))
+
+            self._profile_operator(
+                'coinOperatorParticle{}'.format(i), co, time)
+
+            i += 1
 
     def _create_shift_operator(self):
         self._logger.info("building shift operator...")
@@ -310,7 +315,13 @@ class DiscreteTimeQuantumWalk:
         """
         self._logger.info("building evolution operators...")
 
-        self._create_coin_operators()
+        particles = len(self._particles)
+
+        if len(self._coin_operators) < particles:
+            self._logger.info(
+                "no coin operators has been set. A new one will be built for each particle")
+
+            self._create_coin_operators()
 
         if self._shift_operator is None:
             self._logger.info(
@@ -319,8 +330,6 @@ class DiscreteTimeQuantumWalk:
             self._create_shift_operator()
 
         self._destroy_evolution_operators()
-
-        particles = len(self._particles)
 
         for i, particle in enumerate(self._particles):
             name = particle.name if particle.name is not None else 'unidentified'

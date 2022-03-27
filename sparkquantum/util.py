@@ -129,9 +129,6 @@ def get_num_partitions(spark_context, expected_size):
         If the number of cores is not informed.
 
     """
-    safety_factor = float(conf.get(
-        spark_context, 'sparkquantum.partitioning.safetyFactor'))
-
     num_partitions = None
 
     if to_bool(conf.get(spark_context, 'sparkquantum.partitioning.enabled')):
@@ -141,6 +138,9 @@ def get_num_partitions(spark_context, expected_size):
         if not num_cores:
             raise ValueError(
                 "invalid number of total cores in the cluster: {}".format(num_cores))
+
+        safety_factor = float(conf.get(
+            spark_context, 'sparkquantum.partitioning.safetyFactor'))
 
         num_cores = int(num_cores)
         max_partition_size = int(conf.get(
