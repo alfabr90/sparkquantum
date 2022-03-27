@@ -116,6 +116,7 @@ class Matrix(Base):
 
     def _sum_scalar(self, other, constant):
         if other == type(other)():
+            # It is a zero-sum
             return self._data, self._shape, self._dtype, self._nelem
 
         dtype = util.get_precedent_type(
@@ -176,7 +177,7 @@ class Matrix(Base):
 
         if self._nelem is not None or other.nelem is not None:
             if self._nelem is not None and other.nelem is not None:
-                nelem = min(self._nelem, other.nelem)
+                nelem = max(self._nelem, other.nelem)
             elif self._nelem is not None:
                 nelem = self._nelem
             else:
@@ -205,12 +206,14 @@ class Matrix(Base):
 
         if other == type(other)():
             if constant < 0:
-                # It is a division by zero operation
+                # It is a division by zero
                 raise ZeroDivisionError
             elif constant > 0:
+                # It is a multiplication by zero
                 return Matrix(self._sc.emptyRDD, self._shape,
                               dtype=dtype, coord_format=self._coord_format, nelem=0)
             else:
+                # It is a multiplication by one
                 return Matrix(self._data, self._shape,
                               dtype=dtype, coord_format=self._coord_format, nelem=self._nelem)
         elif other == type(other)() + 1:
@@ -607,10 +610,8 @@ class Matrix(Base):
             self._logger.error("invalid coordinate format")
             raise NotImplementedError("invalid coordinate format")
 
-        round_precision = int(
-            conf.get(
-                self._sc,
-                'sparkquantum.math.roundPrecision'))
+        round_precision = int(conf.get(
+            self._sc, 'sparkquantum.math.roundPrecision'))
 
         return round(self.norm(), round_precision) == 1.0
 
